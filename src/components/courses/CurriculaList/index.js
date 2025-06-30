@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { 
   Plus, 
@@ -432,6 +432,7 @@ const courses = [
 ];
 
 const CurriculaList = () => {
+  const navigate = useNavigate();
   const [expandedCourses, setExpandedCourses] = useState(courses.map(course => course.id));
   const [searchQuery, setSearchQuery] = useState('');
   const [openMenu, setOpenMenu] = useState(null);
@@ -456,6 +457,14 @@ const CurriculaList = () => {
       setOpenMenu(curriculumId);
     }
   };
+
+  const handleCreateCurriculum = () => {
+    navigate('/courses/curriculum/create');
+  };
+
+  const handleEditCurriculum = (id) => {
+    navigate(`/courses/curriculum/edit/${id}`);
+  };
   
   const filteredCourses = courses.map(course => ({
     ...course,
@@ -471,7 +480,7 @@ const CurriculaList = () => {
       <Header>
         <h1>Curricula Management</h1>
         <div className="actions">
-          <Button className="primary">
+          <Button className="primary" onClick={handleCreateCurriculum}>
             <Plus size={18} />
             Create Curriculum
           </Button>
@@ -528,7 +537,7 @@ const CurriculaList = () => {
                               <Eye size={16} />
                               <span>View</span>
                             </div>
-                            <div className="dropdown-item">
+                            <div className="dropdown-item" onClick={() => handleEditCurriculum(curriculum.id)}>
                               <Edit size={16} />
                               <span>Edit</span>
                             </div>
@@ -563,7 +572,7 @@ const CurriculaList = () => {
                     </div>
                   </CurriculumCard>
                 ))}
-                <AddCurriculumCard>
+                <AddCurriculumCard onClick={handleCreateCurriculum}>
                   <div className="add-icon">
                     <Plus size={24} />
                   </div>

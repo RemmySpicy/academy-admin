@@ -443,46 +443,63 @@ const CurriculumBuilderForm = () => {
   const [activeTab, setActiveTab] = useState('details');
   const [activeLevel, setActiveLevel] = useState(1);
   const [expandedActivities, setExpandedActivities] = useState(['warmup']);
+  const [showLessonModal, setShowLessonModal] = useState(false);
+  const [editingLesson, setEditingLesson] = useState(null);
   
   // Sample data
-  const curriculum = {
+  const [curriculum, setCurriculum] = useState({
     id: id || 'new',
     title: id ? 'Learn to Swim: 6-17 Years' : '',
     courseId: id ? '2' : '',
     description: id ? 'Comprehensive swimming program for school-age children covering all major strokes and techniques.' : '',
     ageRange: id ? '6 - 17 years' : '',
-    levels: 4,
-    modules: [
+    levels: [
       {
         id: 1,
-        title: 'Module 1: Water Confidence',
-        sections: [
+        title: 'Level 1: Water Confidence',
+        modules: [
           {
             id: 1,
-            title: 'Introduction to Water',
-            activities: {
-              warmup: 'Simple water entry and exit practice',
-              preset: 'Breathing exercises at the pool edge',
-              mainset: [
-                {
-                  id: 1,
-                  title: 'Water Familiarization',
-                  type: 'lesson'
-                },
-                {
-                  id: 2,
-                  title: 'Floating Practice',
-                  type: 'lesson'
+            title: 'Module 1: Water Confidence',
+            sections: [
+              {
+                id: 1,
+                title: 'Introduction to Water',
+                activities: {
+                  warmup: 'Simple water entry and exit practice',
+                  preset: 'Breathing exercises at the pool edge',
+                  mainset: [
+                    {
+                      id: 1,
+                      title: 'Water Familiarization',
+                      type: 'lesson'
+                    },
+                    {
+                      id: 2,
+                      title: 'Floating Practice',
+                      type: 'lesson'
+                    }
+                  ],
+                  postset: 'Group water confidence games',
+                  cooldown: 'Gentle water walking and relaxation'
                 }
-              ],
-              postset: 'Group water confidence games',
-              cooldown: 'Gentle water walking and relaxation'
-            }
+              }
+            ]
           }
         ]
+      },
+      {
+        id: 2,
+        title: 'Level 2: Basic Strokes',
+        modules: []
+      },
+      {
+        id: 3,
+        title: 'Level 3: Advanced Techniques',
+        modules: []
       }
     ]
-  };
+  });
   
   const courses = [
     { id: 1, title: 'Learn to Swim' },
@@ -490,6 +507,339 @@ const CurriculumBuilderForm = () => {
     { id: 3, title: 'Adult Swimming' },
     { id: 4, title: 'Survival Swimming' }
   ];
+
+  // Sample lessons for selection
+  const availableLessons = [
+    { id: 1, title: 'Water Familiarization', difficulty: 'beginner' },
+    { id: 2, title: 'Floating Practice', difficulty: 'beginner' },
+    { id: 3, title: 'Kicking Technique', difficulty: 'intermediate' },
+    { id: 4, title: 'Arm Stroke Development', difficulty: 'intermediate' },
+    { id: 5, title: 'Breathing Technique', difficulty: 'intermediate' },
+    { id: 6, title: 'Breaststroke Technique', difficulty: 'intermediate' },
+    { id: 7, title: 'Butterfly Technique', difficulty: 'advanced' },
+    { id: 8, title: 'Diving Fundamentals', difficulty: 'intermediate' },
+    { id: 9, title: 'Water Safety Skills', difficulty: 'beginner' },
+    { id: 10, title: 'Endurance Training', difficulty: 'advanced' }
+  ];
+  
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setCurriculum({
+      ...curriculum,
+      [name]: value
+    });
+  };
+  
+  // Add a new level
+  const handleAddLevel = () => {
+    const newLevel = {
+      id: curriculum.levels.length + 1,
+      title: `Level ${curriculum.levels.length + 1}`,
+      modules: []
+    };
+    
+    setCurriculum({
+      ...curriculum,
+      levels: [...curriculum.levels, newLevel]
+    });
+    
+    setActiveLevel(newLevel.id);
+  };
+  
+  // Add a new module to the active level
+  const handleAddModule = () => {
+    const updatedLevels = curriculum.levels.map(level => {
+      if (level.id === activeLevel) {
+        const newModuleId = level.modules.length > 0 
+          ? Math.max(...level.modules.map(m => m.id)) + 1 
+          : 1;
+        
+        return {
+          ...level,
+          modules: [
+            ...level.modules, 
+            {
+              id: newModuleId,
+              title: `Module ${newModuleId}: New Module`,
+              sections: []
+            }
+          ]
+        };
+      }
+      return level;
+    });
+    
+    setCurriculum({
+      ...curriculum,
+      levels: updatedLevels
+    });
+  };
+  
+  // Add a new section to a module
+  const handleAddSection = (moduleId) => {
+    const updatedLevels = curriculum.levels.map(level => {
+      if (level.id === activeLevel) {
+        return {
+          ...level,
+          modules: level.modules.map(module => {
+            if (module.id === moduleId) {
+              const newSectionId = module.sections.length > 0 
+                ? Math.max(...module.sections.map(s => s.id)) + 1 
+                : 1;
+              
+              return {
+                ...module,
+                sections: [
+                  ...module.sections,
+                  {
+                    id: newSectionId,
+                    title: `Section ${newSectionId}`,
+                    activities: {
+                      warmup: '',
+                      preset: '',
+                      mainset: [],
+                      postset: '',
+                      cooldown: ''
+                    }
+                  }
+                ]
+              };
+            }
+            return module;
+          })
+        };
+      }
+      return level;
+    });
+    
+    setCurriculum({
+      ...curriculum,
+      levels: updatedLevels
+    });
+  };
+  
+  // Update section title
+  const handleSectionTitleChange = (moduleId, sectionId, newTitle) => {
+    const updatedLevels = curriculum.levels.map(level => {
+      if (level.id === activeLevel) {
+        return {
+          ...level,
+          modules: level.modules.map(module => {
+            if (module.id === moduleId) {
+              return {
+                ...module,
+                sections: module.sections.map(section => {
+                  if (section.id === sectionId) {
+                    return {
+                      ...section,
+                      title: newTitle
+                    };
+                  }
+                  return section;
+                })
+              };
+            }
+            return module;
+          })
+        };
+      }
+      return level;
+    });
+    
+    setCurriculum({
+      ...curriculum,
+      levels: updatedLevels
+    });
+  };
+  
+  // Update module title
+  const handleModuleTitleChange = (moduleId, newTitle) => {
+    const updatedLevels = curriculum.levels.map(level => {
+      if (level.id === activeLevel) {
+        return {
+          ...level,
+          modules: level.modules.map(module => {
+            if (module.id === moduleId) {
+              return {
+                ...module,
+                title: newTitle
+              };
+            }
+            return module;
+          })
+        };
+      }
+      return level;
+    });
+    
+    setCurriculum({
+      ...curriculum,
+      levels: updatedLevels
+    });
+  };
+  
+  // Update activity content
+  const handleActivityChange = (moduleId, sectionId, activityType, content) => {
+    const updatedLevels = curriculum.levels.map(level => {
+      if (level.id === activeLevel) {
+        return {
+          ...level,
+          modules: level.modules.map(module => {
+            if (module.id === moduleId) {
+              return {
+                ...module,
+                sections: module.sections.map(section => {
+                  if (section.id === sectionId) {
+                    return {
+                      ...section,
+                      activities: {
+                        ...section.activities,
+                        [activityType]: content
+                      }
+                    };
+                  }
+                  return section;
+                })
+              };
+            }
+            return module;
+          })
+        };
+      }
+      return level;
+    });
+    
+    setCurriculum({
+      ...curriculum,
+      levels: updatedLevels
+    });
+  };
+  
+  // Add a lesson to the mainset
+  const handleAddLesson = (moduleId, sectionId, lesson) => {
+    const updatedLevels = curriculum.levels.map(level => {
+      if (level.id === activeLevel) {
+        return {
+          ...level,
+          modules: level.modules.map(module => {
+            if (module.id === moduleId) {
+              return {
+                ...module,
+                sections: module.sections.map(section => {
+                  if (section.id === sectionId) {
+                    const newMainset = [...section.activities.mainset, lesson];
+                    return {
+                      ...section,
+                      activities: {
+                        ...section.activities,
+                        mainset: newMainset
+                      }
+                    };
+                  }
+                  return section;
+                })
+              };
+            }
+            return module;
+          })
+        };
+      }
+      return level;
+    });
+    
+    setCurriculum({
+      ...curriculum,
+      levels: updatedLevels
+    });
+    
+    setShowLessonModal(false);
+    setEditingLesson(null);
+  };
+  
+  // Remove a lesson from the mainset
+  const handleRemoveLesson = (moduleId, sectionId, lessonId) => {
+    const updatedLevels = curriculum.levels.map(level => {
+      if (level.id === activeLevel) {
+        return {
+          ...level,
+          modules: level.modules.map(module => {
+            if (module.id === moduleId) {
+              return {
+                ...module,
+                sections: module.sections.map(section => {
+                  if (section.id === sectionId) {
+                    const newMainset = section.activities.mainset.filter(
+                      lesson => lesson.id !== lessonId
+                    );
+                    return {
+                      ...section,
+                      activities: {
+                        ...section.activities,
+                        mainset: newMainset
+                      }
+                    };
+                  }
+                  return section;
+                })
+              };
+            }
+            return module;
+          })
+        };
+      }
+      return level;
+    });
+    
+    setCurriculum({
+      ...curriculum,
+      levels: updatedLevels
+    });
+  };
+  
+  // Remove a section
+  const handleRemoveSection = (moduleId, sectionId) => {
+    const updatedLevels = curriculum.levels.map(level => {
+      if (level.id === activeLevel) {
+        return {
+          ...level,
+          modules: level.modules.map(module => {
+            if (module.id === moduleId) {
+              return {
+                ...module,
+                sections: module.sections.filter(section => section.id !== sectionId)
+              };
+            }
+            return module;
+          })
+        };
+      }
+      return level;
+    });
+    
+    setCurriculum({
+      ...curriculum,
+      levels: updatedLevels
+    });
+  };
+  
+  // Remove a module
+  const handleRemoveModule = (moduleId) => {
+    const updatedLevels = curriculum.levels.map(level => {
+      if (level.id === activeLevel) {
+        return {
+          ...level,
+          modules: level.modules.filter(module => module.id !== moduleId)
+        };
+      }
+      return level;
+    });
+    
+    setCurriculum({
+      ...curriculum,
+      levels: updatedLevels
+    });
+  };
   
   const toggleActivity = (activityId) => {
     if (expandedActivities.includes(activityId)) {
@@ -501,6 +851,155 @@ const CurriculumBuilderForm = () => {
   
   const handleGoBack = () => {
     navigate('/courses/curriculum');
+  };
+  
+  // Open lesson modal for adding a new lesson
+  const openAddLessonModal = (moduleId, sectionId) => {
+    setEditingLesson({ moduleId, sectionId });
+    setShowLessonModal(true);
+  };
+  
+  // Get the active level data
+  const getActiveLevelData = () => {
+    return curriculum.levels.find(level => level.id === activeLevel) || curriculum.levels[0];
+  };
+  
+  // Count total lessons in a module
+  const countLessonsInModule = (module) => {
+    return module.sections.reduce((total, section) => 
+      total + (section.activities.mainset ? section.activities.mainset.length : 0), 0
+    );
+  };
+  
+  // Lesson Selection Modal
+  const LessonSelectionModal = () => {
+    const [selectedLesson, setSelectedLesson] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    
+    const filteredLessons = availableLessons.filter(lesson => 
+      lesson.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000
+      }}>
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: 'var(--border-radius)',
+          width: '600px',
+          maxWidth: '90%',
+          maxHeight: '90%',
+          overflow: 'auto',
+          padding: '24px'
+        }}>
+          <h2>Select a Lesson</h2>
+          <div style={{ marginBottom: '20px' }}>
+            <input
+              type="text"
+              placeholder="Search lessons..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px',
+                border: '1px solid var(--gray-300)',
+                borderRadius: 'var(--border-radius)'
+              }}
+            />
+          </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr',
+            gap: '12px',
+            maxHeight: '400px',
+            overflowY: 'auto'
+          }}>
+            {filteredLessons.map(lesson => (
+              <div
+                key={lesson.id}
+                onClick={() => setSelectedLesson(lesson)}
+                style={{
+                  padding: '12px',
+                  border: `1px solid ${selectedLesson?.id === lesson.id ? 'var(--primary-color)' : 'var(--gray-200)'}`,
+                  borderRadius: 'var(--border-radius)',
+                  cursor: 'pointer',
+                  backgroundColor: selectedLesson?.id === lesson.id ? 'var(--primary-light)' : 'white'
+                }}
+              >
+                <div style={{ fontWeight: 500 }}>{lesson.title}</div>
+                <div style={{ 
+                  fontSize: '12px',
+                  color: 'var(--gray-600)',
+                  marginTop: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <span className={`tag ${lesson.difficulty}`} style={{
+                    padding: '2px 8px',
+                    borderRadius: 'var(--border-radius)',
+                    fontSize: '11px',
+                    backgroundColor: 
+                      lesson.difficulty === 'beginner' ? 'var(--success-light)' :
+                      lesson.difficulty === 'intermediate' ? 'var(--warning-light)' : 'var(--danger-light)',
+                    color:
+                      lesson.difficulty === 'beginner' ? 'var(--success-color)' :
+                      lesson.difficulty === 'intermediate' ? 'var(--warning-color)' : 'var(--danger-color)'
+                  }}>
+                    {lesson.difficulty.charAt(0).toUpperCase() + lesson.difficulty.slice(1)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{
+            marginTop: '24px',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '12px'
+          }}>
+            <Button 
+              className="secondary"
+              onClick={() => {
+                setShowLessonModal(false);
+                setEditingLesson(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              className="primary"
+              onClick={() => {
+                if (selectedLesson && editingLesson) {
+                  handleAddLesson(
+                    editingLesson.moduleId,
+                    editingLesson.sectionId,
+                    {
+                      id: selectedLesson.id,
+                      title: selectedLesson.title,
+                      type: 'lesson'
+                    }
+                  );
+                }
+              }}
+              disabled={!selectedLesson}
+            >
+              Add Lesson
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   };
   
   return (
@@ -521,7 +1020,7 @@ const CurriculumBuilderForm = () => {
           </h1>
         </div>
         <div className="actions">
-          <Button className="secondary">
+          <Button className="secondary" onClick={handleGoBack}>
             Cancel
           </Button>
           <Button className="primary">
@@ -555,7 +1054,9 @@ const CurriculumBuilderForm = () => {
               </label>
               <Input 
                 type="text" 
+                name="title"
                 value={curriculum.title} 
+                onChange={handleInputChange}
                 placeholder="Enter curriculum title"
               />
             </FormGroup>
@@ -564,7 +1065,11 @@ const CurriculumBuilderForm = () => {
               <label>
                 Course <span className="required">*</span>
               </label>
-              <Select value={curriculum.courseId}>
+              <Select 
+                name="courseId"
+                value={curriculum.courseId}
+                onChange={handleInputChange}
+              >
                 <option value="">Select a course</option>
                 {courses.map(course => (
                   <option key={course.id} value={course.id}>
@@ -581,7 +1086,9 @@ const CurriculumBuilderForm = () => {
                 Description
               </label>
               <Textarea 
+                name="description"
                 value={curriculum.description} 
+                onChange={handleInputChange}
                 placeholder="Enter curriculum description"
               />
             </FormGroup>
@@ -606,8 +1113,10 @@ const CurriculumBuilderForm = () => {
                 Age Range <span className="required">*</span>
               </label>
               <Input 
-                type="text" 
-                value={curriculum.ageRange} 
+                type="text"
+                name="ageRange" 
+                value={curriculum.ageRange}
+                onChange={handleInputChange} 
                 placeholder="e.g. 6 - 17 years"
               />
             </FormGroup>
@@ -616,25 +1125,38 @@ const CurriculumBuilderForm = () => {
       ) : (
         <FormContainer>
           <LevelPills>
-            {[1, 2, 3, 4].map(level => (
+            {curriculum.levels.map(level => (
               <LevelPill 
-                key={level} 
-                active={activeLevel === level}
-                onClick={() => setActiveLevel(level)}
+                key={level.id} 
+                active={activeLevel === level.id}
+                onClick={() => setActiveLevel(level.id)}
               >
-                Level {level}
+                Level {level.id}
               </LevelPill>
             ))}
-            <AddLevelButton>
+            <AddLevelButton onClick={handleAddLevel}>
               <Plus size={16} />
             </AddLevelButton>
           </LevelPills>
           
-          {curriculum.modules.map((module, moduleIndex) => (
-            <ModuleContainer key={moduleIndex}>
+          {getActiveLevelData().modules.map((module) => (
+            <ModuleContainer key={module.id}>
               <ModuleHeader>
                 <div className="module-title">
-                  <h3>{module.title}</h3>
+                  <input
+                    type="text"
+                    value={module.title}
+                    onChange={(e) => handleModuleTitleChange(module.id, e.target.value)}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      width: '100%',
+                      padding: '0',
+                      outline: 'none'
+                    }}
+                  />
                 </div>
                 <div className="module-stats">
                   <div className="stat">
@@ -642,31 +1164,33 @@ const CurriculumBuilderForm = () => {
                   </div>
                   <div className="stat">
                     <span>
-                      {module.sections.reduce((total, section) => 
-                        total + (section.activities.mainset ? section.activities.mainset.length : 0), 0)
-                      } Lessons
+                      {countLessonsInModule(module)} Lessons
                     </span>
                   </div>
                 </div>
                 <div className="module-actions">
-                  <ActionButton>
+                  <ActionButton onClick={() => handleRemoveModule(module.id)} className="danger">
                     <Trash2 size={16} />
                   </ActionButton>
                 </div>
               </ModuleHeader>
               <ModuleContent>
-                {module.sections.map((section, sectionIndex) => (
-                  <SectionContainer key={sectionIndex}>
+                {module.sections.map((section) => (
+                  <SectionContainer key={section.id}>
                     <SectionHeader>
                       <div className="section-title">
                         <input 
                           type="text" 
                           value={section.title} 
+                          onChange={(e) => handleSectionTitleChange(module.id, section.id, e.target.value)}
                           placeholder="Section Title"
                         />
                       </div>
                       <div className="section-actions">
-                        <ActionButton className="danger">
+                        <ActionButton 
+                          className="danger"
+                          onClick={() => handleRemoveSection(module.id, section.id)}
+                        >
                           <Trash2 size={16} />
                         </ActionButton>
                       </div>
@@ -690,6 +1214,7 @@ const CurriculumBuilderForm = () => {
                           <ActivityContent>
                             <Textarea 
                               value={section.activities.warmup} 
+                              onChange={(e) => handleActivityChange(module.id, section.id, 'warmup', e.target.value)}
                               placeholder="Enter warm up activities"
                             />
                           </ActivityContent>
@@ -713,7 +1238,8 @@ const CurriculumBuilderForm = () => {
                         {expandedActivities.includes('preset') && (
                           <ActivityContent>
                             <Textarea 
-                              value={section.activities.preset} 
+                              value={section.activities.preset}
+                              onChange={(e) => handleActivityChange(module.id, section.id, 'preset', e.target.value)}
                               placeholder="Enter pre set activities"
                             />
                           </ActivityContent>
@@ -737,7 +1263,7 @@ const CurriculumBuilderForm = () => {
                         {expandedActivities.includes('mainset') && (
                           <ActivityContent>
                             <LessonList>
-                              {section.activities.mainset.map((lesson, lessonIndex) => (
+                              {section.activities.mainset && section.activities.mainset.map((lesson, lessonIndex) => (
                                 <LessonItem key={lessonIndex}>
                                   <div className="lesson-info">
                                     <div className="lesson-icon">
@@ -748,13 +1274,13 @@ const CurriculumBuilderForm = () => {
                                     </div>
                                   </div>
                                   <div className="lesson-actions">
-                                    <ActionButton>
+                                    <ActionButton onClick={() => handleRemoveLesson(module.id, section.id, lesson.id)}>
                                       <Trash2 size={16} />
                                     </ActionButton>
                                   </div>
                                 </LessonItem>
                               ))}
-                              <AddLessonButton>
+                              <AddLessonButton onClick={() => openAddLessonModal(module.id, section.id)}>
                                 <Plus size={16} />
                                 <span>Add Lesson</span>
                               </AddLessonButton>
@@ -780,7 +1306,8 @@ const CurriculumBuilderForm = () => {
                         {expandedActivities.includes('postset') && (
                           <ActivityContent>
                             <Textarea 
-                              value={section.activities.postset} 
+                              value={section.activities.postset}
+                              onChange={(e) => handleActivityChange(module.id, section.id, 'postset', e.target.value)}
                               placeholder="Enter post set activities"
                             />
                           </ActivityContent>
@@ -804,7 +1331,8 @@ const CurriculumBuilderForm = () => {
                         {expandedActivities.includes('cooldown') && (
                           <ActivityContent>
                             <Textarea 
-                              value={section.activities.cooldown} 
+                              value={section.activities.cooldown}
+                              onChange={(e) => handleActivityChange(module.id, section.id, 'cooldown', e.target.value)}
                               placeholder="Enter cool down activities"
                             />
                           </ActivityContent>
@@ -814,7 +1342,11 @@ const CurriculumBuilderForm = () => {
                   </SectionContainer>
                 ))}
                 
-                <Button className="secondary" style={{ width: '100%' }}>
+                <Button 
+                  className="secondary" 
+                  style={{ width: '100%' }}
+                  onClick={() => handleAddSection(module.id)}
+                >
                   <Plus size={16} />
                   Add Section
                 </Button>
@@ -822,12 +1354,19 @@ const CurriculumBuilderForm = () => {
             </ModuleContainer>
           ))}
           
-          <Button className="secondary" style={{ width: '100%' }}>
+          <Button 
+            className="secondary" 
+            style={{ width: '100%' }}
+            onClick={handleAddModule}
+          >
             <Plus size={16} />
             Add Module
           </Button>
         </FormContainer>
       )}
+      
+      {/* Lesson Selection Modal */}
+      {showLessonModal && <LessonSelectionModal />}
     </Container>
   );
 };
