@@ -1,0 +1,129 @@
+﻿Feature 2: Course & Curriculum Management System
+Feature Goal Provide a comprehensive course creation and management system with hierarchical curriculum structure supporting courses, levels, modules, sections, and lessons, enabling reusable content across different academy programs with activity-specific customization.
+API Relationships
+* POST/GET/PUT/DELETE /api/v1/courses/
+* POST/GET/PUT/DELETE /api/v1/curriculum/{course_id}/
+* GET/POST /api/v1/lessons/library/
+* POST /api/v1/curriculum/templates/
+* POST/GET /api/v1/video-lessons/upload/
+* GET /api/v1/safety-protocols/{activity_type}/
+* POST/GET /api/v1/skill-assessments/{academy_id}/
+Detailed Feature Requirements
+1. Hierarchical Curriculum Builder
+
+   * Drag-and-drop interface for curriculum structure creation
+   * Five-level hierarchy: Course → Levels → Modules → Sections → Lessons
+   * Visual tree structure with expand/collapse functionality
+   * Reordering capabilities with automatic sequence numbering
+   * Dependency management between curriculum elements
+   * Prerequisite setting and validation
+   2. Activity-Specific Course Templates
+
+      * Pre-built curriculum templates for swimming (stroke progression)
+      * Football position-specific training modules
+      * Music instrument-specific lesson structures
+      * Basketball skill progression frameworks
+      * Customizable template modification without affecting base templates
+      * Template versioning and rollback capabilities
+      3. Lesson Library Management
+
+         * Centralized lesson repository with cross-academy sharing
+         * Activity-type filtering and categorization
+         * Lesson tagging system for easy discovery
+         * Content version control with approval workflows
+         * Lesson difficulty rating and age-appropriateness labels
+         * Usage analytics for popular lesson identification
+         4. Video Content Integration
+
+            * Secure video upload with compression optimization
+            * AWS S3 integration for scalable video storage
+            * Video streaming with adaptive bitrate
+            * Progress tracking integration for video lessons
+            * Closed caption support for accessibility
+            * Video analytics for engagement tracking
+            5. Safety Protocol Integration
+
+               * Activity-specific safety requirement embedding
+               * Mandatory safety protocol acknowledgment per lesson
+               * Safety equipment requirement specification
+               * Emergency procedure integration within lessons
+               * Safety assessment checkpoints throughout curriculum
+               * Incident reporting integration for safety-related issues
+               6. Pricing Model Configuration
+
+                  * Flexible pricing per course, level, or individual lesson
+                  * Academy-specific pricing customization
+                  * Package deal creation for multiple courses
+                  * Seasonal pricing and promotional rate management
+                  * Family discount configuration
+                  * Early bird and loyalty pricing structures
+Detailed Implementation Guide
+Database Schema Design
+
+ Curriculum Hierarchy:
+- courses (id, academy_id, name, description, activity_type, pricing_model)
+- course_levels (id, course_id, name, sequence, prerequisites)
+- level_modules (id, level_id, name, sequence, duration_weeks)
+- module_sections (id, module_id, name, sequence, learning_objectives)
+- section_lessons (id, section_id, name, sequence, content_type)
+
+
+Content Management:
+- lesson_library (id, title, content, activity_type, difficulty, tags)
+- video_lessons (id, lesson_id, video_url, duration, transcription)
+- safety_protocols (id, activity_type, protocol_text, compliance_level)
+- curriculum_templates (id, template_name, activity_type, structure_json)
+
+
+Relationships:
+- Foreign key constraints with CASCADE options
+- Many-to-many relationships for lesson reusability
+- Recursive relationships for curriculum hierarchy
+                  1.                   2. Content Management System
+
+                     * WYSIWYG editor integration for lesson content creation
+                     * Markdown support for structured content formatting
+                     * Media file management with drag-and-drop upload
+                     * Content approval workflow with multi-level review
+                     * Version control system with diff tracking
+                     * Content archiving and restoration capabilities
+                     3. Video Processing Pipeline
+
+                        * Automated video compression upon upload
+                        * Multiple resolution generation for adaptive streaming
+                        * Thumbnail extraction for video previews
+                        * Metadata extraction and indexing
+                        * Video analytics integration for engagement metrics
+                        * CDN distribution for global video delivery
+                        4. Template System Architecture
+
+                           * JSON-based template structure definition
+                           * Template inheritance and extension mechanisms
+                           * Academy-specific template customization
+                           * Bulk template application across multiple academies
+                           * Template marketplace for community sharing
+                           * Template performance analytics and optimization
+                           5. Cross-Academy Content Sharing
+
+                              * Permission-based content sharing controls
+                              * Content licensing and attribution management
+                              * Quality rating system for shared content
+                              * Usage tracking and royalty calculation
+                              * Content recommendation engine
+                              * Collaborative content development workflows
+                              6. Assessment Integration
+
+                                 * Skill assessment framework per activity type
+                                 * Automated progress tracking through curriculum
+                                 * Competency-based progression requirements
+                                 * Assessment scheduling and reminder system
+                                 * Performance analytics and improvement recommendations
+                                 * Certification generation upon curriculum completion
+                                 7. Performance Optimization
+
+                                    * Lazy loading for large curriculum structures
+                                    * Content caching strategy with intelligent invalidation
+                                    * Database query optimization for hierarchical data
+                                    * Frontend virtualization for large lesson lists
+                                    * Background processing for video transcoding
+                                    * CDN integration for global content delivery
