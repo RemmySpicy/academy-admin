@@ -1,11 +1,12 @@
 import React from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
-import { BookOpen, Layers } from 'lucide-react';
+import { BookOpen, Layers, BookOpenCheck } from 'lucide-react';
 import CourseManagement from '../components/courses/Management';
-import CourseCreate from '../components/courses/Create';
+import CourseCreate2 from '../components/courses/Create2';
 import CourseDetails from '../components/courses/Details';
 import CurriculumBuilder from '../components/courses/Curriculum';
+import LessonsManagement from '../components/courses/Lessons';
 
 const Container = styled.div`
   padding: 20px 0;
@@ -48,21 +49,26 @@ const CoursesPage = () => {
   return (
     <Container>
       <TabsContainer>
-        <Tab to="/courses" active={!isActive('/curriculum').toString()}>
+        <Tab to="/courses" active={!isActive('/curriculum') && !isActive('/lessons').toString()}>
           <BookOpen />
           Courses
         </Tab>
         <Tab to="/courses/curriculum" active={isActive('/curriculum').toString()}>
           <Layers />
-          Curriculum
+          Curricula
+        </Tab>
+        <Tab to="/courses/lessons" active={isActive('/lessons').toString()}>
+          <BookOpenCheck />
+          Lessons
         </Tab>
       </TabsContainer>
       
       <Routes>
         <Route path="/" element={<CourseManagement />} />
-        <Route path="/create" element={<CourseCreate />} />
+        <Route path="/create" element={<CourseCreate2 />} />
         <Route path="/details/:courseId" element={<CourseDetails />} />
         <Route path="/curriculum" element={<CurriculumBuilder />} />
+        <Route path="/lessons" element={<LessonsManagement />} />
       </Routes>
     </Container>
   );

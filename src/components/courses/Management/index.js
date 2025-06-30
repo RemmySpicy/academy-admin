@@ -154,6 +154,9 @@ const CourseCard = styled.div`
   .card-header {
     height: 140px;
     background-color: ${props => props.color || 'var(--primary-color)'};
+    background-image: ${props => props.imageUrl ? `url(${props.imageUrl})` : 'none'};
+    background-size: cover;
+    background-position: center;
     position: relative;
     display: flex;
     align-items: flex-end;
@@ -166,15 +169,16 @@ const CourseCard = styled.div`
       left: 0;
       right: 0;
       bottom: 0;
-      background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.4) 100%);
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.7) 100%);
     }
     
     .title {
       position: relative;
       z-index: 2;
-      font-size: 18px;
-      font-weight: 600;
+      font-size: 20px;
+      font-weight: 700;
       margin: 0;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
     }
     
     .menu {
@@ -234,6 +238,24 @@ const CourseCard = styled.div`
   
   .card-body {
     padding: 16px;
+    
+    .age-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    
+    .age-tag {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: var(--border-radius);
+      font-size: 13px;
+      font-weight: 600;
+      background-color: var(--primary-light);
+      color: var(--primary-color);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
     
     .badge {
       display: inline-block;
@@ -457,123 +479,123 @@ const Pagination = styled.div`
 const courses = [
   {
     id: 1,
-    title: 'Learn to Swim - Beginners',
-    description: 'Introductory swimming course for beginners aged 3-5, focusing on water confidence and basic strokes.',
+    title: 'Learn to Swim',
+    description: 'Comprehensive swimming program for beginners to intermediate swimmers.',
     status: 'active',
     color: '#4299e1',
-    students: 15,
-    capacity: 20,
-    duration: '45 min',
-    price: '$150',
+    students: 45,
+    price: '₦15,000',
     schedule: 'Mon, Wed, Fri',
     instructor: 'Sarah Johnson',
     level: 'Beginner',
-    category: 'Learn to Swim'
+    category: 'Learn to Swim',
+    ageRanges: ['3 - 5', '6 - 17', '18 - 29'],
+    imageUrl: 'https://images.unsplash.com/photo-1600965962361-9035dbfd1c50?ixlib=rb-4.0.3'
   },
   {
     id: 2,
-    title: 'Competitive Swimming',
-    description: 'Advanced course for experienced swimmers looking to improve technique and speed for competitions.',
+    title: 'Swimming Club',
+    description: 'Regular swimming sessions for children and young adults who can already swim confidently.',
     status: 'active',
     color: '#6c5ce7',
-    students: 12,
-    capacity: 15,
-    duration: '60 min',
-    price: '$200',
+    students: 38,
+    price: '₦20,000',
     schedule: 'Tue, Thu, Sat',
     instructor: 'Michael Phelps',
-    level: 'Advanced',
-    category: 'Competitive'
+    level: 'Intermediate',
+    category: 'Club',
+    ageRanges: ['3 - 5', '6 - 17', '18 - 29'],
+    imageUrl: 'https://images.unsplash.com/photo-1560089000-7433a4ebbd64?ixlib=rb-4.0.3'
   },
   {
     id: 3,
-    title: 'Water Safety & Survival',
-    description: 'Essential water safety skills and survival techniques for all ages.',
-    status: 'upcoming',
+    title: 'Adult Swimming',
+    description: 'Swimming lessons designed specifically for adults who want to learn or improve their swimming skills.',
+    status: 'active',
     color: '#ed8936',
-    students: 0,
-    capacity: 25,
-    duration: '45 min',
-    price: '$120',
+    students: 22,
+    price: '₦22,000',
     schedule: 'Sat, Sun',
     instructor: 'David Miller',
-    level: 'Intermediate',
-    category: 'Safety'
+    level: 'Beginner',
+    category: 'Adult',
+    ageRanges: ['30+'],
+    imageUrl: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?ixlib=rb-4.0.3'
   },
   {
     id: 4,
-    title: 'Aqua Babies',
-    description: 'Parent and baby swimming sessions for infants aged 6-24 months.',
+    title: 'Fitness Swimming',
+    description: 'Swimming for fitness and endurance training for adults.',
     status: 'active',
     color: '#38b2ac',
-    students: 8,
-    capacity: 10,
-    duration: '30 min',
-    price: '$180',
+    students: 18,
+    price: '₦18,000',
     schedule: 'Tue, Thu',
     instructor: 'Emma Wilson',
-    level: 'Beginner',
-    category: 'Learn to Swim'
+    level: 'Intermediate',
+    category: 'Fitness',
+    ageRanges: ['20+'],
+    imageUrl: 'https://images.unsplash.com/photo-1626201850133-172a69ccde3d?ixlib=rb-4.0.3'
   },
   {
     id: 5,
-    title: 'Adult Swimming Lessons',
-    description: 'Swimming lessons designed specifically for adults who want to learn or improve their swimming skills.',
-    status: 'draft',
+    title: 'Aqua Babies',
+    description: 'Parent and baby swimming sessions for infants aged 12-36 months.',
+    status: 'active',
     color: '#9f7aea',
-    students: 0,
-    capacity: 12,
-    duration: '60 min',
-    price: '$220',
+    students: 15,
+    price: '₦18,000',
     schedule: 'Mon, Wed',
     instructor: 'Robert Brown',
     level: 'Beginner',
-    category: 'Learn to Swim'
+    category: 'Infants',
+    ageRanges: ['12 - 36 months'],
+    imageUrl: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?ixlib=rb-4.0.3'
   },
   {
     id: 6,
-    title: 'Stroke Improvement',
-    description: 'Focus on refining and perfecting all four competitive swimming strokes.',
+    title: 'Aqua Aerobics',
+    description: 'Water-based exercise program for older adults focusing on flexibility and cardiovascular health.',
     status: 'active',
     color: '#48bb78',
-    students: 10,
-    capacity: 15,
-    duration: '45 min',
-    price: '$175',
+    students: 20,
+    price: '₦17,500',
     schedule: 'Mon, Wed, Fri',
     instructor: 'Jessica Adams',
-    level: 'Intermediate',
-    category: 'Technique'
+    level: 'Beginner',
+    category: 'Aerobics',
+    ageRanges: ['45 years +'],
+    imageUrl: 'https://images.unsplash.com/photo-1576013551627-0fd24e0fb55d?ixlib=rb-4.0.3'
   },
   {
     id: 7,
-    title: 'Swimming Club',
-    description: 'Regular swimming sessions for children aged 7-14 who can already swim confidently.',
+    title: 'Survival Swimming',
+    description: 'Essential water safety skills and survival techniques for children and adults.',
     status: 'active',
     color: '#e53e3e',
-    students: 18,
-    capacity: 25,
-    duration: '90 min',
-    price: '$250',
+    students: 28,
+    price: '₦25,000',
     schedule: 'Tue, Thu, Sat',
     instructor: 'Thomas Clark',
     level: 'Intermediate',
-    category: 'Club'
+    category: 'Safety',
+    ageRanges: ['6 - 11', '12+'],
+    imageUrl: 'https://images.unsplash.com/photo-1551649446-7a3b6d50f320?ixlib=rb-4.0.3'
   },
   {
     id: 8,
-    title: 'Special Needs Swimming',
-    description: 'Adaptive swimming lessons for children and adults with special needs.',
+    title: 'Parent-Child Aquatics',
+    description: 'Swimming lessons for parents and young children to learn together.',
     status: 'active',
     color: '#f6ad55',
-    students: 6,
-    capacity: 8,
-    duration: '45 min',
-    price: '$160',
+    students: 16,
+    price: '₦16,000',
     schedule: 'Wed, Sat',
     instructor: 'Lisa Martinez',
     level: 'Beginner',
-    category: 'Adaptive'
+    category: 'Family',
+    ageRanges: ['1 - 3 years'],
+    imageUrl: 'https://images.unsplash.com/photo-1601979031925-424e53b6caaa?ixlib=rb-4.0.3'
   }
 ];
 
@@ -688,7 +710,7 @@ const CourseManagement = () => {
       {viewMode === 'grid' ? (
         <CourseGrid>
           {filteredCourses.map(course => (
-            <CourseCard key={course.id} color={course.color}>
+            <CourseCard key={course.id} color={course.color} imageUrl={course.imageUrl}>
               <div className="card-header">
                 <div className="overlay"></div>
                 <h3 className="title">{course.title}</h3>
@@ -702,10 +724,10 @@ const CourseManagement = () => {
                         <Eye size={16} />
                         <span>View Details</span>
                       </div>
-                      <div className="dropdown-item">
+                      <Link to={`/courses/details/${course.id}`} className="dropdown-item">
                         <Edit size={16} />
                         <span>Edit</span>
-                      </div>
+                      </Link>
                       <div className="dropdown-item">
                         <Copy size={16} />
                         <span>Duplicate</span>
@@ -719,17 +741,17 @@ const CourseManagement = () => {
                 </div>
               </div>
               <div className="card-body">
-                {getStatusBadge(course.status)}
+                <div className="age-tags">
+                  {course.ageRanges.map((age, index) => (
+                    <span key={index} className="age-tag">{age}</span>
+                  ))}
+                </div>
                 <p className="description">{course.description}</p>
               </div>
               <div className="card-footer">
                 <div className="stat">
                   <Users size={16} />
-                  <span className="stat-value">{course.students}/{course.capacity}</span>
-                </div>
-                <div className="stat">
-                  <Clock size={16} />
-                  <span className="stat-value">{course.duration}</span>
+                  <span className="stat-value">{course.students}</span>
                 </div>
                 <div className="stat">
                   <Calendar size={16} />

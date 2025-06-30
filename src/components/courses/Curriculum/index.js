@@ -1,21 +1,18 @@
 import React, { useState } from 'react';
+import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { 
-  Plus, 
+  ArrowLeft, 
   Save, 
-  Trash2, 
-  ChevronDown, 
-  ChevronRight, 
-  GripVertical, 
-  Edit, 
-  Copy,
+  Plus, 
+  Trash2,
+  ChevronRight,
+  ChevronDown,
   BookOpen,
   Layers,
-  FileText,
-  Video,
-  CheckSquare,
-  AlertTriangle
+  GraduationCap
 } from 'lucide-react';
+import CurriculaList from '../CurriculaList';
 
 const Container = styled.div`
   background-color: white;
@@ -34,6 +31,26 @@ const Header = styled.div`
   h1 {
     font-size: 1.5rem;
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--gray-600);
+    font-size: 14px;
+    
+    a {
+      color: var(--primary-color);
+      text-decoration: none;
+      
+      &:hover {
+        text-decoration: underline;
+      }
+    }
   }
   
   .actions {
@@ -50,6 +67,7 @@ const Button = styled.button`
   border-radius: var(--border-radius);
   font-weight: 500;
   transition: all 0.2s;
+  cursor: pointer;
   
   &.primary {
     background-color: var(--primary-color);
@@ -72,206 +90,57 @@ const Button = styled.button`
   }
 `;
 
-const Content = styled.div`
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  min-height: 600px;
-`;
-
-const Sidebar = styled.div`
-  border-right: 1px solid var(--gray-200);
-  overflow-y: auto;
-  padding: 16px;
-`;
-
-const MainContent = styled.div`
-  padding: 24px;
-  overflow-y: auto;
-`;
-
-const TreeContainer = styled.div`
-  font-size: 14px;
-`;
-
-const TreeItem = styled.div`
-  margin-bottom: 4px;
-  
-  .item-header {
-    display: flex;
-    align-items: center;
-    padding: 8px 12px;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    user-select: none;
-    color: var(--gray-700);
-    background-color: ${props => props.active ? 'var(--gray-100)' : 'transparent'};
-    border-left: 3px solid ${props => props.active ? 'var(--primary-color)' : 'transparent'};
-    
-    &:hover {
-      background-color: var(--gray-100);
-    }
-    
-    .expand-icon {
-      margin-right: 8px;
-      width: 16px;
-      height: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--gray-500);
-    }
-    
-    .type-icon {
-      margin-right: 8px;
-      color: ${props => {
-        switch (props.itemType) {
-          case 'level': return 'var(--primary-color)';
-          case 'module': return 'var(--secondary-color)';
-          case 'section': return 'var(--warning-color)';
-          case 'lesson': return 'var(--success-color)';
-          default: return 'var(--gray-500)';
-        }
-      }};
-    }
-    
-    .item-title {
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    
-    .actions {
-      display: none;
-      
-      button {
-        background: none;
-        border: none;
-        color: var(--gray-500);
-        cursor: pointer;
-        padding: 4px;
-        border-radius: var(--border-radius);
-        
-        &:hover {
-          background-color: var(--gray-200);
-          color: var(--gray-700);
-        }
-      }
-    }
-    
-    &:hover .actions {
-      display: flex;
-    }
-  }
-  
-  .children {
-    padding-left: 24px;
-  }
-`;
-
-const AddItemButton = styled.button`
+const TabsContainer = styled.div`
+  padding: 0 24px;
+  border-bottom: 1px solid var(--gray-200);
   display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 12px;
-  margin-top: 8px;
-  background-color: var(--gray-50);
-  border: 1px dashed var(--gray-300);
-  border-radius: var(--border-radius);
-  color: var(--gray-600);
+  gap: 24px;
+`;
+
+const Tab = styled.div`
+  padding: 16px 0;
+  font-weight: ${props => props.active ? '600' : '500'};
+  color: ${props => props.active ? 'var(--primary-color)' : 'var(--gray-600)'};
+  border-bottom: 2px solid ${props => props.active ? 'var(--primary-color)' : 'transparent'};
   cursor: pointer;
   transition: all 0.2s;
   
   &:hover {
-    background-color: var(--gray-100);
-    color: var(--gray-800);
+    color: ${props => props.active ? 'var(--primary-color)' : 'var(--gray-800)'};
   }
 `;
 
-const FormSection = styled.div`
-  margin-bottom: 24px;
-  
-  h2 {
-    font-size: 1.25rem;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    
-    svg {
-      color: var(--primary-color);
-    }
-  }
-  
-  .section-description {
-    font-size: 14px;
-    color: var(--gray-600);
-    margin-bottom: 20px;
-  }
-`;
-
-const FormRow = styled.div`
-  display: grid;
-  grid-template-columns: ${props => props.columns || '1fr'};
-  gap: 20px;
-  margin-bottom: 20px;
-  
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
+const FormContainer = styled.div`
+  padding: 24px;
 `;
 
 const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
+  margin-bottom: 20px;
   
   label {
-    font-size: 14px;
+    display: block;
+    margin-bottom: 8px;
     font-weight: 500;
-    margin-bottom: 6px;
     color: var(--gray-700);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    
-    .required {
-      color: var(--danger-color);
-    }
   }
   
   .helper-text {
-    font-size: 12px;
-    color: var(--gray-500);
     margin-top: 4px;
+    font-size: 13px;
+    color: var(--gray-500);
+  }
+  
+  .required {
+    color: var(--danger-color);
   }
 `;
 
 const Input = styled.input`
+  width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--gray-300);
   border-radius: var(--border-radius);
   font-size: 14px;
-  transition: all 0.2s;
-  
-  &:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
-  }
-  
-  &::placeholder {
-    color: var(--gray-400);
-  }
-`;
-
-const Select = styled.select`
-  padding: 10px 12px;
-  border: 1px solid var(--gray-300);
-  border-radius: var(--border-radius);
-  font-size: 14px;
-  transition: all 0.2s;
-  background-color: white;
   
   &:focus {
     outline: none;
@@ -281,11 +150,11 @@ const Select = styled.select`
 `;
 
 const Textarea = styled.textarea`
+  width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--gray-300);
   border-radius: var(--border-radius);
   font-size: 14px;
-  transition: all 0.2s;
   min-height: 100px;
   resize: vertical;
   
@@ -294,577 +163,366 @@ const Textarea = styled.textarea`
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
   }
+`;
+
+const Select = styled.select`
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  background-color: white;
   
-  &::placeholder {
-    color: var(--gray-400);
+  &:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
   }
 `;
 
-const EmptyState = styled.div`
+const FormRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(${props => props.columns || 1}, 1fr);
+  gap: 20px;
+  margin-bottom: 20px;
+`;
+
+const LevelPills = styled.div`
   display: flex;
-  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+`;
+
+const LevelPill = styled.div`
+  padding: 8px 16px;
+  background-color: ${props => props.active ? 'var(--primary-color)' : 'var(--gray-100)'};
+  color: ${props => props.active ? 'white' : 'var(--gray-700)'};
+  border-radius: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: ${props => props.active ? 'var(--primary-color)' : 'var(--gray-200)'};
+  }
+`;
+
+const AddLevelButton = styled.div`
+  display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  padding: 40px;
-  text-align: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--gray-100);
+  color: var(--gray-700);
+  cursor: pointer;
+  transition: all 0.2s;
   
-  svg {
-    color: var(--gray-300);
-    margin-bottom: 16px;
-  }
-  
-  h3 {
-    font-size: 18px;
-    margin-bottom: 8px;
-    color: var(--gray-700);
-  }
-  
-  p {
-    color: var(--gray-500);
-    margin-bottom: 24px;
-    max-width: 400px;
+  &:hover {
+    background-color: var(--gray-200);
   }
 `;
 
-// Sample curriculum data for demonstration
-const initialCurriculum = {
-  id: 1,
-  name: 'Learn to Swim Curriculum',
-  description: 'A comprehensive swimming curriculum for beginners to advanced swimmers',
-  levels: [
-    {
-      id: 1,
-      name: 'Level 1: Water Confidence',
-      description: 'Introduction to water and basic water confidence skills',
-      modules: [
-        {
-          id: 1,
-          name: 'Water Familiarization',
-          description: 'Getting comfortable in water environments',
-          sections: [
-            {
-              id: 1,
-              name: 'Entry and Exit',
-              description: 'Safe ways to enter and exit the pool',
-              lessons: [
+const ModuleContainer = styled.div`
+  border: 1px solid var(--gray-200);
+  border-radius: var(--border-radius);
+  margin-bottom: 24px;
+  overflow: hidden;
+`;
+
+const ModuleHeader = styled.div`
+  padding: 16px;
+  background-color: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .module-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+  }
+  
+  .module-stats {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--gray-600);
+    
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+  }
+  
+  .module-actions {
+    display: flex;
+    gap: 8px;
+  }
+`;
+
+const ModuleContent = styled.div`
+  padding: 16px;
+`;
+
+const SectionContainer = styled.div`
+  border: 1px solid var(--gray-200);
+  border-radius: var(--border-radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+`;
+
+const SectionHeader = styled.div`
+  padding: 12px 16px;
+  background-color: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    input {
+      padding: 6px 10px;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--border-radius);
+      font-size: 14px;
+      font-weight: 500;
+      
+      &:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+      }
+    }
+  }
+  
+  .section-actions {
+    display: flex;
+    gap: 8px;
+  }
+`;
+
+const SectionContent = styled.div`
+  padding: 16px;
+`;
+
+const ActivityContainer = styled.div`
+  margin-bottom: 16px;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const ActivityHeader = styled.div`
+  padding: 12px 16px;
+  background-color: ${props => props.expanded ? 'var(--primary-light)' : 'var(--gray-50)'};
+  border: 1px solid ${props => props.expanded ? 'var(--primary-color)' : 'var(--gray-200)'};
+  border-radius: ${props => props.expanded ? 'var(--border-radius) var(--border-radius) 0 0' : 'var(--border-radius)'};
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  
+  .activity-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    color: ${props => props.expanded ? 'var(--primary-color)' : 'var(--gray-700)'};
+  }
+`;
+
+const ActivityContent = styled.div`
+  padding: 16px;
+  border: 1px solid var(--primary-color);
+  border-top: none;
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+`;
+
+const LessonList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const LessonItem = styled.div`
+  border: 1px solid var(--gray-200);
+  border-radius: var(--border-radius);
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .lesson-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    
+    .lesson-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--border-radius);
+      background-color: var(--primary-light);
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .lesson-title {
+      font-weight: 500;
+    }
+  }
+  
+  .lesson-actions {
+    display: flex;
+    gap: 8px;
+  }
+`;
+
+const AddLessonButton = styled.div`
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--border-radius);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background-color: var(--gray-50);
+  }
+`;
+
+const ActionButton = styled.button`
+  background: none;
+  border: none;
+  padding: 6px;
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: var(--gray-100);
+    color: var(--gray-800);
+  }
+  
+  &.danger:hover {
+    background-color: var(--danger-light);
+    color: var(--danger-color);
+  }
+`;
+
+const CurriculumBuilderForm = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('details');
+  const [activeLevel, setActiveLevel] = useState(1);
+  const [expandedActivities, setExpandedActivities] = useState(['warmup']);
+  
+  // Sample data
+  const curriculum = {
+    id: id || 'new',
+    title: id ? 'Learn to Swim: 6-17 Years' : '',
+    courseId: id ? '2' : '',
+    description: id ? 'Comprehensive swimming program for school-age children covering all major strokes and techniques.' : '',
+    ageRange: id ? '6 - 17 years' : '',
+    levels: 4,
+    modules: [
+      {
+        id: 1,
+        title: 'Module 1: Water Confidence',
+        sections: [
+          {
+            id: 1,
+            title: 'Introduction to Water',
+            activities: {
+              warmup: 'Simple water entry and exit practice',
+              preset: 'Breathing exercises at the pool edge',
+              mainset: [
                 {
                   id: 1,
-                  name: 'Sitting Entry',
-                  type: 'practical',
-                  duration: 15,
-                  content: 'Practice sitting on the edge and sliding into the water safely'
+                  title: 'Water Familiarization',
+                  type: 'lesson'
                 },
                 {
                   id: 2,
-                  name: 'Step Entry',
-                  type: 'practical',
-                  duration: 15,
-                  content: 'Using steps to enter the pool safely'
+                  title: 'Floating Practice',
+                  type: 'lesson'
                 }
-              ]
-            },
-            {
-              id: 2,
-              name: 'Water Play',
-              description: 'Fun activities to build comfort in water',
-              lessons: [
-                {
-                  id: 3,
-                  name: 'Splashing Games',
-                  type: 'practical',
-                  duration: 20,
-                  content: 'Games that involve controlled splashing to build comfort with water on face'
-                }
-              ]
+              ],
+              postset: 'Group water confidence games',
+              cooldown: 'Gentle water walking and relaxation'
             }
-          ]
-        },
-        {
-          id: 2,
-          name: 'Submersion',
-          description: 'Learning to submerge face and body in water',
-          sections: [
-            {
-              id: 3,
-              name: 'Face Submersion',
-              description: 'Getting comfortable with water on face',
-              lessons: [
-                {
-                  id: 4,
-                  name: 'Blowing Bubbles',
-                  type: 'practical',
-                  duration: 15,
-                  content: 'Practice exhaling into the water'
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      id: 2,
-      name: 'Level 2: Floating and Gliding',
-      description: 'Developing floating skills and basic gliding',
-      modules: [
-        {
-          id: 3,
-          name: 'Floating',
-          description: 'Learning to float on back and front',
-          sections: []
-        }
-      ]
-    }
-  ]
-};
-
-const CurriculumBuilder = () => {
-  const [curriculum, setCurriculum] = useState(initialCurriculum);
-  const [expandedItems, setExpandedItems] = useState({
-    level_1: true,
-    module_1: true,
-    section_1: true
-  });
-  const [selectedItem, setSelectedItem] = useState({
-    type: 'curriculum',
-    id: 1
-  });
-  
-  const toggleExpand = (type, id) => {
-    const key = `${type}_${id}`;
-    setExpandedItems({
-      ...expandedItems,
-      [key]: !expandedItems[key]
-    });
+          }
+        ]
+      }
+    ]
   };
   
-  const selectItem = (type, id) => {
-    setSelectedItem({ type, id });
-  };
+  const courses = [
+    { id: 1, title: 'Learn to Swim' },
+    { id: 2, title: 'Swimming Club' },
+    { id: 3, title: 'Adult Swimming' },
+    { id: 4, title: 'Survival Swimming' }
+  ];
   
-  const getSelectedItemDetails = () => {
-    if (selectedItem.type === 'curriculum') {
-      return curriculum;
-    } else if (selectedItem.type === 'level') {
-      return curriculum.levels.find(level => level.id === selectedItem.id);
-    } else if (selectedItem.type === 'module') {
-      let foundModule = null;
-      curriculum.levels.forEach(level => {
-        const module = level.modules.find(m => m.id === selectedItem.id);
-        if (module) foundModule = module;
-      });
-      return foundModule;
-    } else if (selectedItem.type === 'section') {
-      let foundSection = null;
-      curriculum.levels.forEach(level => {
-        level.modules.forEach(module => {
-          const section = module.sections.find(s => s.id === selectedItem.id);
-          if (section) foundSection = section;
-        });
-      });
-      return foundSection;
-    } else if (selectedItem.type === 'lesson') {
-      let foundLesson = null;
-      curriculum.levels.forEach(level => {
-        level.modules.forEach(module => {
-          module.sections.forEach(section => {
-            const lesson = section.lessons.find(l => l.id === selectedItem.id);
-            if (lesson) foundLesson = lesson;
-          });
-        });
-      });
-      return foundLesson;
-    }
-    return null;
-  };
-  
-  const getIconForType = (type) => {
-    switch (type) {
-      case 'curriculum':
-        return <BookOpen size={16} />;
-      case 'level':
-        return <Layers size={16} />;
-      case 'module':
-        return <FileText size={16} />;
-      case 'section':
-        return <CheckSquare size={16} />;
-      case 'lesson':
-        return <Video size={16} />;
-      default:
-        return <FileText size={16} />;
+  const toggleActivity = (activityId) => {
+    if (expandedActivities.includes(activityId)) {
+      setExpandedActivities(expandedActivities.filter(id => id !== activityId));
+    } else {
+      setExpandedActivities([...expandedActivities, activityId]);
     }
   };
   
-  const renderTree = () => {
-    return (
-      <TreeContainer>
-        <TreeItem 
-          active={selectedItem.type === 'curriculum' && selectedItem.id === curriculum.id}
-          itemType="curriculum"
-        >
-          <div 
-            className="item-header" 
-            onClick={() => selectItem('curriculum', curriculum.id)}
-          >
-            <div className="type-icon">
-              <BookOpen size={16} />
-            </div>
-            <div className="item-title">{curriculum.name}</div>
-            <div className="actions">
-              <button>
-                <Edit size={14} />
-              </button>
-            </div>
-          </div>
-        </TreeItem>
-        
-        {curriculum.levels.map(level => (
-          <TreeItem 
-            key={level.id} 
-            active={selectedItem.type === 'level' && selectedItem.id === level.id}
-            itemType="level"
-          >
-            <div className="item-header">
-              <div 
-                className="expand-icon" 
-                onClick={() => toggleExpand('level', level.id)}
-              >
-                {expandedItems[`level_${level.id}`] ? (
-                  <ChevronDown size={16} />
-                ) : (
-                  <ChevronRight size={16} />
-                )}
-              </div>
-              <div className="type-icon">
-                <Layers size={16} />
-              </div>
-              <div 
-                className="item-title"
-                onClick={() => selectItem('level', level.id)}
-              >
-                {level.name}
-              </div>
-              <div className="actions">
-                <button>
-                  <Edit size={14} />
-                </button>
-                <button>
-                  <Copy size={14} />
-                </button>
-                <button>
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </div>
-            
-            {expandedItems[`level_${level.id}`] && (
-              <div className="children">
-                {level.modules.map(module => (
-                  <TreeItem 
-                    key={module.id} 
-                    active={selectedItem.type === 'module' && selectedItem.id === module.id}
-                    itemType="module"
-                  >
-                    <div className="item-header">
-                      <div 
-                        className="expand-icon" 
-                        onClick={() => toggleExpand('module', module.id)}
-                      >
-                        {expandedItems[`module_${module.id}`] ? (
-                          <ChevronDown size={16} />
-                        ) : (
-                          <ChevronRight size={16} />
-                        )}
-                      </div>
-                      <div className="type-icon">
-                        <FileText size={16} />
-                      </div>
-                      <div 
-                        className="item-title"
-                        onClick={() => selectItem('module', module.id)}
-                      >
-                        {module.name}
-                      </div>
-                      <div className="actions">
-                        <button>
-                          <Edit size={14} />
-                        </button>
-                        <button>
-                          <Copy size={14} />
-                        </button>
-                        <button>
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                    
-                    {expandedItems[`module_${module.id}`] && (
-                      <div className="children">
-                        {module.sections.map(section => (
-                          <TreeItem 
-                            key={section.id} 
-                            active={selectedItem.type === 'section' && selectedItem.id === section.id}
-                            itemType="section"
-                          >
-                            <div className="item-header">
-                              <div 
-                                className="expand-icon" 
-                                onClick={() => toggleExpand('section', section.id)}
-                              >
-                                {expandedItems[`section_${section.id}`] ? (
-                                  <ChevronDown size={16} />
-                                ) : (
-                                  <ChevronRight size={16} />
-                                )}
-                              </div>
-                              <div className="type-icon">
-                                <CheckSquare size={16} />
-                              </div>
-                              <div 
-                                className="item-title"
-                                onClick={() => selectItem('section', section.id)}
-                              >
-                                {section.name}
-                              </div>
-                              <div className="actions">
-                                <button>
-                                  <Edit size={14} />
-                                </button>
-                                <button>
-                                  <Copy size={14} />
-                                </button>
-                                <button>
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-                            </div>
-                            
-                            {expandedItems[`section_${section.id}`] && section.lessons && (
-                              <div className="children">
-                                {section.lessons.map(lesson => (
-                                  <TreeItem 
-                                    key={lesson.id} 
-                                    active={selectedItem.type === 'lesson' && selectedItem.id === lesson.id}
-                                    itemType="lesson"
-                                  >
-                                    <div className="item-header">
-                                      <div className="expand-icon">
-                                        {/* No expand icon for lessons */}
-                                      </div>
-                                      <div className="type-icon">
-                                        <Video size={16} />
-                                      </div>
-                                      <div 
-                                        className="item-title"
-                                        onClick={() => selectItem('lesson', lesson.id)}
-                                      >
-                                        {lesson.name}
-                                      </div>
-                                      <div className="actions">
-                                        <button>
-                                          <Edit size={14} />
-                                        </button>
-                                        <button>
-                                          <Copy size={14} />
-                                        </button>
-                                        <button>
-                                          <Trash2 size={14} />
-                                        </button>
-                                      </div>
-                                    </div>
-                                  </TreeItem>
-                                ))}
-                                <AddItemButton>
-                                  <Plus size={14} />
-                                  Add Lesson
-                                </AddItemButton>
-                              </div>
-                            )}
-                          </TreeItem>
-                        ))}
-                        <AddItemButton>
-                          <Plus size={14} />
-                          Add Section
-                        </AddItemButton>
-                      </div>
-                    )}
-                  </TreeItem>
-                ))}
-                <AddItemButton>
-                  <Plus size={14} />
-                  Add Module
-                </AddItemButton>
-              </div>
-            )}
-          </TreeItem>
-        ))}
-        <AddItemButton>
-          <Plus size={14} />
-          Add Level
-        </AddItemButton>
-      </TreeContainer>
-    );
-  };
-  
-  const renderDetails = () => {
-    const item = getSelectedItemDetails();
-    
-    if (!item) {
-      return (
-        <EmptyState>
-          <AlertTriangle size={48} />
-          <h3>No Item Selected</h3>
-          <p>Select an item from the curriculum tree to view and edit its details.</p>
-        </EmptyState>
-      );
-    }
-    
-    if (selectedItem.type === 'curriculum') {
-      return (
-        <>
-          <FormSection>
-            <h2><BookOpen size={20} /> Curriculum Information</h2>
-            <FormRow>
-              <FormGroup>
-                <label>Curriculum Name <span className="required">*</span></label>
-                <Input type="text" value={item.name} />
-              </FormGroup>
-            </FormRow>
-            <FormRow>
-              <FormGroup>
-                <label>Description</label>
-                <Textarea value={item.description} />
-              </FormGroup>
-            </FormRow>
-          </FormSection>
-          
-          <FormSection>
-            <h2><Layers size={20} /> Levels Overview</h2>
-            <p>This curriculum has {item.levels.length} levels.</p>
-          </FormSection>
-        </>
-      );
-    } else if (selectedItem.type === 'level') {
-      return (
-        <>
-          <FormSection>
-            <h2><Layers size={20} /> Level Information</h2>
-            <FormRow>
-              <FormGroup>
-                <label>Level Name <span className="required">*</span></label>
-                <Input type="text" value={item.name} />
-              </FormGroup>
-            </FormRow>
-            <FormRow>
-              <FormGroup>
-                <label>Description</label>
-                <Textarea value={item.description} />
-              </FormGroup>
-            </FormRow>
-          </FormSection>
-          
-          <FormSection>
-            <h2><FileText size={20} /> Modules Overview</h2>
-            <p>This level has {item.modules.length} modules.</p>
-          </FormSection>
-        </>
-      );
-    } else if (selectedItem.type === 'module') {
-      return (
-        <>
-          <FormSection>
-            <h2><FileText size={20} /> Module Information</h2>
-            <FormRow>
-              <FormGroup>
-                <label>Module Name <span className="required">*</span></label>
-                <Input type="text" value={item.name} />
-              </FormGroup>
-            </FormRow>
-            <FormRow>
-              <FormGroup>
-                <label>Description</label>
-                <Textarea value={item.description} />
-              </FormGroup>
-            </FormRow>
-          </FormSection>
-          
-          <FormSection>
-            <h2><CheckSquare size={20} /> Sections Overview</h2>
-            <p>This module has {item.sections.length} sections.</p>
-          </FormSection>
-        </>
-      );
-    } else if (selectedItem.type === 'section') {
-      return (
-        <>
-          <FormSection>
-            <h2><CheckSquare size={20} /> Section Information</h2>
-            <FormRow>
-              <FormGroup>
-                <label>Section Name <span className="required">*</span></label>
-                <Input type="text" value={item.name} />
-              </FormGroup>
-            </FormRow>
-            <FormRow>
-              <FormGroup>
-                <label>Description</label>
-                <Textarea value={item.description} />
-              </FormGroup>
-            </FormRow>
-          </FormSection>
-          
-          <FormSection>
-            <h2><Video size={20} /> Lessons Overview</h2>
-            <p>This section has {item.lessons ? item.lessons.length : 0} lessons.</p>
-          </FormSection>
-        </>
-      );
-    } else if (selectedItem.type === 'lesson') {
-      return (
-        <>
-          <FormSection>
-            <h2><Video size={20} /> Lesson Information</h2>
-            <FormRow>
-              <FormGroup>
-                <label>Lesson Name <span className="required">*</span></label>
-                <Input type="text" value={item.name} />
-              </FormGroup>
-            </FormRow>
-            <FormRow columns="1fr 1fr">
-              <FormGroup>
-                <label>Lesson Type</label>
-                <Select value={item.type}>
-                  <option value="practical">Practical</option>
-                  <option value="theory">Theory</option>
-                  <option value="assessment">Assessment</option>
-                  <option value="video">Video</option>
-                </Select>
-              </FormGroup>
-              <FormGroup>
-                <label>Duration (minutes)</label>
-                <Input type="number" value={item.duration} />
-              </FormGroup>
-            </FormRow>
-            <FormRow>
-              <FormGroup>
-                <label>Content</label>
-                <Textarea value={item.content} />
-              </FormGroup>
-            </FormRow>
-          </FormSection>
-        </>
-      );
-    }
+  const handleGoBack = () => {
+    navigate('/courses/curriculum');
   };
   
   return (
     <Container>
       <Header>
-        <h1>Curriculum Builder</h1>
+        <div>
+          <div className="breadcrumb">
+            <button onClick={handleGoBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+              <ArrowLeft size={16} />
+            </button>
+            <a onClick={handleGoBack} style={{ cursor: 'pointer' }}>Curricula</a>
+            <span>/</span>
+            <span>{id ? 'Edit' : 'Create'} Curriculum</span>
+          </div>
+          <h1>
+            <BookOpen size={24} />
+            {id ? curriculum.title : 'Create New Curriculum'}
+          </h1>
+        </div>
         <div className="actions">
           <Button className="secondary">
-            Import Template
+            Cancel
           </Button>
           <Button className="primary">
             <Save size={18} />
@@ -873,15 +531,316 @@ const CurriculumBuilder = () => {
         </div>
       </Header>
       
-      <Content>
-        <Sidebar>
-          {renderTree()}
-        </Sidebar>
-        <MainContent>
-          {renderDetails()}
-        </MainContent>
-      </Content>
+      <TabsContainer>
+        <Tab 
+          active={activeTab === 'details'} 
+          onClick={() => setActiveTab('details')}
+        >
+          Details
+        </Tab>
+        <Tab 
+          active={activeTab === 'lessons'} 
+          onClick={() => setActiveTab('lessons')}
+        >
+          Lesson Plan
+        </Tab>
+      </TabsContainer>
+      
+      {activeTab === 'details' ? (
+        <FormContainer>
+          <FormRow columns={2}>
+            <FormGroup>
+              <label>
+                Curriculum Title <span className="required">*</span>
+              </label>
+              <Input 
+                type="text" 
+                value={curriculum.title} 
+                placeholder="Enter curriculum title"
+              />
+            </FormGroup>
+            
+            <FormGroup>
+              <label>
+                Course <span className="required">*</span>
+              </label>
+              <Select value={curriculum.courseId}>
+                <option value="">Select a course</option>
+                {courses.map(course => (
+                  <option key={course.id} value={course.id}>
+                    {course.title}
+                  </option>
+                ))}
+              </Select>
+            </FormGroup>
+          </FormRow>
+          
+          <FormRow>
+            <FormGroup>
+              <label>
+                Description
+              </label>
+              <Textarea 
+                value={curriculum.description} 
+                placeholder="Enter curriculum description"
+              />
+            </FormGroup>
+          </FormRow>
+          
+          <FormRow columns={2}>
+            <FormGroup>
+              <label>
+                Curriculum ID
+              </label>
+              <Input 
+                type="text" 
+                value={curriculum.id !== 'new' ? curriculum.id : ''} 
+                placeholder="Auto-generated if left empty"
+                disabled={curriculum.id !== 'new'}
+              />
+              <p className="helper-text">Unique identifier for this curriculum</p>
+            </FormGroup>
+            
+            <FormGroup>
+              <label>
+                Age Range <span className="required">*</span>
+              </label>
+              <Input 
+                type="text" 
+                value={curriculum.ageRange} 
+                placeholder="e.g. 6 - 17 years"
+              />
+            </FormGroup>
+          </FormRow>
+        </FormContainer>
+      ) : (
+        <FormContainer>
+          <LevelPills>
+            {[1, 2, 3, 4].map(level => (
+              <LevelPill 
+                key={level} 
+                active={activeLevel === level}
+                onClick={() => setActiveLevel(level)}
+              >
+                Level {level}
+              </LevelPill>
+            ))}
+            <AddLevelButton>
+              <Plus size={16} />
+            </AddLevelButton>
+          </LevelPills>
+          
+          {curriculum.modules.map((module, moduleIndex) => (
+            <ModuleContainer key={moduleIndex}>
+              <ModuleHeader>
+                <div className="module-title">
+                  <h3>{module.title}</h3>
+                </div>
+                <div className="module-stats">
+                  <div className="stat">
+                    <span>{module.sections.length} Sections</span>
+                  </div>
+                  <div className="stat">
+                    <span>
+                      {module.sections.reduce((total, section) => 
+                        total + (section.activities.mainset ? section.activities.mainset.length : 0), 0)
+                      } Lessons
+                    </span>
+                  </div>
+                </div>
+                <div className="module-actions">
+                  <ActionButton>
+                    <Trash2 size={16} />
+                  </ActionButton>
+                </div>
+              </ModuleHeader>
+              <ModuleContent>
+                {module.sections.map((section, sectionIndex) => (
+                  <SectionContainer key={sectionIndex}>
+                    <SectionHeader>
+                      <div className="section-title">
+                        <input 
+                          type="text" 
+                          value={section.title} 
+                          placeholder="Section Title"
+                        />
+                      </div>
+                      <div className="section-actions">
+                        <ActionButton className="danger">
+                          <Trash2 size={16} />
+                        </ActionButton>
+                      </div>
+                    </SectionHeader>
+                    <SectionContent>
+                      <ActivityContainer>
+                        <ActivityHeader 
+                          expanded={expandedActivities.includes('warmup')}
+                          onClick={() => toggleActivity('warmup')}
+                        >
+                          <div className="activity-title">
+                            {expandedActivities.includes('warmup') ? (
+                              <ChevronDown size={16} />
+                            ) : (
+                              <ChevronRight size={16} />
+                            )}
+                            Warm Up
+                          </div>
+                        </ActivityHeader>
+                        {expandedActivities.includes('warmup') && (
+                          <ActivityContent>
+                            <Textarea 
+                              value={section.activities.warmup} 
+                              placeholder="Enter warm up activities"
+                            />
+                          </ActivityContent>
+                        )}
+                      </ActivityContainer>
+                      
+                      <ActivityContainer>
+                        <ActivityHeader 
+                          expanded={expandedActivities.includes('preset')}
+                          onClick={() => toggleActivity('preset')}
+                        >
+                          <div className="activity-title">
+                            {expandedActivities.includes('preset') ? (
+                              <ChevronDown size={16} />
+                            ) : (
+                              <ChevronRight size={16} />
+                            )}
+                            Pre Set
+                          </div>
+                        </ActivityHeader>
+                        {expandedActivities.includes('preset') && (
+                          <ActivityContent>
+                            <Textarea 
+                              value={section.activities.preset} 
+                              placeholder="Enter pre set activities"
+                            />
+                          </ActivityContent>
+                        )}
+                      </ActivityContainer>
+                      
+                      <ActivityContainer>
+                        <ActivityHeader 
+                          expanded={expandedActivities.includes('mainset')}
+                          onClick={() => toggleActivity('mainset')}
+                        >
+                          <div className="activity-title">
+                            {expandedActivities.includes('mainset') ? (
+                              <ChevronDown size={16} />
+                            ) : (
+                              <ChevronRight size={16} />
+                            )}
+                            Main Set
+                          </div>
+                        </ActivityHeader>
+                        {expandedActivities.includes('mainset') && (
+                          <ActivityContent>
+                            <LessonList>
+                              {section.activities.mainset.map((lesson, lessonIndex) => (
+                                <LessonItem key={lessonIndex}>
+                                  <div className="lesson-info">
+                                    <div className="lesson-icon">
+                                      <GraduationCap size={20} />
+                                    </div>
+                                    <div className="lesson-title">
+                                      {lesson.title}
+                                    </div>
+                                  </div>
+                                  <div className="lesson-actions">
+                                    <ActionButton>
+                                      <Trash2 size={16} />
+                                    </ActionButton>
+                                  </div>
+                                </LessonItem>
+                              ))}
+                              <AddLessonButton>
+                                <Plus size={16} />
+                                <span>Add Lesson</span>
+                              </AddLessonButton>
+                            </LessonList>
+                          </ActivityContent>
+                        )}
+                      </ActivityContainer>
+                      
+                      <ActivityContainer>
+                        <ActivityHeader 
+                          expanded={expandedActivities.includes('postset')}
+                          onClick={() => toggleActivity('postset')}
+                        >
+                          <div className="activity-title">
+                            {expandedActivities.includes('postset') ? (
+                              <ChevronDown size={16} />
+                            ) : (
+                              <ChevronRight size={16} />
+                            )}
+                            Post Set
+                          </div>
+                        </ActivityHeader>
+                        {expandedActivities.includes('postset') && (
+                          <ActivityContent>
+                            <Textarea 
+                              value={section.activities.postset} 
+                              placeholder="Enter post set activities"
+                            />
+                          </ActivityContent>
+                        )}
+                      </ActivityContainer>
+                      
+                      <ActivityContainer>
+                        <ActivityHeader 
+                          expanded={expandedActivities.includes('cooldown')}
+                          onClick={() => toggleActivity('cooldown')}
+                        >
+                          <div className="activity-title">
+                            {expandedActivities.includes('cooldown') ? (
+                              <ChevronDown size={16} />
+                            ) : (
+                              <ChevronRight size={16} />
+                            )}
+                            Cool Down
+                          </div>
+                        </ActivityHeader>
+                        {expandedActivities.includes('cooldown') && (
+                          <ActivityContent>
+                            <Textarea 
+                              value={section.activities.cooldown} 
+                              placeholder="Enter cool down activities"
+                            />
+                          </ActivityContent>
+                        )}
+                      </ActivityContainer>
+                    </SectionContent>
+                  </SectionContainer>
+                ))}
+                
+                <Button className="secondary" style={{ width: '100%' }}>
+                  <Plus size={16} />
+                  Add Section
+                </Button>
+              </ModuleContent>
+            </ModuleContainer>
+          ))}
+          
+          <Button className="secondary" style={{ width: '100%' }}>
+            <Plus size={16} />
+            Add Module
+          </Button>
+        </FormContainer>
+      )}
     </Container>
+  );
+};
+
+export { CurriculumBuilderForm };
+
+const CurriculumBuilder = () => {
+  return (
+    <Routes>
+      <Route path="/" element={<CurriculaList />} />
+      <Route path="/create" element={<CurriculumBuilderForm />} />
+      <Route path="/edit/:id" element={<CurriculumBuilderForm />} />
+    </Routes>
   );
 };
 

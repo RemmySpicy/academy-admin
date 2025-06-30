@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { ChevronDown, Waves, Dumbbell, Music, Football } from 'lucide-react';
+import { ChevronDown, Waves, Dumbbell, Music, Trophy } from 'lucide-react';
 
 const SwitcherContainer = styled.div`
   position: relative;
@@ -114,7 +114,7 @@ const academies = [
   { id: 1, name: 'Swimming Academy', icon: 'swimming', iconComponent: Waves },
   { id: 2, name: 'Fitness Academy', icon: 'fitness', iconComponent: Dumbbell },
   { id: 3, name: 'Music Academy', icon: 'music', iconComponent: Music },
-  { id: 4, name: 'Sports Academy', icon: 'sports', iconComponent: Football }
+  { id: 4, name: 'Sports Academy', icon: 'sports', iconComponent: Trophy }
 ];
 
 const AcademySwitcher = () => {
