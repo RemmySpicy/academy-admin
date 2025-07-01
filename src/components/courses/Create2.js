@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { 
   Save, 
@@ -440,7 +441,24 @@ const CurriculaPreview = styled.div`
   }
 `;
 
+const sampleCourses = [
+  {
+    id: '1',
+    name: 'Learn to Swim',
+    description: 'Comprehensive swimming program for beginners to intermediate swimmers.',
+    imageUrl: 'https://images.unsplash.com/photo-1600965962361-9035dbfd1c50?ixlib=rb-4.0.3',
+    learningPoints: ['Water safety', 'Basic strokes'],
+    location: 'our-facilities',
+    perks: ['certificate', 'equipment'],
+    ageRanges: [{ from: '3', to: '5' }, { from: '6', to: '17' }],
+    priceRange: { lowest: '15000', highest: '30000' },
+    sessions: '24'
+  },
+  // Add more sample courses as needed
+];
+
 const CourseCreate2 = () => {
+  const { courseId } = useParams();
   const [activeTab, setActiveTab] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
@@ -453,6 +471,25 @@ const CourseCreate2 = () => {
     priceRange: { lowest: '', highest: '' },
     sessions: ''
   });
+
+  useEffect(() => {
+    if (courseId) {
+      const course = sampleCourses.find(c => c.id === courseId);
+      if (course) {
+        setFormData({
+          name: course.name,
+          description: course.description,
+          imageUrl: course.imageUrl,
+          learningPoints: course.learningPoints,
+          location: course.location,
+          perks: course.perks,
+          ageRanges: course.ageRanges,
+          priceRange: course.priceRange,
+          sessions: course.sessions
+        });
+      }
+    }
+  }, [courseId]);
   
   const handleInputChange = (e) => {
     const { name, value } = e.target;

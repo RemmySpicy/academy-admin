@@ -720,11 +720,11 @@ const CourseManagement = () => {
                   </button>
                   {openMenu === course.id && (
                     <div className="dropdown">
-                      <div className="dropdown-item">
+                      <Link to={`/courses/details/${course.id}`} className="dropdown-item">
                         <Eye size={16} />
                         <span>View Details</span>
-                      </div>
-                      <Link to={`/courses/details/${course.id}`} className="dropdown-item">
+                      </Link>
+                      <Link to={`/courses/edit/${course.id}`} className="dropdown-item">
                         <Edit size={16} />
                         <span>Edit</span>
                       </Link>

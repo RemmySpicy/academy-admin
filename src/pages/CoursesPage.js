@@ -66,8 +66,9 @@ const CoursesPage = () => {
       <Routes>
         <Route path="/" element={<CourseManagement />} />
         <Route path="/create" element={<CourseCreate2 />} />
+        <Route path="/edit/:courseId" element={<CourseCreate2 />} />
         <Route path="/details/:courseId" element={<CourseDetails />} />
-        <Route path="/curriculum" element={<CurriculumBuilder />} />
+        <Route path="/curriculum/*" element={<CurriculumBuilder />} />
         <Route path="/lessons" element={<LessonsManagement />} />
       </Routes>
     </Container>
