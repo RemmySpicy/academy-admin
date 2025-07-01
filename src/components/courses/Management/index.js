@@ -43,13 +43,19 @@ const Header = styled.div`
 `;
 
 const Button = styled.button`
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 8px 16px;
   border-radius: var(--border-radius);
+  font-size: 14px;
   font-weight: 500;
-  transition: all 0.2s;
+  line-height: 1.5;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+  height: 38px;
   
   &.primary {
     background-color: var(--primary-color);
@@ -59,6 +65,10 @@ const Button = styled.button`
     &:hover {
       background-color: var(--primary-dark);
     }
+    
+    &:active {
+      background-color: var(--primary-darker);
+    }
   }
   
   &.secondary {
@@ -67,6 +77,11 @@ const Button = styled.button`
     border: 1px solid var(--gray-300);
     
     &:hover {
+      background-color: var(--gray-50);
+      border-color: var(--gray-400);
+    }
+    
+    &:active {
       background-color: var(--gray-100);
     }
   }
