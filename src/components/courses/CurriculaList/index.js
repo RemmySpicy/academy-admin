@@ -526,7 +526,6 @@ const CurriculaList = () => {
                   <CurriculumCard key={curriculum.id} color={curriculum.color}>
                     <div className="card-header">
                       <h3 className="title">{curriculum.title}</h3>
-                      <div className="age-range">{curriculum.ageRange}</div>
                       <div className="menu">
                         <button onClick={(e) => toggleMenu(curriculum.id, e)}>
                           <MoreVertical size={16} />
@@ -554,6 +553,9 @@ const CurriculaList = () => {
                       </div>
                     </div>
                     <div className="card-body">
+                      <div className="age-range" style={{ marginBottom: '8px', fontSize: '13px', color: 'var(--gray-600)' }}>
+                        {curriculum.ageRange}
+                      </div>
                       <p className="description">{curriculum.description}</p>
                       <div className="stats">
                         <div className="stat">

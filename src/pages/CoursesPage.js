@@ -43,21 +43,21 @@ const CoursesPage = () => {
   const location = useLocation();
   
   const isActive = (path) => {
-    return location.pathname.includes(path);
+    return location.pathname.startsWith(path);
   };
   
   return (
     <Container>
       <TabsContainer>
-        <Tab to="/courses" active={!isActive('/curriculum') && !isActive('/lessons').toString()}>
+        <Tab to="/courses" active={isActive('/courses') && !isActive('/courses/curriculum') && !isActive('/courses/lessons') ? 'true' : 'false'}>
           <BookOpen />
           Courses
         </Tab>
-        <Tab to="/courses/curriculum" active={isActive('/curriculum').toString()}>
+        <Tab to="/courses/curriculum" active={isActive('/courses/curriculum') ? 'true' : 'false'}>
           <Layers />
           Curricula
         </Tab>
-        <Tab to="/courses/lessons" active={isActive('/lessons').toString()}>
+        <Tab to="/courses/lessons" active={isActive('/courses/lessons') ? 'true' : 'false'}>
           <BookOpenCheck />
           Lessons
         </Tab>
