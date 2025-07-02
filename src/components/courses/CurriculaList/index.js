@@ -11,8 +11,12 @@ import {
   Eye, 
   ChevronRight,
   ChevronDown,
-  BookOpen
+  BookOpen,
+  Layers,
+  Filter
 } from 'lucide-react';
+import FeatureContainer from '../../common/FeatureContainer';
+import { createFilterDropdowns } from '../../common/FeatureContainer/utils';
 
 const Container = styled.div`
   background-color: white;
@@ -250,35 +254,48 @@ const CurriculumCard = styled.div`
     .stats {
       display: flex;
       justify-content: space-between;
-      font-size: 13px;
-      color: var(--gray-600);
       
       .stat {
+        font-size: 13px;
+        color: var(--gray-600);
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 6px;
+        
+        .value {
+          font-weight: 500;
+          color: var(--gray-700);
+        }
       }
     }
   }
   
   .card-footer {
     padding: 12px 16px;
-    border-top: 1px solid var(--gray-200);
+    border-top: 1px solid var(--gray-100);
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
+    align-items: center;
     
-    a {
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--primary-color);
-      text-decoration: none;
+    .levels {
       display: flex;
-      align-items: center;
-      gap: 4px;
+      gap: 8px;
       
-      &:hover {
-        text-decoration: underline;
+      .level {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--gray-300);
+        
+        &.active {
+          background-color: var(--primary-color);
+        }
       }
+    }
+    
+    .updated {
+      font-size: 12px;
+      color: var(--gray-500);
     }
   }
 `;
@@ -322,131 +339,234 @@ const AddCurriculumCard = styled.div`
   }
 `;
 
-// Sample data for demonstration
+// Sample data
 const courses = [
   {
     id: 1,
-    title: 'Learn to Swim',
+    name: 'Learn to Swim',
+    totalCurricula: 3,
+    color: '#4299e1',
     curricula: [
       {
-        id: 1,
+        id: 101,
         title: 'Learn to Swim: 3-5 Years',
+        description: 'Basic swimming curriculum for young children focusing on water confidence and safety.',
         ageRange: '3 - 5 years',
-        description: 'Basic swimming curriculum for young children focusing on water confidence and basic strokes.',
-        levels: 3,
-        modules: 8,
-        color: '#4299e1'
+        lessons: 8,
+        duration: '45 mins',
+        level: 'beginner',
+        levels: 1,
+        lastUpdated: '2 weeks ago'
       },
       {
-        id: 2,
+        id: 102,
         title: 'Learn to Swim: 6-17 Years',
+        description: 'Comprehensive swimming program for school-age children covering basic strokes.',
         ageRange: '6 - 17 years',
-        description: 'Comprehensive swimming program for school-age children covering all major strokes and techniques.',
-        levels: 4,
-        modules: 12,
-        color: '#4299e1'
+        lessons: 10,
+        duration: '45 mins',
+        level: 'beginner',
+        levels: 1,
+        lastUpdated: '3 weeks ago'
       },
       {
-        id: 3,
+        id: 103,
         title: 'Learn to Swim: 18-29 Years',
+        description: 'Swimming program for young adults focusing on technique and confidence.',
         ageRange: '18 - 29 years',
-        description: 'Swimming program for young adults focusing on stroke refinement and endurance building.',
-        levels: 3,
-        modules: 9,
-        color: '#4299e1'
+        lessons: 12,
+        duration: '45 mins',
+        level: 'beginner',
+        levels: 2,
+        lastUpdated: '1 month ago'
       }
     ]
   },
   {
     id: 2,
-    title: 'Swimming Club',
+    name: 'Swimming Club',
+    totalCurricula: 3,
+    color: '#6c5ce7',
     curricula: [
       {
-        id: 4,
+        id: 201,
         title: 'Swimming Club: 3-5 Years',
-        ageRange: '3 - 5 years',
         description: 'Introductory competitive swimming program for young children.',
+        ageRange: '3 - 5 years',
+        lessons: 12,
+        duration: '45 mins',
+        level: 'intermediate',
         levels: 2,
-        modules: 6,
-        color: '#6c5ce7'
+        lastUpdated: '1 week ago'
       },
       {
-        id: 5,
+        id: 202,
         title: 'Swimming Club: 6-17 Years',
+        description: 'Competitive swimming program focusing on technique and racing skills.',
         ageRange: '6 - 17 years',
-        description: 'Competitive swimming program for school-age children with focus on technique and speed.',
-        levels: 4,
-        modules: 16,
-        color: '#6c5ce7'
+        lessons: 15,
+        duration: '60 mins',
+        level: 'intermediate',
+        levels: 3,
+        lastUpdated: '4 days ago'
       },
       {
-        id: 6,
+        id: 203,
         title: 'Swimming Club: 18-29 Years',
+        description: 'Advanced swimming techniques and race preparation for adults.',
         ageRange: '18 - 29 years',
-        description: 'Advanced competitive swimming program for young adults.',
+        lessons: 15,
+        duration: '60 mins',
+        level: 'advanced',
         levels: 3,
-        modules: 12,
-        color: '#6c5ce7'
+        lastUpdated: '2 weeks ago'
       }
     ]
   },
   {
     id: 3,
-    title: 'Adult Swimming',
+    name: 'Adult Swimming',
+    totalCurricula: 1,
+    color: '#ed8936',
     curricula: [
       {
-        id: 7,
-        title: 'Adult Swimming: 30+',
-        ageRange: '30+ years',
+        id: 301,
+        title: 'Adult Swimming: 30+ Years',
         description: 'Swimming program designed for adults focusing on technique and fitness.',
+        ageRange: '30+ years',
+        lessons: 12,
+        duration: '60 mins',
+        level: 'intermediate',
         levels: 3,
-        modules: 9,
-        color: '#ed8936'
+        lastUpdated: '2 months ago'
       }
     ]
   },
   {
     id: 4,
-    title: 'Survival Swimming',
+    name: 'Fitness Swimming',
+    totalCurricula: 1,
+    color: '#38b2ac',
     curricula: [
       {
-        id: 8,
-        title: 'Survival Swimming: 6-11 Years',
-        ageRange: '6 - 11 years',
-        description: 'Water safety and survival techniques for children.',
+        id: 401,
+        title: 'Fitness Swimming: 20+ Years',
+        description: 'Swimming for fitness and endurance training for adults.',
+        ageRange: '20+ years',
+        lessons: 12,
+        duration: '60 mins',
+        level: 'intermediate',
         levels: 2,
-        modules: 6,
-        color: '#e53e3e'
+        lastUpdated: '3 weeks ago'
+      }
+    ]
+  },
+  {
+    id: 5,
+    name: 'Aqua Babies',
+    totalCurricula: 1,
+    color: '#9f7aea',
+    curricula: [
+      {
+        id: 501,
+        title: 'Aqua Babies: 12-36 Months',
+        description: 'Parent and baby swimming sessions focusing on water familiarity.',
+        ageRange: '12 - 36 months',
+        lessons: 8,
+        duration: '30 mins',
+        level: 'beginner',
+        levels: 1,
+        lastUpdated: '1 month ago'
+      }
+    ]
+  },
+  {
+    id: 6,
+    name: 'Aqua Aerobics',
+    totalCurricula: 1,
+    color: '#48bb78',
+    curricula: [
+      {
+        id: 601,
+        title: 'Aqua Aerobics: 45+ Years',
+        description: 'Water-based fitness program focusing on flexibility and cardiovascular health.',
+        ageRange: '45+ years',
+        lessons: 10,
+        duration: '45 mins',
+        level: 'beginner',
+        levels: 1,
+        lastUpdated: '2 weeks ago'
+      }
+    ]
+  },
+  {
+    id: 7,
+    name: 'Survival Swimming',
+    totalCurricula: 2,
+    color: '#e53e3e',
+    curricula: [
+      {
+        id: 701,
+        title: 'Survival Swimming: 6-11 Years',
+        description: 'Essential water safety and survival techniques for children.',
+        ageRange: '6 - 11 years',
+        lessons: 6,
+        duration: '45 mins',
+        level: 'beginner',
+        levels: 2,
+        lastUpdated: '1 month ago'
       },
       {
-        id: 9,
-        title: 'Survival Swimming: 12+',
-        ageRange: '12+ years',
+        id: 702,
+        title: 'Survival Swimming: 12+ Years',
         description: 'Advanced water safety and survival techniques for older children and adults.',
+        ageRange: '12+ years',
+        lessons: 8,
+        duration: '60 mins',
+        level: 'intermediate',
         levels: 2,
-        modules: 8,
-        color: '#e53e3e'
+        lastUpdated: '2 months ago'
+      }
+    ]
+  },
+  {
+    id: 8,
+    name: 'Parent-Child Aquatics',
+    totalCurricula: 1,
+    color: '#f6ad55',
+    curricula: [
+      {
+        id: 801,
+        title: 'Parent-Child Aquatics: 1-3 Years',
+        description: 'Swimming lessons for parents and young children to learn together.',
+        ageRange: '1 - 3 years',
+        lessons: 8,
+        duration: '30 mins',
+        level: 'beginner',
+        levels: 1,
+        lastUpdated: '3 weeks ago'
       }
     ]
   }
 ];
 
 const CurriculaList = () => {
-  const navigate = useNavigate();
-  const [expandedCourses, setExpandedCourses] = useState(courses.map(course => course.id));
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedCourses, setExpandedCourses] = useState([1]); // Start with the first course expanded
   const [openMenu, setOpenMenu] = useState(null);
+  const [courseFilter, setCourseFilter] = useState('');
+  const navigate = useNavigate();
   
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
   };
   
   const toggleCourseExpand = (courseId) => {
-    if (expandedCourses.includes(courseId)) {
-      setExpandedCourses(expandedCourses.filter(id => id !== courseId));
-    } else {
-      setExpandedCourses([...expandedCourses, courseId]);
-    }
+    setExpandedCourses(prev => 
+      prev.includes(courseId) 
+        ? prev.filter(id => id !== courseId) 
+        : [...prev, courseId]
+    );
   };
   
   const toggleMenu = (curriculumId, e) => {
@@ -457,48 +577,73 @@ const CurriculaList = () => {
       setOpenMenu(curriculumId);
     }
   };
-
+  
   const handleCreateCurriculum = () => {
     navigate('/courses/curriculum/create');
   };
-
+  
   const handleEditCurriculum = (id) => {
     navigate(`/courses/curriculum/edit/${id}`);
   };
+
+  // Filter courses based on course filter
+  let displayCourses = courses;
+  if (courseFilter) {
+    displayCourses = courses.filter(course => course.id === parseInt(courseFilter));
+  }
   
-  const filteredCourses = courses.map(course => ({
+  // Filter curricula based on search query
+  const filteredCourses = displayCourses.map(course => ({
     ...course,
-    curricula: course.curricula.filter(curriculum => 
-      curriculum.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      curriculum.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      curriculum.ageRange.toLowerCase().includes(searchQuery.toLowerCase())
+    curricula: course.curricula.filter(
+      curriculum => curriculum.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                   curriculum.description.toLowerCase().includes(searchQuery.toLowerCase())
     )
   })).filter(course => course.curricula.length > 0);
   
+  // Create the course filter options
+  const courseOptions = [
+    { value: '', label: 'All Courses' },
+    ...courses.map(course => ({
+      value: course.id.toString(),
+      label: course.name
+    }))
+  ];
+
+  // Create filter component
+  const filterComponent = (
+    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+      {createFilterDropdowns([
+        {
+          value: courseFilter,
+          onChange: setCourseFilter,
+          options: courseOptions
+        }
+      ])}
+    </div>
+  );
+  
+  const totalCurricula = filteredCourses.reduce((total, course) => total + course.curricula.length, 0);
+  
   return (
-    <Container>
-      <Header>
-        <h1>Curricula Management</h1>
-        <div className="actions">
-          <Button className="primary" onClick={handleCreateCurriculum}>
-            <Plus size={18} />
-            Create Curriculum
-          </Button>
-        </div>
-      </Header>
-      
-      <SearchContainer>
-        <div className="search-input">
-          <Search size={18} />
-          <input 
-            type="text" 
-            placeholder="Search curricula..." 
-            value={searchQuery}
-            onChange={handleSearch}
-          />
-        </div>
-      </SearchContainer>
-      
+    <FeatureContainer
+      title="Curricula Management"
+      icon={Layers}
+      badge={`${totalCurricula} curricula`}
+      showSearch={true}
+      searchPlaceholder="Search curricula..."
+      searchValue={searchQuery}
+      onSearchChange={handleSearch}
+      customFilterComponent={filterComponent}
+      primaryAction={{
+        label: 'Create Curriculum',
+        icon: Plus,
+        onClick: handleCreateCurriculum
+      }}
+      secondaryActions={[
+        { label: 'Import Templates', onClick: () => console.log('Import templates') }
+      ]}
+    >
       {filteredCourses.map(course => (
         <CourseSection key={course.id}>
           <div 
@@ -506,33 +651,34 @@ const CurriculaList = () => {
             onClick={() => toggleCourseExpand(course.id)}
           >
             {expandedCourses.includes(course.id) ? (
-              <ChevronDown size={18} className="toggle-icon" />
+              <ChevronDown size={20} className="toggle-icon" />
             ) : (
-              <ChevronRight size={18} className="toggle-icon" />
+              <ChevronRight size={20} className="toggle-icon" />
             )}
             <h2>
               <BookOpen size={18} />
-              {course.title}
+              {course.name}
             </h2>
-            <div className="course-meta">
-              {course.curricula.length} {course.curricula.length === 1 ? 'curriculum' : 'curricula'}
-            </div>
+            <span className="course-meta">
+              {course.curricula.length} of {course.totalCurricula} curricula
+            </span>
           </div>
           
           {expandedCourses.includes(course.id) && (
             <div className="course-content">
               <CurriculaGrid>
                 {course.curricula.map(curriculum => (
-                  <CurriculumCard key={curriculum.id} color={curriculum.color}>
+                  <CurriculumCard key={curriculum.id} color={course.color}>
                     <div className="card-header">
                       <h3 className="title">{curriculum.title}</h3>
+                      <div className="age-range">{curriculum.ageRange}</div>
                       <div className="menu">
                         <button onClick={(e) => toggleMenu(curriculum.id, e)}>
                           <MoreVertical size={16} />
                         </button>
                         {openMenu === curriculum.id && (
                           <div className="dropdown">
-                            <div className="dropdown-item">
+                            <div className="dropdown-item" onClick={() => console.log('View curriculum', curriculum.id)}>
                               <Eye size={16} />
                               <span>View</span>
                             </div>
@@ -553,39 +699,37 @@ const CurriculaList = () => {
                       </div>
                     </div>
                     <div className="card-body">
-                      <div className="age-range" style={{ marginBottom: '8px', fontSize: '13px', color: 'var(--gray-600)' }}>
-                        {curriculum.ageRange}
-                      </div>
                       <p className="description">{curriculum.description}</p>
                       <div className="stats">
                         <div className="stat">
-                          <span>{curriculum.levels} Levels</span>
+                          Lessons: <span className="value">{curriculum.lessons}</span>
                         </div>
                         <div className="stat">
-                          <span>{curriculum.modules} Modules</span>
+                          Duration: <span className="value">{curriculum.duration}</span>
                         </div>
                       </div>
                     </div>
                     <div className="card-footer">
-                      <Link to={`/courses/curriculum/edit/${curriculum.id}`}>
-                        <span>Customize Curriculum</span>
-                        <ChevronRight size={16} />
-                      </Link>
+                      <div className="levels">
+                        {[...Array(3)].map((_, i) => (
+                          <div 
+                            key={i} 
+                            className={`level ${i < curriculum.levels ? 'active' : ''}`}
+                          />
+                        ))}
+                      </div>
+                      <div className="updated">
+                        Updated {curriculum.lastUpdated}
+                      </div>
                     </div>
                   </CurriculumCard>
                 ))}
-                <AddCurriculumCard onClick={handleCreateCurriculum}>
-                  <div className="add-icon">
-                    <Plus size={24} />
-                  </div>
-                  <div className="add-text">Add New Curriculum</div>
-                </AddCurriculumCard>
               </CurriculaGrid>
             </div>
           )}
         </CourseSection>
       ))}
-    </Container>
+    </FeatureContainer>
   );
 };
 

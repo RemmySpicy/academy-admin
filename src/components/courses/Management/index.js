@@ -14,8 +14,11 @@ import {
   Users, 
   Calendar,
   Clock,
-  DollarSign
+  DollarSign,
+  BookOpen
 } from 'lucide-react';
+import FeatureContainer from '../../common/FeatureContainer';
+import { createFilterDropdowns, createViewToggle } from '../../common/FeatureContainer/utils';
 
 const Container = styled.div`
   background-color: white;
@@ -43,19 +46,13 @@ const Header = styled.div`
 `;
 
 const Button = styled.button`
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
-  padding: 8px 16px;
+  padding: 10px 16px;
   border-radius: var(--border-radius);
-  font-size: 14px;
   font-weight: 500;
-  line-height: 1.5;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  border: 1px solid transparent;
-  height: 38px;
+  transition: all 0.2s;
   
   &.primary {
     background-color: var(--primary-color);
@@ -65,10 +62,6 @@ const Button = styled.button`
     &:hover {
       background-color: var(--primary-dark);
     }
-    
-    &:active {
-      background-color: var(--primary-darker);
-    }
   }
   
   &.secondary {
@@ -77,11 +70,6 @@ const Button = styled.button`
     border: 1px solid var(--gray-300);
     
     &:hover {
-      background-color: var(--gray-50);
-      border-color: var(--gray-400);
-    }
-    
-    &:active {
       background-color: var(--gray-100);
     }
   }
@@ -151,7 +139,6 @@ const CourseGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 24px;
-  padding: 24px;
 `;
 
 const CourseCard = styled.div`
@@ -213,39 +200,45 @@ const CourseCard = styled.div`
         justify-content: center;
         color: white;
         cursor: pointer;
+        transition: all 0.2s;
         
         &:hover {
           background: rgba(255, 255, 255, 0.3);
         }
       }
-    }
-    
-    .dropdown {
-      position: absolute;
-      top: 100%;
-      right: 0;
-      background-color: white;
-      border-radius: var(--border-radius);
-      box-shadow: var(--shadow-lg);
-      width: 180px;
-      z-index: 10;
-      overflow: hidden;
       
-      .dropdown-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 16px;
-        color: var(--gray-700);
-        cursor: pointer;
-        transition: background-color 0.2s;
+      .dropdown {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background-color: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-lg);
+        min-width: 180px;
+        z-index: 10;
+        overflow: hidden;
+        margin-top: 4px;
         
-        &:hover {
-          background-color: var(--gray-100);
-        }
-        
-        &.danger {
-          color: var(--danger-color);
+        .dropdown-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 16px;
+          color: var(--gray-700);
+          text-decoration: none;
+          transition: all 0.2s;
+          
+          &:hover {
+            background-color: var(--gray-100);
+          }
+          
+          &.danger {
+            color: var(--danger-color);
+            
+            &:hover {
+              background-color: var(--danger-50);
+            }
+          }
         }
       }
     }
@@ -259,17 +252,146 @@ const CourseCard = styled.div`
       flex-wrap: wrap;
       gap: 6px;
       margin-bottom: 12px;
+      
+      .age-tag {
+        padding: 2px 8px;
+        border-radius: 12px;
+        background-color: var(--primary-50, rgba(108, 92, 231, 0.1));
+        color: var(--primary-color);
+        font-size: 12px;
+        font-weight: 500;
+      }
     }
     
-    .age-tag {
-      display: inline-block;
-      padding: 6px 10px;
-      border-radius: var(--border-radius);
+    .description {
+      color: var(--gray-600);
+      font-size: 14px;
+      margin-bottom: 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  }
+  
+  .card-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--gray-100);
+    display: flex;
+    justify-content: space-between;
+    
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       font-size: 13px;
+      color: var(--gray-600);
+      
+      svg {
+        color: var(--gray-500);
+      }
+    }
+  }
+`;
+
+const TableView = styled.div`
+  overflow-x: auto;
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    
+    th, td {
+      padding: 16px 24px;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    
+    th {
       font-weight: 600;
-      background-color: var(--primary-light);
-      color: var(--primary-color);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      color: var(--gray-700);
+      background-color: var(--gray-50);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    
+    td {
+      color: var(--gray-800);
+      font-size: 14px;
+      
+      &.title {
+        font-weight: 500;
+      }
+    }
+    
+    tr:hover td {
+      background-color: var(--gray-50);
+    }
+    
+    .actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      position: relative;
+      
+      button {
+        background: none;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: var(--border-radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--gray-600);
+        cursor: pointer;
+        
+        &:hover {
+          background-color: var(--gray-100);
+          color: var(--gray-800);
+        }
+        
+        &.danger:hover {
+          background-color: var(--danger-50);
+          color: var(--danger-color);
+        }
+      }
+      
+      .dropdown {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background-color: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-lg);
+        min-width: 180px;
+        z-index: 10;
+        overflow: hidden;
+        margin-top: 4px;
+        
+        .dropdown-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 16px;
+          color: var(--gray-700);
+          cursor: pointer;
+          transition: all 0.2s;
+          
+          &:hover {
+            background-color: var(--gray-100);
+          }
+          
+          &.danger {
+            color: var(--danger-color);
+            
+            &:hover {
+              background-color: var(--danger-50);
+            }
+          }
+        }
+      }
     }
     
     .badge {
@@ -278,341 +400,156 @@ const CourseCard = styled.div`
       border-radius: var(--border-radius);
       font-size: 12px;
       font-weight: 500;
-      margin-bottom: 12px;
       
       &.active {
-        background-color: var(--success-color);
-        color: white;
+        background-color: var(--success-light, rgba(72, 187, 120, 0.1));
+        color: var(--success-color);
       }
       
       &.draft {
-        background-color: var(--gray-300);
-        color: var(--gray-700);
+        background-color: var(--gray-100);
+        color: var(--gray-600);
       }
       
       &.upcoming {
-        background-color: var(--warning-color);
-        color: white;
-      }
-    }
-    
-    .description {
-      font-size: 14px;
-      color: var(--gray-600);
-      margin-bottom: 16px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-  }
-  
-  .card-footer {
-    padding: 16px;
-    border-top: 1px solid var(--gray-200);
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    
-    .stat {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      
-      svg {
-        color: var(--gray-500);
-      }
-      
-      .stat-value {
-        font-size: 14px;
-        font-weight: 500;
-        color: var(--gray-700);
-      }
-    }
-  }
-`;
-
-const TableView = styled.div`
-  padding: 0 24px 24px;
-  overflow-x: auto;
-  
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    
-    th {
-      text-align: left;
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--gray-200);
-      color: var(--gray-600);
-      font-weight: 500;
-      font-size: 14px;
-    }
-    
-    td {
-      padding: 16px;
-      border-bottom: 1px solid var(--gray-200);
-      font-size: 14px;
-      color: var(--gray-700);
-      
-      &.title {
-        font-weight: 500;
-        color: var(--gray-800);
-      }
-    }
-    
-    tr:hover {
-      background-color: var(--gray-50);
-    }
-  }
-  
-  .badge {
-    display: inline-block;
-    padding: 4px 8px;
-    border-radius: var(--border-radius);
-    font-size: 12px;
-    font-weight: 500;
-    
-    &.active {
-      background-color: var(--success-color);
-      color: white;
-    }
-    
-    &.draft {
-      background-color: var(--gray-300);
-      color: var(--gray-700);
-    }
-    
-    &.upcoming {
-      background-color: var(--warning-color);
-      color: white;
-    }
-  }
-  
-  .actions {
-    display: flex;
-    gap: 8px;
-    
-    button {
-      background: none;
-      border: none;
-      width: 32px;
-      height: 32px;
-      border-radius: var(--border-radius);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--gray-600);
-      cursor: pointer;
-      
-      &:hover {
-        background-color: var(--gray-100);
-        color: var(--gray-800);
-      }
-      
-      &.danger:hover {
-        color: var(--danger-color);
-      }
-    }
-  }
-`;
-
-const ViewToggle = styled.div`
-  display: flex;
-  border: 1px solid var(--gray-300);
-  border-radius: var(--border-radius);
-  overflow: hidden;
-  
-  button {
-    background: none;
-    border: none;
-    padding: 8px 12px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--gray-600);
-    
-    &.active {
-      background-color: var(--primary-color);
-      color: white;
-    }
-    
-    &:hover:not(.active) {
-      background-color: var(--gray-100);
-    }
-  }
-`;
-
-const Pagination = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 24px;
-  border-top: 1px solid var(--gray-200);
-  
-  .pagination-info {
-    font-size: 14px;
-    color: var(--gray-600);
-  }
-  
-  .pagination-controls {
-    display: flex;
-    gap: 8px;
-    
-    button {
-      background: none;
-      border: 1px solid var(--gray-300);
-      border-radius: var(--border-radius);
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      
-      &.active {
-        background-color: var(--primary-color);
-        color: white;
-        border-color: var(--primary-color);
-      }
-      
-      &:hover:not(.active) {
-        background-color: var(--gray-100);
-      }
-      
-      &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
+        background-color: var(--warning-light, rgba(237, 137, 54, 0.1));
+        color: var(--warning-color);
       }
     }
   }
 `;
 
 // Sample data for demonstration
-  const courses = [
-    {
-      id: 1,
-      title: 'Learn to Swim',
-      description: 'Comprehensive swimming program for beginners to intermediate swimmers.',
-      status: 'active',
-      color: '#4299e1',
-      students: 45,
-      price: '₦15,000',
-      schedule: 'Mon, Wed, Fri',
-      instructor: 'Sarah Johnson',
-      level: 'Beginner',
-      category: 'Learn to Swim',
-      ageRanges: ['3 - 5 years', '6 - 17 years', '18 - 29 years'],
-      imageUrl: 'https://images.unsplash.com/photo-1600965962361-9035dbfd1c50?ixlib=rb-4.0.3'
-    },
-    {
-      id: 2,
-      title: 'Swimming Club',
-      description: 'Regular swimming sessions for children and young adults who can already swim confidently.',
-      status: 'active',
-      color: '#6c5ce7',
-      students: 38,
-      price: '₦20,000',
-      schedule: 'Tue, Thu, Sat',
-      instructor: 'Michael Phelps',
-      level: 'Intermediate',
-      category: 'Club',
-      ageRanges: ['3 - 5 years', '6 - 17 years', '18 - 29 years'],
-      imageUrl: 'https://images.unsplash.com/photo-1560089000-7433a4ebbd64?ixlib=rb-4.0.3'
-    },
-    {
-      id: 3,
-      title: 'Adult Swimming',
-      description: 'Swimming lessons designed specifically for adults who want to learn or improve their swimming skills.',
-      status: 'active',
-      color: '#ed8936',
-      students: 22,
-      price: '₦22,000',
-      schedule: 'Sat, Sun',
-      instructor: 'David Miller',
-      level: 'Beginner',
-      category: 'Adult',
-      ageRanges: ['30+ years'],
-      imageUrl: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?ixlib=rb-4.0.3'
-    },
-    {
-      id: 4,
-      title: 'Fitness Swimming',
-      description: 'Swimming for fitness and endurance training for adults.',
-      status: 'active',
-      color: '#38b2ac',
-      students: 18,
-      price: '₦18,000',
-      schedule: 'Tue, Thu',
-      instructor: 'Emma Wilson',
-      level: 'Intermediate',
-      category: 'Fitness',
-      ageRanges: ['20+ years'],
-      imageUrl: 'https://images.unsplash.com/photo-1626201850133-172a69ccde3d?ixlib=rb-4.0.3'
-    },
-    {
-      id: 5,
-      title: 'Aqua Babies',
-      description: 'Parent and baby swimming sessions for infants aged 12-36 months.',
-      status: 'active',
-      color: '#9f7aea',
-      students: 15,
-      price: '₦18,000',
-      schedule: 'Mon, Wed',
-      instructor: 'Robert Brown',
-      level: 'Beginner',
-      category: 'Infants',
-      ageRanges: ['12 - 36 months'],
-      imageUrl: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?ixlib=rb-4.0.3'
-    },
-    {
-      id: 6,
-      title: 'Aqua Aerobics',
-      description: 'Water-based exercise program for older adults focusing on flexibility and cardiovascular health.',
-      status: 'active',
-      color: '#48bb78',
-      students: 20,
-      price: '₦17,500',
-      schedule: 'Mon, Wed, Fri',
-      instructor: 'Jessica Adams',
-      level: 'Beginner',
-      category: 'Aerobics',
-      ageRanges: ['45 years +'],
-      imageUrl: 'https://images.unsplash.com/photo-1576013551627-0fd24e0fb55d?ixlib=rb-4.0.3'
-    },
-    {
-      id: 7,
-      title: 'Survival Swimming',
-      description: 'Essential water safety skills and survival techniques for children and adults.',
-      status: 'active',
-      color: '#e53e3e',
-      students: 28,
-      price: '₦25,000',
-      schedule: 'Tue, Thu, Sat',
-      instructor: 'Thomas Clark',
-      level: 'Intermediate',
-      category: 'Safety',
-      ageRanges: ['6 - 11 years', '12+ years'],
-      imageUrl: 'https://images.unsplash.com/photo-1551649446-7a3b6d50f320?ixlib=rb-4.0.3'
-    },
-    {
-      id: 8,
-      title: 'Parent-Child Aquatics',
-      description: 'Swimming lessons for parents and young children to learn together.',
-      status: 'active',
-      color: '#f6ad55',
-      students: 16,
-      price: '₦16,000',
-      schedule: 'Wed, Sat',
-      instructor: 'Lisa Martinez',
-      level: 'Beginner',
-      category: 'Family',
-      ageRanges: ['1 - 3 years'],
-      imageUrl: 'https://images.unsplash.com/photo-1601979031925-424e53b6caaa?ixlib=rb-4.0.3'
-    }
-  ];
+const courses = [
+  {
+    id: 1,
+    title: 'Learn to Swim',
+    description: 'Comprehensive swimming program for beginners to intermediate swimmers.',
+    status: 'active',
+    color: '#4299e1',
+    students: 45,
+    price: '₦15,000',
+    schedule: 'Mon, Wed, Fri',
+    instructor: 'Sarah Johnson',
+    level: 'Beginner',
+    category: 'Learn to Swim',
+    ageRanges: ['3 - 5 years', '6 - 17 years', '18 - 29 years'],
+    imageUrl: 'https://images.unsplash.com/photo-1600965962361-9035dbfd1c50?ixlib=rb-4.0.3',
+    capacity: 50
+  },
+  {
+    id: 2,
+    title: 'Swimming Club',
+    description: 'Regular swimming sessions for children and young adults who can already swim confidently.',
+    status: 'active',
+    color: '#6c5ce7',
+    students: 38,
+    price: '₦20,000',
+    schedule: 'Tue, Thu, Sat',
+    instructor: 'Michael Phelps',
+    level: 'Intermediate',
+    category: 'Club',
+    ageRanges: ['3 - 5 years', '6 - 17 years', '18 - 29 years'],
+    imageUrl: 'https://images.unsplash.com/photo-1560089000-7433a4ebbd64?ixlib=rb-4.0.3',
+    capacity: 40
+  },
+  {
+    id: 3,
+    title: 'Adult Swimming',
+    description: 'Swimming lessons designed specifically for adults who want to learn or improve their swimming skills.',
+    status: 'active',
+    color: '#ed8936',
+    students: 22,
+    price: '₦22,000',
+    schedule: 'Sat, Sun',
+    instructor: 'David Miller',
+    level: 'Beginner',
+    category: 'Adult',
+    ageRanges: ['30+ years'],
+    imageUrl: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?ixlib=rb-4.0.3',
+    capacity: 25
+  },
+  {
+    id: 4,
+    title: 'Fitness Swimming',
+    description: 'Swimming for fitness and endurance training for adults.',
+    status: 'active',
+    color: '#38b2ac',
+    students: 18,
+    price: '₦18,000',
+    schedule: 'Tue, Thu',
+    instructor: 'Emma Wilson',
+    level: 'Intermediate',
+    category: 'Fitness',
+    ageRanges: ['20+ years'],
+    imageUrl: 'https://images.unsplash.com/photo-1626201850133-172a69ccde3d?ixlib=rb-4.0.3',
+    capacity: 20
+  },
+  {
+    id: 5,
+    title: 'Aqua Babies',
+    description: 'Parent and baby swimming sessions for infants aged 12-36 months.',
+    status: 'active',
+    color: '#9f7aea',
+    students: 15,
+    price: '₦18,000',
+    schedule: 'Mon, Wed',
+    instructor: 'Robert Brown',
+    level: 'Beginner',
+    category: 'Infants',
+    ageRanges: ['12 - 36 months'],
+    imageUrl: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?ixlib=rb-4.0.3',
+    capacity: 15
+  },
+  {
+    id: 6,
+    title: 'Aqua Aerobics',
+    description: 'Water-based exercise program for older adults focusing on flexibility and cardiovascular health.',
+    status: 'active',
+    color: '#48bb78',
+    students: 20,
+    price: '₦17,500',
+    schedule: 'Mon, Wed, Fri',
+    instructor: 'Jessica Adams',
+    level: 'Beginner',
+    category: 'Aerobics',
+    ageRanges: ['45 years +'],
+    imageUrl: 'https://images.unsplash.com/photo-1576013551627-0fd24e0fb55d?ixlib=rb-4.0.3',
+    capacity: 25
+  },
+  {
+    id: 7,
+    title: 'Survival Swimming',
+    description: 'Essential water safety skills and survival techniques for children and adults.',
+    status: 'active',
+    color: '#e53e3e',
+    students: 28,
+    price: '₦25,000',
+    schedule: 'Tue, Thu, Sat',
+    instructor: 'Thomas Clark',
+    level: 'Intermediate',
+    category: 'Safety',
+    ageRanges: ['6 - 11 years', '12+ years'],
+    imageUrl: 'https://images.unsplash.com/photo-1551649446-7a3b6d50f320?ixlib=rb-4.0.3',
+    capacity: 30
+  },
+  {
+    id: 8,
+    title: 'Parent-Child Aquatics',
+    description: 'Swimming lessons for parents and young children to learn together.',
+    status: 'active',
+    color: '#f6ad55',
+    students: 16,
+    price: '₦16,000',
+    schedule: 'Wed, Sat',
+    instructor: 'Lisa Martinez',
+    level: 'Beginner',
+    category: 'Family',
+    ageRanges: ['1 - 3 years'],
+    imageUrl: 'https://images.unsplash.com/photo-1601979031925-424e53b6caaa?ixlib=rb-4.0.3',
+    capacity: 20
+  }
+];
 
 const CourseManagement = () => {
   const [viewMode, setViewMode] = useState('grid');
@@ -654,78 +591,88 @@ const CourseManagement = () => {
         return null;
     }
   };
-  
+
+  // Filter options
+  const categoryOptions = [
+    { value: '', label: 'All Categories' },
+    { value: 'Learn to Swim', label: 'Learn to Swim' },
+    { value: 'Competitive', label: 'Competitive' },
+    { value: 'Safety', label: 'Safety' },
+    { value: 'Club', label: 'Club' },
+    { value: 'Technique', label: 'Technique' },
+    { value: 'Adaptive', label: 'Adaptive' },
+    { value: 'Family', label: 'Family' }
+  ];
+
+  const statusOptions = [
+    { value: '', label: 'All Status' },
+    { value: 'active', label: 'Active' },
+    { value: 'draft', label: 'Draft' },
+    { value: 'upcoming', label: 'Upcoming' }
+  ];
+
+  // Custom filter component
+  const filterComponent = (
+    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+      {createFilterDropdowns([
+        {
+          value: categoryFilter,
+          onChange: setCategoryFilter,
+          options: categoryOptions
+        },
+        {
+          value: statusFilter,
+          onChange: setStatusFilter,
+          options: statusOptions
+        }
+      ])}
+    </div>
+  );
+
+  // View toggle component
+  const viewToggleComponent = createViewToggle(
+    viewMode,
+    setViewMode,
+    [
+      { value: 'grid', label: 'Grid' },
+      { value: 'table', label: 'Table' }
+    ]
+  );
+
   return (
-    <Container>
-      <Header>
-        <h1>Course Management</h1>
-        <div className="actions">
-          <Button className="secondary">
-            Import Courses
-          </Button>
-          <Button className="primary" as={Link} to="/courses/create">
-            <Plus size={18} />
-            Create Course
-          </Button>
-        </div>
-      </Header>
-      
-      <Filters>
-        <div className="search-container">
-          <Search size={18} />
-          <input 
-            type="text" 
-            placeholder="Search courses..." 
-            value={searchQuery}
-            onChange={handleSearch}
-          />
-        </div>
-        
-        <div className="filter-group">
-          <select 
-            value={categoryFilter} 
-            onChange={(e) => setCategoryFilter(e.target.value)}
-          >
-            <option value="">All Categories</option>
-            <option value="Learn to Swim">Learn to Swim</option>
-            <option value="Competitive">Competitive</option>
-            <option value="Safety">Safety</option>
-            <option value="Club">Club</option>
-            <option value="Technique">Technique</option>
-            <option value="Adaptive">Adaptive</option>
-          </select>
-          
-          <select 
-            value={statusFilter} 
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="draft">Draft</option>
-            <option value="upcoming">Upcoming</option>
-          </select>
-        </div>
-        
-        <ViewToggle>
-          <button 
-            className={viewMode === 'grid' ? 'active' : ''}
-            onClick={() => setViewMode('grid')}
-          >
-            Grid
-          </button>
-          <button 
-            className={viewMode === 'table' ? 'active' : ''}
-            onClick={() => setViewMode('table')}
-          >
-            Table
-          </button>
-        </ViewToggle>
-      </Filters>
-      
+    <FeatureContainer
+      title="Course Management"
+      icon={BookOpen}
+      badge={`${filteredCourses.length} courses`}
+      showSearch={true}
+      searchPlaceholder="Search courses..."
+      searchValue={searchQuery}
+      onSearchChange={handleSearch}
+      customFilterComponent={filterComponent}
+      viewToggle={viewToggleComponent}
+      primaryAction={{
+        label: 'Create Course',
+        icon: Plus,
+        as: Link,
+        to: '/courses/create'
+      }}
+      secondaryActions={[
+        { label: 'Import Courses', onClick: () => console.log('Import courses') }
+      ]}
+      showPagination={true}
+      paginationInfo={`Showing 1-${filteredCourses.length} of ${filteredCourses.length} courses`}
+      currentPage={1}
+      totalPages={1}
+      onPageChange={() => {}}
+    >
       {viewMode === 'grid' ? (
         <CourseGrid>
           {filteredCourses.map(course => (
-            <CourseCard key={course.id} color={course.color} imageUrl={course.imageUrl}>
+            <CourseCard 
+              key={course.id} 
+              color={course.color} 
+              imageUrl={course.imageUrl}
+            >
               <div className="card-header">
                 <div className="overlay"></div>
                 <h3 className="title">{course.title}</h3>
@@ -792,7 +739,7 @@ const CourseManagement = () => {
                 <th>Enrollment</th>
                 <th>Price</th>
                 <th>Status</th>
-                <th>Actions</th>
+                <th style={{ width: '80px' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -802,23 +749,34 @@ const CourseManagement = () => {
                   <td>{course.category}</td>
                   <td>{course.level}</td>
                   <td>{course.instructor}</td>
-                  <td>{course.students}/{course.capacity}</td>
+                  <td>{course.students}/{course.capacity || '∞'}</td>
                   <td>{course.price}</td>
                   <td>{getStatusBadge(course.status)}</td>
                   <td>
                     <div className="actions">
-                      <button>
-                        <Eye size={16} />
+                      <button onClick={(e) => toggleMenu(course.id, e)}>
+                        <MoreVertical size={16} />
                       </button>
-                      <button>
-                        <Edit size={16} />
-                      </button>
-                      <button>
-                        <Copy size={16} />
-                      </button>
-                      <button className="danger">
-                        <Trash2 size={16} />
-                      </button>
+                      {openMenu === course.id && (
+                        <div className="dropdown">
+                          <div className="dropdown-item" onClick={() => console.log(`View ${course.id}`)}>
+                            <Eye size={16} />
+                            <span>View Details</span>
+                          </div>
+                          <div className="dropdown-item" onClick={() => console.log(`Edit ${course.id}`)}>
+                            <Edit size={16} />
+                            <span>Edit</span>
+                          </div>
+                          <div className="dropdown-item" onClick={() => console.log(`Duplicate ${course.id}`)}>
+                            <Copy size={16} />
+                            <span>Duplicate</span>
+                          </div>
+                          <div className="dropdown-item danger" onClick={() => console.log(`Delete ${course.id}`)}>
+                            <Trash2 size={16} />
+                            <span>Delete</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -827,18 +785,7 @@ const CourseManagement = () => {
           </table>
         </TableView>
       )}
-      
-      <Pagination>
-        <div className="pagination-info">
-          Showing 1-8 of 8 courses
-        </div>
-        <div className="pagination-controls">
-          <button disabled>&lt;</button>
-          <button className="active">1</button>
-          <button disabled>&gt;</button>
-        </div>
-      </Pagination>
-    </Container>
+    </FeatureContainer>
   );
 };
 
