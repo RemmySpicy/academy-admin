@@ -8,17 +8,34 @@
     "backend:dev": "cd backend && uvicorn app.main:app --reload --port 8000",
     "frontend:build": "cd frontend && npm run build",
     "backend:start": "cd backend && uvicorn app.main:app --port 8000",
-    "install:all": "cd frontend && npm install && cd ../backend && pip install -r requirements.txt",
+    "install:all": "npm run install:frontend && npm run install:backend",
     "install:frontend": "cd frontend && npm install",
     "install:backend": "cd backend && pip install -r requirements.txt",
     "lint:frontend": "cd frontend && npm run lint",
     "type-check:frontend": "cd frontend && npm run type-check",
-    "test:backend": "cd backend && pytest"
+    "test:backend": "cd backend && pytest",
+    "test:frontend": "cd frontend && npm run test",
+    "test:all": "npm run test:backend && npm run test:frontend",
+    "build:all": "npm run frontend:build",
+    "clean": "npm run clean:frontend && npm run clean:backend",
+    "clean:frontend": "cd frontend && rm -rf .next node_modules",
+    "clean:backend": "cd backend && rm -rf __pycache__ .pytest_cache",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "docker:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
+    "docker:prod": "docker-compose -f docker-compose.yml -f docker-compose.prod.yml up",
+    "db:migrate": "cd backend && python -m alembic upgrade head",
+    "db:migrate:down": "cd backend && python -m alembic downgrade -1",
+    "db:reset": "cd backend && python -m alembic downgrade base && python -m alembic upgrade head",
+    "db:seed": "cd backend && python scripts/seed_database.py",
+    "setup:dev": "cp .env.example .env && cp backend/.env.example backend/.env && cp frontend/.env.example frontend/.env.local",
+    "setup:project": "npm run setup:dev && npm run install:all && npm run docker:up"
   },
   "keywords": ["academy", "admin", "nextjs", "fastapi", "typescript", "python"],
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "concurrently": "^8.2.0"
+    "concurrently": "^9.1.0"
   }
 }

@@ -1,89 +1,58 @@
-# Feature Specifications
+# Academy Management System - Specifications
 
-This directory contains all feature specifications for the Academy Admin system. These files serve as the single source of truth for feature requirements and implementation details.
+This directory contains all technical specifications for the Academy Management System.
 
 ## Directory Structure
 
-### `/features/`
-Contains individual feature specifications. Each feature should have its own file with detailed requirements, user stories, acceptance criteria, and technical specifications.
-
-**Example files:**
-- `user-management.md` - User registration, authentication, roles
-- `student-enrollment.md` - Student enrollment process and management
-- `course-management.md` - Course creation, scheduling, and administration
-- `assessment-system.md` - Quizzes, exams, and grading
-- `dashboard-analytics.md` - Analytics and reporting features
-
-### `/api/`
-Contains API endpoint specifications including request/response schemas, authentication requirements, and error handling.
-
-**Example files:**
-- `auth-endpoints.md` - Authentication and authorization APIs
-- `student-endpoints.md` - Student management APIs
-- `course-endpoints.md` - Course management APIs
-
-### `/database/`
-Contains database schema specifications, entity relationships, and migration requirements.
-
-**Example files:**
-- `schema-overview.md` - Complete database schema
-- `user-models.md` - User-related table structures
-- `academic-models.md` - Academic-related table structures
-
-### `/ui/`
-Contains UI/UX specifications, wireframes, design requirements, and component specifications.
-
-**Example files:**
-- `design-system.md` - Design tokens, colors, typography
-- `dashboard-layout.md` - Dashboard wireframes and components
-- `forms-specification.md` - Form designs and validation rules
-
-## Template Structure
-
-Each feature specification should follow this template:
-
-```markdown
-# Feature Name
-
-## Overview
-Brief description of the feature and its purpose.
-
-## User Stories
-- As a [user type], I want [goal] so that [benefit]
-
-## Acceptance Criteria
-- [ ] Specific, testable requirements
-- [ ] Edge cases and error scenarios
-
-## Technical Requirements
-- Database changes required
-- API endpoints needed
-- Frontend components needed
-- Third-party integrations
-
-## Implementation Notes
-- Performance considerations
-- Security requirements
-- Accessibility requirements
-
-## Testing Requirements
-- Unit tests needed
-- Integration tests needed
-- E2E test scenarios
+```
+specs/
+├── README.md                           # This file
+├── system-overview.md                  # High-level system architecture
+├── api/                               # API specifications
+│   ├── README.md                      # API documentation guide
+│   ├── authentication.md              # Auth endpoints
+│   ├── students.md                    # Student management API
+│   ├── curriculum.md                  # Curriculum management API
+│   ├── scheduling.md                  # Scheduling API
+│   └── locations.md                   # Location management API
+├── database/                          # Database schemas
+│   ├── README.md                      # Database documentation guide
+│   ├── schema-overview.md             # Complete schema overview
+│   ├── students.md                    # Student-related tables
+│   ├── curriculum.md                  # Curriculum tables
+│   ├── scheduling.md                  # Scheduling tables
+│   └── locations.md                   # Location tables
+├── features/                          # Feature specifications
+│   ├── README.md                      # Feature documentation guide
+│   ├── authentication/                # Authentication features
+│   ├── student-management/            # Student management features
+│   ├── curriculum-management/         # Curriculum features
+│   ├── scheduling/                    # Scheduling features
+│   └── location-management/           # Location features
+└── ui/                               # UI/UX specifications
+    ├── README.md                      # UI documentation guide
+    ├── design-system.md               # Design system guidelines
+    ├── admin-dashboard/               # Admin dashboard specs
+    ├── parent-app/                    # Parent app specs
+    └── instructor-app/                # Instructor app specs
 ```
 
-## How to Use
+## How to Use This Directory
 
-1. **Creating New Features**: Add new specification files to the appropriate directory
-2. **Referencing During Development**: Claude will reference these files when implementing features
-3. **Updating Specifications**: Keep specifications updated as requirements change
-4. **Review Process**: Ensure specifications are reviewed before implementation begins
+1. **system-overview.md** - Start here for high-level understanding
+2. **features/** - Detailed feature specifications organized by domain
+3. **api/** - API endpoint specifications for each feature
+4. **database/** - Database schema documentation
+5. **ui/** - User interface specifications and design guidelines
 
-## Best Practices
+## Specification Templates
 
-- Use clear, concise language
-- Include visual mockups or diagrams when helpful
-- Specify both happy path and error scenarios
-- Include performance and security considerations
-- Link related specifications together
-- Keep specifications up-to-date with implementation changes
+Each feature specification should include:
+- Feature Overview
+- User Stories
+- Business Rules
+- Technical Requirements
+- API Endpoints
+- Database Schema
+- UI/UX Requirements
+- Testing Requirements
