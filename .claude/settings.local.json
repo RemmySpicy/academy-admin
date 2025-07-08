@@ -22,7 +22,21 @@
       "Bash(source:*)",
       "Bash(npm run type-check:*)",
       "Bash(npm run build:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(npm run install:frontend:*)",
+      "Bash(npm run clean:frontend:*)",
+      "Bash(env)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(npx:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker compose:*)",
+      "Bash(npm run install:backend:*)",
+      "Bash(sqlite3:*)",
+      "Bash(python:*)",
+      "Bash(curl:*)",
+      "Bash(npm run dev:*)",
+      "Bash(pkill:*)"
     ],
     "deny": []
   }
