@@ -8,17 +8,19 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     
-    # CORS origins
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
+    # Environment
+    ENVIRONMENT: str = "development"
+    DEBUG: bool = True
     
-    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
-    @classmethod
-    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
-            return v
-        raise ValueError(v)
+    # CORS origins
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+    
+    @property
+    def BACKEND_CORS_ORIGINS(self) -> List[str]:
+        """Parse CORS origins from environment variable"""
+        if self.CORS_ORIGINS:
+            return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+        return []
     
     # Database
     DATABASE_URL: str = "sqlite:///./academy_admin.db"
@@ -31,12 +33,29 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: str = "redis://localhost:6379"
     
+    # Server
+    HOST: str = "localhost"
+    PORT: int = 8000
+    
+    # File Upload
+    UPLOAD_DIR: str = "./uploads"
+    MAX_FILE_SIZE: int = 10485760  # 10MB
+    
+    # Email
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    FROM_EMAIL: str = "noreply@academy.com"
+    
+    # Feature flags
+    ENABLE_DOCS: bool = True
+    ENABLE_ADMIN_OVERRIDE: bool = True
+    
     model_config = {
         "env_file": ".env",
         "case_sensitive": True,
         "extra": "ignore"
     }
 
-settings = Settings(
-    BACKEND_CORS_ORIGINS=["http://localhost:3000", "http://127.0.0.1:3000"]
-)
+settings = Settings()
