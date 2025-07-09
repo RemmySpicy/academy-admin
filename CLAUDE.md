@@ -117,7 +117,7 @@ If you encounter issues with Docker setup:
    - `.dockerignore` should exclude `node_modules`, `.next`, `__pycache__`, etc.
 
 3. **Database Connection Issues**:
-   - Remove any local SQLite files: `rm -f backend/academy_admin.db`
+   - Ensure PostgreSQL is running and accessible
    - Backend should connect to PostgreSQL at `postgresql://admin:password@db:5432/academy_admin`
 
 4. **CORS Errors**:
@@ -137,6 +137,7 @@ If you encounter issues with Docker setup:
 ### Database Management
 - `npm run db:migrate` - Run database migrations
 - `npm run db:migrate:down` - Rollback last migration
+- `npm run db:migrate:create` - Create new database migration
 - `npm run db:reset` - Reset database (downgrade to base, then upgrade)
 - `npm run db:seed` - Seed database with sample data
 - `npm run db:setup` - Run production database setup script
@@ -162,14 +163,31 @@ docker compose exec backend python setup_db.py
 - `npm run db:local:logs` - View PostgreSQL database logs
 
 ### Code Quality
+- `npm run quality:all` - **Comprehensive quality checks** (linting, type checking, formatting for both frontend and backend)
+- `npm run quality:frontend` - Run frontend quality checks (linting, type checking, formatting)
+- `npm run quality:backend` - Run backend quality checks (linting, type checking, formatting)
+- `npm run quality:fix` - Auto-fix quality issues (linting and formatting)
 - `npm run lint:frontend` - Run frontend linting
+- `npm run lint:frontend:fix` - Auto-fix frontend linting issues
+- `npm run lint:backend` - Run backend linting (flake8)
+- `npm run format:frontend` - Format frontend code (Prettier)
+- `npm run format:backend` - Format backend code (Black + isort)
+- `npm run format:frontend:check` - Check frontend code formatting
+- `npm run format:backend:check` - Check backend code formatting
 - `npm run type-check:frontend` - Run TypeScript type checking
+- `npm run type-check:backend` - Run Python type checking (mypy)
+- `npm run type-check:all` - Run type checking for both frontend and backend
 - `npm run test:backend` - Run backend tests
+- `npm run test:backend:watch` - Run backend tests in watch mode
+- `npm run test:backend:coverage` - Run backend tests with coverage report
 - `npm run test:frontend` - Run frontend tests
+- `npm run test:frontend:watch` - Run frontend tests in watch mode
+- `npm run test:frontend:coverage` - Run frontend tests with coverage report
+- `npm run test:e2e` - Run end-to-end tests
 - `npm run test:all` - Run all tests
 
 ### Deployment
-- `npm run deploy:check` - Run all quality checks before deployment
+- `npm run deploy:check` - Run all quality checks before deployment (quality:all + test:all)
 - `npm run deploy:build` - Complete production build with all checks
 
 ### Utility Commands
@@ -214,6 +232,57 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 - **Tabs** - Tab navigation components
 - **Toast** - Notification system with useToast hook
 
+## Code Quality & Testing Configuration
+
+### Frontend Testing (Jest)
+- **Configuration**: `frontend/jest.config.js`
+- **Test Setup**: `frontend/src/tests/setup.ts`
+- **Environment**: jsdom with Next.js integration
+- **Coverage Threshold**: 70% for branches, functions, lines, statements
+- **Test Patterns**: `**/__tests__/**/*.(ts|tsx|js|jsx)`, `**/*.(test|spec).(ts|tsx|js|jsx)`
+
+### Backend Testing (Pytest)
+- **Configuration**: `backend/pytest.ini` and `backend/pyproject.toml`
+- **Test Database**: PostgreSQL test database (`academy_admin_test`)
+- **Coverage Threshold**: 70% with HTML/XML reports
+- **Test Markers**: 
+  - `unit` - Unit tests
+  - `integration` - Integration tests
+  - `auth` - Authentication tests
+  - `database` - Database tests
+  - `api` - API tests
+  - `student`, `curriculum`, `location`, `scheduling` - Feature-specific tests
+
+### Code Formatting & Linting
+
+#### Frontend ESLint Configuration
+- **File**: `frontend/.eslintrc.js`
+- **Extends**: Next.js core web vitals, TypeScript rules
+- **Features**: Import ordering, accessibility rules, testing library integration
+- **Auto-fix**: `npm run lint:frontend:fix`
+
+#### Backend Code Quality Tools
+- **Black**: Code formatting with 88-character line length
+- **isort**: Import sorting with Black profile
+- **flake8**: Code linting with complexity checks
+- **mypy**: Static type checking with strict configuration
+- **Configuration**: `backend/pyproject.toml`
+
+### Running Quality Checks
+```bash
+# Run all quality checks (recommended before commits)
+npm run quality:all
+
+# Run frontend-specific checks
+npm run quality:frontend
+
+# Run backend-specific checks  
+npm run quality:backend
+
+# Auto-fix quality issues
+npm run quality:fix
+```
+
 ## Development Best Practices
 
 ### Quick Start for New Development Sessions
@@ -222,10 +291,44 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 
 ### Code Quality Commands
 Always run these before committing:
-- `npm run lint:frontend` - Run frontend linting
-- `npm run type-check:frontend` - Run TypeScript type checking
-- `npm run test:frontend` - Run frontend tests
-- `npm run test:backend` - Run backend tests
+- `npm run quality:all` - **Recommended**: Run all quality checks
+- `npm run test:all` - Run all tests
+- `npm run deploy:check` - Full deployment readiness check
+
+## Security Configuration
+
+### Security Headers Middleware
+The backend now includes comprehensive security headers:
+
+- **Content Security Policy (CSP)**: Restricts resource loading
+- **HTTP Strict Transport Security (HSTS)**: Forces HTTPS in production
+- **X-Frame-Options**: Prevents clickjacking (DENY)
+- **X-Content-Type-Options**: Prevents MIME type sniffing (nosniff)
+- **X-XSS-Protection**: Enables XSS filtering
+- **Referrer-Policy**: Controls referrer information
+- **Permissions-Policy**: Restricts browser features
+
+### Rate Limiting Middleware
+- **Default Limits**: 100 requests per 60 seconds per IP
+- **Temporary Blocking**: 5-minute block after rate limit exceeded
+- **Excluded Paths**: `/health`, `/docs`, `/openapi.json`
+- **Configuration**: Customizable in `backend/app/middleware/security.py`
+
+### Request Logging Middleware
+- **Request Logging**: Method, path, client IP, user agent
+- **Response Logging**: Status code, processing time
+- **Performance Headers**: X-Process-Time header added to responses
+- **Security Events**: Rate limit violations and blocked IPs logged
+
+### Security Implementation
+```python
+# Security middleware is automatically applied in main.py
+from app.middleware.security import SecurityHeadersMiddleware, RateLimitMiddleware, LoggingMiddleware
+
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RateLimitMiddleware, calls=100, period=60)
+app.add_middleware(LoggingMiddleware)
+```
 
 ### Component Development
 - Use shadcn/ui components as the foundation
@@ -549,6 +652,13 @@ Development (Docker): PostgreSQL in container
 Development (Local): PostgreSQL via Docker + local apps
 Production: Managed PostgreSQL (Supabase/RDS)
 ```
+
+### Alembic Configuration
+- **Database URL**: Configured via `DATABASE_URL` environment variable
+- **Migration Files**: Located in `backend/alembic/versions/`
+- **Configuration**: `backend/alembic.ini` uses environment variables (no hardcoded SQLite)
+- **Auto-migrations**: Run automatically on Docker container startup
+- **Manual migrations**: Use `npm run db:migrate` or `npm run db:migrate:create`
 
 ### Setup Options
 

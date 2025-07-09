@@ -5,27 +5,29 @@ A comprehensive Academy Management System built with modern full-stack technolog
 ## 🚀 Technology Stack
 
 ### Frontend
-- **Framework**: Next.js 14+ with App Router
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **UI Components**: Shadcn/UI
+- **Framework**: Next.js 15.3.5 with App Router
+- **Language**: TypeScript 5.7.2
+- **Styling**: Tailwind CSS 3.4.17
+- **UI Components**: shadcn/ui (Primary UI Library)
 - **Forms**: React Hook Form + Zod validation
-- **State Management**: Zustand
-- **Data Fetching**: TanStack Query
-- **Animations**: Framer Motion
+- **State Management**: Zustand 4.5.5
+- **Data Fetching**: TanStack Query 5.62.4
+- **Animations**: Framer Motion 11.13.5
 - **Charts**: Recharts
-- **Drag & Drop**: React DnD Kit
+- **Drag & Drop**: DND Kit
 - **Date Handling**: Date-fns
+- **Icons**: Lucide React + Radix UI Icons
+- **Testing**: Jest + Testing Library
 
 ### Backend
-- **Framework**: FastAPI
-- **Language**: Python 3.11+
-- **Database**: SQLAlchemy (ORM)
-- **Validation**: Pydantic
-- **Migrations**: Alembic
-- **Server**: Uvicorn (ASGI)
-- **Background Tasks**: Celery
-- **Testing**: Pytest
+- **Framework**: FastAPI 0.115.12
+- **Language**: Python 3.12+
+- **Database**: SQLAlchemy 2.0.36 (ORM)
+- **Validation**: Pydantic 2.10.4
+- **Migrations**: Alembic 1.14.0
+- **Server**: Uvicorn 0.32.1 (ASGI)
+- **Background Tasks**: Celery 5.4.0
+- **Testing**: Pytest 8.3.4
 - **Authentication**: PyJWT + Passlib
 - **File Uploads**: Python-multipart
 - **Email Templates**: Jinja2
@@ -95,21 +97,46 @@ npm run backend:start
 
 ### Code Quality
 ```bash
-# Run frontend linting
-npm run lint:frontend
+# Run all quality checks (recommended)
+npm run quality:all
 
-# Run TypeScript type checking
-npm run type-check:frontend
+# Run frontend quality checks (linting, type checking, formatting)
+npm run quality:frontend
+
+# Run backend quality checks (linting, type checking, formatting)
+npm run quality:backend
+
+# Auto-fix quality issues
+npm run quality:fix
+```
+
+### Testing
+```bash
+# Run all tests
+npm run test:all
+
+# Run frontend tests
+npm run test:frontend
+
+# Run frontend tests with coverage
+npm run test:frontend:coverage
 
 # Run backend tests
 npm run test:backend
+
+# Run backend tests with coverage
+npm run test:backend:coverage
+
+# Run end-to-end tests
+npm run test:e2e
 ```
 
 ## ⚙️ Environment Setup
 
 ### Prerequisites
 - **Node.js**: 18+ required
-- **Python**: 3.11+ required
+- **Python**: 3.12+ required
+- **PostgreSQL**: Recommended for all environments
 - **Redis**: Optional (for Celery background tasks)
 
 ### Frontend Environment (.env.local)
@@ -119,9 +146,11 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 ### Backend Environment (.env)
 ```env
-DATABASE_URL=sqlite:///./academy_admin.db
+DATABASE_URL=postgresql://admin:password@localhost:5432/academy_admin
 SECRET_KEY=your-secret-key-here
 REDIS_URL=redis://localhost:6379
+DEBUG=true
+CORS_ORIGINS=http://localhost:3000
 ```
 
 ## 🌐 API Endpoints
@@ -133,14 +162,49 @@ REDIS_URL=redis://localhost:6379
 
 ## 🗄️ Database
 
-- **Development**: SQLite (academy_admin.db)
-- **Production**: PostgreSQL (configurable via DATABASE_URL)
+- **All Environments**: PostgreSQL (unified database strategy)
+- **Development**: PostgreSQL via Docker or local installation
+- **Production**: Managed PostgreSQL (Supabase, AWS RDS, etc.)
+- **Migrations**: Handled by Alembic with proper PostgreSQL configuration
 
-## 🧪 Testing
+## 🧪 Testing & Quality
 
-- **Frontend**: React Testing Library + Jest (via Next.js)
-- **Backend**: Pytest with async support
-- **API Testing**: FastAPI TestClient
+### Frontend Testing
+- **Framework**: Jest with Next.js integration
+- **Environment**: jsdom with React Testing Library
+- **Coverage**: 70% threshold for branches, functions, lines, statements
+- **Configuration**: `frontend/jest.config.js`
+
+### Backend Testing
+- **Framework**: Pytest 8.3.4 with async support
+- **Test Database**: PostgreSQL test database
+- **Coverage**: 70% threshold with HTML/XML reports
+- **Markers**: Unit, integration, auth, database, API, feature-specific tests
+- **Configuration**: `backend/pytest.ini` and `backend/pyproject.toml`
+
+### Code Quality Tools
+- **Frontend**: ESLint with Next.js rules, Prettier formatting
+- **Backend**: Black (formatting), isort (imports), flake8 (linting), mypy (type checking)
+- **Quality Commands**: `npm run quality:all` for comprehensive checks
+
+## 🔒 Security Features
+
+### Security Headers
+- **Content Security Policy (CSP)**: Restricts resource loading
+- **HTTP Strict Transport Security (HSTS)**: Forces HTTPS in production
+- **X-Frame-Options**: Prevents clickjacking attacks
+- **X-Content-Type-Options**: Prevents MIME type sniffing
+- **X-XSS-Protection**: Enables cross-site scripting protection
+
+### Rate Limiting
+- **Default Limits**: 100 requests per 60 seconds per IP
+- **Automatic Blocking**: Temporary 5-minute blocks for violators
+- **Excluded Paths**: Health checks and documentation endpoints
+
+### Request Monitoring
+- **Comprehensive Logging**: All requests and responses logged
+- **Performance Monitoring**: Response time tracking
+- **Security Events**: Rate limit violations and suspicious activity
 
 ## 🚀 Deployment
 
@@ -159,9 +223,9 @@ REDIS_URL=redis://localhost:6379
 ## 🔧 Common Issues & Solutions
 
 ### Development Setup
-1. **Python Version**: Ensure Python 3.11+ is installed
+1. **Python Version**: Ensure Python 3.12+ is installed
 2. **Node Version**: Ensure Node.js 18+ is installed
-3. **Database**: SQLite is used by default, no additional setup needed
+3. **Database**: PostgreSQL required (via Docker or local installation)
 4. **Redis**: Required for Celery background tasks (optional for basic setup)
 
 ### Port Conflicts

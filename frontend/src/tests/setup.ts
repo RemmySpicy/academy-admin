@@ -3,16 +3,47 @@
  */
 import '@testing-library/jest-dom';
 
-// Mock Next.js router
+// Mock next/router
+jest.mock('next/router', () => ({
+  useRouter: () => ({
+    route: '/',
+    pathname: '/',
+    query: {},
+    asPath: '/',
+    push: jest.fn(),
+    pop: jest.fn(),
+    reload: jest.fn(),
+    back: jest.fn(),
+    prefetch: jest.fn(),
+    beforePopState: jest.fn(),
+    events: {
+      on: jest.fn(),
+      off: jest.fn(),
+      emit: jest.fn(),
+    },
+  }),
+}));
+
+// Mock next/navigation
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: jest.fn(),
     replace: jest.fn(),
     prefetch: jest.fn(),
     back: jest.fn(),
+    forward: jest.fn(),
+    refresh: jest.fn(),
   }),
-  usePathname: () => '/admin',
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => ({
+    get: jest.fn(),
+    has: jest.fn(),
+    getAll: jest.fn(),
+    keys: jest.fn(),
+    values: jest.fn(),
+    entries: jest.fn(),
+    toString: jest.fn(),
+  }),
+  usePathname: () => '/',
 }));
 
 // Mock environment variables
@@ -28,7 +59,7 @@ global.ResizeObserver = jest.fn().mockImplementation(() => ({
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: jest.fn().mockImplementation(query => ({
+  value: jest.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -40,6 +71,13 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
+// Mock intersection observer
+global.IntersectionObserver = jest.fn().mockImplementation(() => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+}));
+
 // Mock localStorage
 const localStorageMock = {
   getItem: jest.fn(),
@@ -48,3 +86,21 @@ const localStorageMock = {
   clear: jest.fn(),
 };
 global.localStorage = localStorageMock;
+
+// Suppress console.error for tests
+const originalError = console.error;
+beforeAll(() => {
+  console.error = (...args: any[]) => {
+    if (
+      typeof args[0] === 'string' &&
+      args[0].includes('Warning: ReactDOM.render is no longer supported')
+    ) {
+      return;
+    }
+    originalError.call(console, ...args);
+  };
+});
+
+afterAll(() => {
+  console.error = originalError;
+});
