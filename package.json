@@ -37,7 +37,8 @@
     "setup:prod": "cp backend/.env.production backend/.env && cp frontend/.env.production frontend/.env.local",
     "setup:project": "npm run setup:dev && npm run install:all && npm run docker:up",
     "deploy:check": "npm run lint:frontend && npm run type-check:frontend && npm run test:all",
-    "deploy:build": "npm run clean && npm run install:all && npm run deploy:check && npm run build:prod"
+    "deploy:build": "npm run clean && npm run install:all && npm run deploy:check && npm run build:prod",
+    "create:feature": "python scripts/create-feature-spec.py"
   },
   "keywords": ["academy", "admin", "nextjs", "fastapi", "typescript", "python"],
   "author": "",
