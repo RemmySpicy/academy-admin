@@ -432,6 +432,117 @@ INSERT INTO {snake_case} (name, description, is_active) VALUES
 ## Overview
 User interface specifications for {title_case} feature in the admin dashboard.
 
+## Route Structure (Next.js 15 App Router)
+```
+src/app/(dashboard)/{kebab_case}/
+├── page.tsx           # Main feature page (Route: /admin/{kebab_case})
+├── loading.tsx        # Feature loading skeleton UI
+├── error.tsx          # Feature error boundary with recovery
+├── [id]/page.tsx      # Detail view (Route: /admin/{kebab_case}/[id])
+├── [id]/edit/page.tsx # Edit view (Route: /admin/{kebab_case}/[id]/edit)
+└── new/page.tsx       # Create view (Route: /admin/{kebab_case}/new)
+```
+
+## Component Structure (Feature-based Architecture)
+```
+src/features/{kebab_case}/
+├── components/
+│   ├── {title_case}List.tsx     # List/table component
+│   ├── {title_case}Form.tsx     # Create/edit form component
+│   ├── {title_case}Card.tsx     # Individual item card component
+│   ├── {title_case}Filters.tsx  # Filters and search component
+│   └── index.ts                 # Component exports
+├── hooks/
+│   ├── use{title_case}.tsx      # Single item hook
+│   ├── use{title_case}List.tsx  # List/pagination hook
+│   ├── use{title_case}Form.tsx  # Form handling hook
+│   └── index.ts                 # Hook exports
+├── api/
+│   ├── {snake_case}ApiService.ts # API service layer
+│   └── index.ts                 # API exports
+├── types/
+│   ├── {snake_case}.types.ts    # TypeScript type definitions
+│   └── index.ts                 # Type exports
+└── index.ts                     # Feature exports
+```
+
+## Loading & Error UI Standards
+
+### Loading Component Template
+```typescript
+// src/app/(dashboard)/{kebab_case}/loading.tsx
+export default function {title_case}Loading() {{
+  return (
+    <div className="p-6 space-y-6">
+      <div className="animate-pulse">
+        {{/* Feature-specific skeleton UI */}}
+        <div className="h-8 bg-gray-200 rounded w-48 mb-6"></div>
+        <div className="space-y-4">
+          {{Array.from({{ length: 5 }}).map((_, i) => (
+            <div key={{i}} className="h-4 bg-gray-200 rounded"></div>
+          ))}}
+        </div>
+      </div>
+    </div>
+  );
+}}
+```
+
+### Error Component Template
+```typescript
+// src/app/(dashboard)/{kebab_case}/error.tsx
+'use client';
+
+import {{ useEffect }} from 'react';
+import {{ Button }} from '@/components/ui/button';
+import {{ Card, CardContent, CardDescription, CardHeader, CardTitle }} from '@/components/ui/card';
+
+export default function {title_case}Error({{
+  error,
+  reset,
+}}: {{
+  error: Error & {{ digest?: string }};
+  reset: () => void;
+}}) {{
+  useEffect(() => {{
+    console.error('{title_case} error:', error);
+  }}, [error]);
+
+  return (
+    <div className="p-6">
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold text-red-600">
+              {title_case} Error
+            </CardTitle>
+            <CardDescription>
+              Something went wrong loading {title_case.lower()} data
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-600 text-center">
+              {{error.message || 'An unexpected error occurred'}}
+            </p>
+            <div className="flex gap-2">
+              <Button onClick={{reset}} variant="outline" className="flex-1">
+                Try Again
+              </Button>
+              <Button 
+                onClick={{() => window.location.href = '/admin'}} 
+                className="flex-1"
+              >
+                Go to Dashboard
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}}
+```
+
 ## Page Layout
 
 ### {title_case} List Page

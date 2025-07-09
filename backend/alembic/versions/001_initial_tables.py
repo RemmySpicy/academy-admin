@@ -65,6 +65,9 @@ def upgrade() -> None:
         sa.Column('full_name', sa.String(200), nullable=False),
         sa.Column('role', sa.String(20), nullable=False, default='user'),
         sa.Column('is_active', sa.Boolean(), nullable=False, default=True),
+        sa.Column('last_login', sa.DateTime(), nullable=True),
+        sa.Column('created_by', sa.String(36), nullable=True),
+        sa.Column('updated_by', sa.String(36), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.current_timestamp()),
         sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.current_timestamp()),
     )

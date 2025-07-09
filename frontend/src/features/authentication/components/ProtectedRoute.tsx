@@ -14,7 +14,7 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ 
   children, 
   requiredRole,
-  fallbackPath = '/auth/login' 
+  fallbackPath = '/login' 
 }: ProtectedRouteProps) {
   const { isAuthenticated, user, isLoading } = useAuth();
   const router = useRouter();
@@ -32,7 +32,7 @@ export function ProtectedRoute({
         if (user?.role === 'user') {
           router.push('/admin/students'); // Users go to students page
         } else {
-          router.push('/auth/login');
+          router.push('/login');
         }
         return;
       }

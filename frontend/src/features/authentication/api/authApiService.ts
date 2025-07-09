@@ -3,6 +3,7 @@
  */
 
 import { apiClient, ApiResponse, isApiSuccess } from '@/lib/api';
+import { AUTH_STORAGE_KEY } from '@/lib/constants';
 
 // Types for authentication
 interface LoginRequest {
@@ -60,7 +61,7 @@ interface PasswordChangeRequest {
 }
 
 // Token storage keys
-const TOKEN_KEY = 'academy_auth_token';
+const TOKEN_KEY = AUTH_STORAGE_KEY;
 const USER_KEY = 'academy_user';
 
 export class AuthApiService {
@@ -79,8 +80,13 @@ export class AuthApiService {
     // If login successful, store token and user data
     if (isApiSuccess(response)) {
       const { access_token, user } = response.data;
+      
+      // Store in localStorage
       localStorage.setItem(TOKEN_KEY, access_token);
       localStorage.setItem(USER_KEY, JSON.stringify(user));
+      
+      // Store in cookies for middleware access
+      document.cookie = `${TOKEN_KEY}=${access_token}; path=/; max-age=${60 * 60 * 24 * 7}; secure; samesite=strict`;
       
       // Set token for future requests
       apiClient.setToken(access_token);
@@ -95,9 +101,13 @@ export class AuthApiService {
   static async logout(): Promise<ApiResponse<{ detail: string }>> {
     const response = await apiClient.post<{ detail: string }>(`${this.BASE_PATH}/logout`);
     
-    // Clear local storage regardless of API response
+    // Clear local storage and cookies regardless of API response
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    
+    // Clear cookie
+    document.cookie = `${TOKEN_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    
     apiClient.setToken(null);
 
     return response;
@@ -162,6 +172,10 @@ export class AuthApiService {
 
       // Set token for API client
       apiClient.setToken(token);
+      
+      // Ensure cookie is set (in case it was cleared)
+      document.cookie = `${TOKEN_KEY}=${token}; path=/; max-age=${60 * 60 * 24 * 7}; secure; samesite=strict`;
+      
       return user;
     } catch {
       this.clearAuth();
@@ -175,6 +189,10 @@ export class AuthApiService {
   static clearAuth(): void {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    
+    // Clear cookie
+    document.cookie = `${TOKEN_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    
     apiClient.setToken(null);
   }
 

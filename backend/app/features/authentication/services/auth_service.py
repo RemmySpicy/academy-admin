@@ -2,16 +2,17 @@
 Authentication service for handling JWT tokens and password operations.
 """
 
-import sqlite3
 from datetime import datetime, timedelta
 from typing import Optional
 
 import jwt
 from passlib.context import CryptContext
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.features.authentication.models.user import User
 from app.features.authentication.schemas.auth import TokenData, UserResponse
+from app.features.common.models.database import get_db
 
 
 class AuthService:
@@ -55,46 +56,24 @@ class AuthService:
         except jwt.PyJWTError:
             return None
     
-    def authenticate_user(self, username: str, password: str) -> Optional[dict]:
+    def authenticate_user(self, db: Session, username: str, password: str) -> Optional[User]:
         """Authenticate a user with username/password."""
-        user = self.get_user_by_username(username)
+        user = self.get_user_by_username(db, username)
         if not user:
             return None
-        if not self.verify_password(password, user["password_hash"]):
+        if not self.verify_password(password, user.password_hash):
             return None
         return user
     
-    def get_user_by_username(self, username: str) -> Optional[dict]:
+    def get_user_by_username(self, db: Session, username: str) -> Optional[User]:
         """Get user by username or email."""
-        conn = sqlite3.connect("academy_admin.db")
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        
-        # Check both username and email
-        cursor.execute(
-            "SELECT * FROM users WHERE username = ? OR email = ?",
-            (username, username)
-        )
-        user = cursor.fetchone()
-        conn.close()
-        
-        if user:
-            return dict(user)
-        return None
+        return db.query(User).filter(
+            (User.username == username) | (User.email == username)
+        ).first()
     
-    def get_user_by_id(self, user_id: str) -> Optional[dict]:
+    def get_user_by_id(self, db: Session, user_id: str) -> Optional[User]:
         """Get user by ID."""
-        conn = sqlite3.connect("academy_admin.db")
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        
-        cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
-        user = cursor.fetchone()
-        conn.close()
-        
-        if user:
-            return dict(user)
-        return None
+        return db.query(User).filter(User.id == user_id).first()
     
     def create_user(self, user_data: dict) -> dict:
         """Create a new user."""
@@ -259,13 +238,13 @@ class AuthService:
         
         return affected_rows > 0
     
-    def get_current_user(self, token: str) -> Optional[dict]:
+    def get_current_user(self, db: Session, token: str) -> Optional[User]:
         """Get current user from JWT token."""
         token_data = self.verify_token(token)
         if token_data is None:
             return None
         
-        user = self.get_user_by_username(token_data.username)
+        user = self.get_user_by_username(db, token_data.username)
         if user is None:
             return None
         

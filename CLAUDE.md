@@ -33,7 +33,10 @@ Academy Management System built with modern full-stack technologies for comprehe
 ## Development Commands
 
 ### Quick Start
-- `npm run setup:project` - Complete project setup (copies env files, installs deps, starts Docker)
+- `docker compose up` - **Full Docker**: Start all services in containers (RECOMMENDED)
+- `npm run setup:local` - **Local Dev**: Set up PostgreSQL database for local development
+- `npm run dev:local` - **Local Dev**: Start local development with PostgreSQL
+- `npm run setup:project` - Complete project setup (copies env files, installs deps)
 - `npm run setup:dev` - Setup development environment files only
 - `npm run setup:prod` - Setup production environment files
 
@@ -43,15 +46,50 @@ Academy Management System built with modern full-stack technologies for comprehe
 - `npm run install:backend` - Install backend dependencies only
 
 #### System Requirements for Backend
-For backend development, ensure your system has:
+For backend development, choose one of these approaches:
+
+**Option 1: Full Docker Setup (Recommended)**
+- Docker and Docker Compose installed
+- No Python setup required on host machine
+- All services (frontend, backend, database) containerized
+
+**Option 2: Local Development with PostgreSQL**
 - Python 3.12+ installed
-- Virtual environment support: `sudo apt install python3.12-venv` (on Ubuntu/Debian)
-- For backend development: `cd backend && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt`
+- Docker for PostgreSQL database only
+- Virtual environment recommended for Python dependencies
 
 ### Development
-- `npm run dev` - Start both frontend and backend in development mode
-- `npm run frontend:dev` - Start frontend only (port 3000)
-- `npm run backend:dev` - Start backend only (port 8000)
+
+#### PREFERRED FULL DOCKER DEVELOPMENT SETUP
+- `docker compose up` - Start all services (frontend, backend, database)
+- `docker compose up backend` - Start backend only
+- `docker compose up frontend` - Start frontend only
+- `docker compose down` - Stop all services
+- `docker compose logs backend` - View backend logs
+- `docker compose logs frontend` - View frontend logs
+- `docker compose build` - Rebuild all containers
+- `docker compose up --build` - Rebuild and start containers
+
+**Benefits:**
+- ✅ No dependency conflicts
+- ✅ Consistent environment across team
+- ✅ Automatic dependency caching
+- ✅ PostgreSQL database included
+- ✅ Isolated from host system
+
+#### Alternative: Local Development with PostgreSQL
+- `./setup-local-db.sh` - **First time**: Set up PostgreSQL database
+- `./start-dev.sh` - Start both servers with PostgreSQL database
+- Manual start:
+  - Database: `docker-compose -f docker-compose.local.yml up -d`
+  - Frontend: `cd frontend && npm run dev` (port 3000)
+  - Backend: `cd backend && python3 -m uvicorn app.main:app --reload --port 8000`
+
+**Benefits:**
+- ✅ Consistent PostgreSQL across all environments
+- ✅ Local development flexibility
+- ✅ Database persistence between sessions
+- ✅ Easy debugging and testing
 
 ### Production
 - `npm run frontend:build` - Build frontend for production
@@ -60,12 +98,41 @@ For backend development, ensure your system has:
 - `npm run backend:start` - Start backend in production mode
 - `npm run backend:prod` - Start backend in production mode with proper host binding
 
-### Docker Development
-- `npm run docker:dev` - Start development environment with Docker
-- `npm run docker:up` - Start Docker containers
-- `npm run docker:down` - Stop Docker containers
-- `npm run docker:build` - Build Docker images
-- `npm run docker:prod` - Start production environment with Docker
+### Docker Development Commands
+- `docker compose up -d` - Start services in background
+- `docker compose build` - Rebuild containers
+- `docker compose build --no-cache` - Force rebuild without cache
+- `docker compose exec backend bash` - Access backend container shell
+- `docker compose exec frontend sh` - Access frontend container shell
+
+### Docker Troubleshooting
+If you encounter issues with Docker setup:
+
+1. **Environment Variables Not Loading**:
+   - Use `docker compose --env-file .env.docker up` to explicitly specify env file
+   - Verify `.env.docker` exists and contains all required variables
+
+2. **Build Context Too Large**:
+   - Ensure `.dockerignore` files exist in both `frontend/` and `backend/` directories
+   - `.dockerignore` should exclude `node_modules`, `.next`, `__pycache__`, etc.
+
+3. **Database Connection Issues**:
+   - Remove any local SQLite files: `rm -f backend/academy_admin.db`
+   - Backend should connect to PostgreSQL at `postgresql://admin:password@db:5432/academy_admin`
+
+4. **CORS Errors**:
+   - Frontend in Docker accesses backend via `http://localhost:8000` (external)
+   - Backend CORS should allow `http://localhost:3000` origin
+   - Check browser console for specific CORS error messages
+
+5. **Port Conflicts**:
+   - Ensure ports 3000, 8000, 5432 are not in use by other services
+   - Use `docker compose down` to clean up before restarting
+
+6. **Container Dependencies**:
+   - Database must be healthy before backend starts
+   - Backend must be healthy before frontend starts
+   - Check logs with `docker compose logs [service]`
 
 ### Database Management
 - `npm run db:migrate` - Run database migrations
@@ -73,6 +140,26 @@ For backend development, ensure your system has:
 - `npm run db:reset` - Reset database (downgrade to base, then upgrade)
 - `npm run db:seed` - Seed database with sample data
 - `npm run db:setup` - Run production database setup script
+
+### Default Admin User Setup
+After starting the application for the first time, create the default admin user:
+
+```bash
+# Create default admin user
+docker compose exec backend python setup_db.py
+```
+
+**Default Admin Credentials:**
+- **Username**: `admin`
+- **Email**: `admin@academy.com`
+- **Password**: `admin123`
+
+⚠️ **Important**: Change the default password immediately after first login in production!
+
+### Local PostgreSQL Database
+- `npm run db:local:up` - Start PostgreSQL database only
+- `npm run db:local:down` - Stop PostgreSQL database
+- `npm run db:local:logs` - View PostgreSQL database logs
 
 ### Code Quality
 - `npm run lint:frontend` - Run frontend linting
@@ -96,6 +183,7 @@ For backend development, ensure your system has:
 - **Backend API**: http://localhost:8000
 - **API Documentation**: http://localhost:8000/docs
 - **Health Check**: http://localhost:8000/api/v1/health
+- **Database**: PostgreSQL on localhost:5432 (consistent across all environments)
 
 ## shadcn/ui Configuration
 The project uses shadcn/ui as the primary UI component library:
@@ -127,6 +215,10 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 - **Toast** - Notification system with useToast hook
 
 ## Development Best Practices
+
+### Quick Start for New Development Sessions
+1. `./start-dev.sh` - Start both servers (if dependencies already installed)
+2. If first time: `./install-backend-deps.sh` then `./start-dev.sh`
 
 ### Code Quality Commands
 Always run these before committing:
@@ -272,3 +364,224 @@ This project is configured with the latest stable versions as of January 2025. K
 - ✅ **Database Strategy**: Managed database service integration
 - ✅ **Production Scripts**: Comprehensive build and deployment automation
 - ✅ **Docker Support**: Optional containerized deployment configurations
+- ✅ **Next.js 15 Structure**: Route groups and loading/error boundaries implemented
+
+## Next.js 15 Folder Structure Standards
+
+### Route Organization (2025 Best Practices)
+Our frontend follows Next.js 15 App Router with optimized structure:
+
+#### Route Groups Pattern
+```
+src/app/
+├── (auth)/                    # Auth route group
+│   ├── login/page.tsx         # Route: /login
+│   ├── register/page.tsx      # Route: /register
+│   ├── loading.tsx            # Loading UI for auth routes
+│   └── error.tsx              # Error UI for auth routes
+├── (dashboard)/               # Dashboard route group  
+│   ├── page.tsx               # Route: /admin (dashboard home)
+│   ├── students/              # Route: /admin/students
+│   │   ├── page.tsx
+│   │   ├── [id]/page.tsx
+│   │   ├── [id]/edit/page.tsx
+│   │   ├── new/page.tsx
+│   │   ├── loading.tsx        # Loading UI for students
+│   │   └── error.tsx          # Error UI for students
+│   ├── curriculum/            # Route: /admin/curriculum
+│   ├── locations/             # Route: /admin/locations
+│   ├── scheduling/            # Route: /admin/scheduling
+│   ├── settings/              # Route: /admin/settings
+│   ├── users/                 # Route: /admin/users
+│   ├── loading.tsx            # Loading UI for dashboard
+│   └── error.tsx              # Error UI for dashboard
+├── layout.tsx                 # Root layout
+├── page.tsx                   # Route: / (home/landing)
+└── globals.css
+```
+
+#### Benefits of Route Groups
+- **Logical Organization**: Groups related routes without affecting URLs
+- **Shared Layouts**: Each group can have its own layout
+- **Better UX**: Specific loading/error states per route group
+- **Maintainability**: Clear separation between auth and dashboard flows
+
+### Loading & Error Boundaries Standard
+
+#### Required Files for New Features
+When adding new routes/features, **ALWAYS** include:
+
+1. **loading.tsx** - Loading skeleton UI
+2. **error.tsx** - Error boundary with recovery options
+3. **page.tsx** - Main route component
+
+#### Loading UI Standards
+```typescript
+// loading.tsx template
+export default function FeatureLoading() {
+  return (
+    <div className="p-6 space-y-6">
+      <div className="animate-pulse">
+        {/* Feature-specific skeleton */}
+        <div className="h-8 bg-gray-200 rounded w-48 mb-6"></div>
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-4 bg-gray-200 rounded"></div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+#### Error UI Standards  
+```typescript
+// error.tsx template
+'use client';
+
+import { useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+export default function FeatureError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  useEffect(() => {
+    console.error('Feature error:', error);
+  }, [error]);
+
+  return (
+    <div className="p-6">
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold text-red-600">
+              Feature Error
+            </CardTitle>
+            <CardDescription>
+              Something went wrong loading this feature
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-600 text-center">
+              {error.message || 'An unexpected error occurred'}
+            </p>
+            <div className="flex gap-2">
+              <Button onClick={reset} variant="outline" className="flex-1">
+                Try Again
+              </Button>
+              <Button 
+                onClick={() => window.location.href = '/admin'} 
+                className="flex-1"
+              >
+                Go to Dashboard
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+```
+
+### New Feature Development Rules
+
+#### 1. Route Structure for New Features
+```bash
+# For dashboard features, always use:
+src/app/(dashboard)/[feature-name]/
+├── page.tsx           # Main feature page
+├── loading.tsx        # Feature loading UI
+├── error.tsx          # Feature error UI  
+├── [id]/page.tsx      # Detail view
+├── [id]/edit/page.tsx # Edit view
+└── new/page.tsx       # Create view
+```
+
+#### 2. Component Structure for New Features  
+```bash
+# Feature components follow this pattern:
+src/features/[feature-name]/
+├── components/
+│   ├── FeatureList.tsx
+│   ├── FeatureForm.tsx
+│   ├── FeatureCard.tsx
+│   └── index.ts
+├── hooks/
+│   ├── useFeature.tsx
+│   ├── useFeatureList.tsx
+│   └── index.ts
+├── api/
+│   ├── featureApiService.ts
+│   └── index.ts
+├── types/
+│   ├── feature.types.ts
+│   └── index.ts
+└── index.ts
+```
+
+#### 3. Mandatory Implementation Checklist
+For every new feature page:
+- ✅ Route group placement: `(dashboard)` or `(auth)`
+- ✅ Loading state: Custom `loading.tsx` with skeleton UI
+- ✅ Error handling: Custom `error.tsx` with recovery actions
+- ✅ TypeScript types: Proper type definitions in feature types
+- ✅ API integration: Consistent API service pattern
+- ✅ Form validation: React Hook Form + Zod validation
+- ✅ shadcn/ui components: Use project UI library consistently
+- ✅ Responsive design: Mobile-first Tailwind CSS classes
+
+# CRITICAL DEVELOPMENT SETUP INSTRUCTIONS
+
+## Database Strategy
+
+### Unified PostgreSQL Approach
+**All environments use PostgreSQL for consistency:**
+
+```
+Development (Docker): PostgreSQL in container
+Development (Local): PostgreSQL via Docker + local apps
+Production: Managed PostgreSQL (Supabase/RDS)
+```
+
+### Setup Options
+
+#### Option 1: Full Docker (Recommended)
+```bash
+# Start everything in Docker
+docker-compose up
+
+# Uses .env.docker for configuration
+# All services containerized
+```
+
+#### Option 2: Local Development with PostgreSQL
+```bash
+# First time setup
+./setup-local-db.sh
+
+# Daily development
+./start-dev.sh
+
+# Uses .env.local for configuration
+# PostgreSQL in Docker, apps run locally
+```
+
+### Environment Files
+- **`.env.docker`** - Full Docker development
+- **`.env.local`** - Local development with PostgreSQL
+- **`.env.production`** - Production deployment
+- **`.env.*.example`** - Template files for each environment
+
+### Benefits of Unified PostgreSQL
+- ✅ **Consistency**: Same database across all environments
+- ✅ **Features**: Full PostgreSQL features in development
+- ✅ **Production Parity**: Matches production database
+- ✅ **Team Collaboration**: Consistent setup across team members
+- ✅ **Data Integrity**: Proper constraints and relationships

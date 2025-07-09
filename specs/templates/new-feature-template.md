@@ -131,8 +131,94 @@ $$ LANGUAGE plpgsql;
 ### [Interface Name] Interface
 - **Layout**: [Page layout description]
 - **Navigation**: [How users navigate to/from this feature]
-- **Responsive Design**: [Mobile/tablet considerations]
+- **Responsive Design**: [Mobile-first Tailwind CSS classes]
 - **Accessibility**: [A11y requirements]
+
+### Route Structure (Next.js 15 App Router)
+```
+src/app/(dashboard)/[feature-name]/
+├── page.tsx           # Main feature page (Route: /admin/[feature-name])
+├── loading.tsx        # Feature loading skeleton UI
+├── error.tsx          # Feature error boundary with recovery
+├── [id]/page.tsx      # Detail view (Route: /admin/[feature-name]/[id])
+├── [id]/edit/page.tsx # Edit view (Route: /admin/[feature-name]/[id]/edit)
+└── new/page.tsx       # Create view (Route: /admin/[feature-name]/new)
+```
+
+### Loading UI Standards
+```typescript
+// loading.tsx - Feature-specific loading skeleton
+export default function [Feature]Loading() {
+  return (
+    <div className="p-6 space-y-6">
+      <div className="animate-pulse">
+        {/* Feature-specific skeleton UI */}
+        <div className="h-8 bg-gray-200 rounded w-48 mb-6"></div>
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-4 bg-gray-200 rounded"></div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+### Error UI Standards
+```typescript
+// error.tsx - Feature-specific error boundary
+'use client';
+
+import { useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+export default function [Feature]Error({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  useEffect(() => {
+    console.error('[Feature] error:', error);
+  }, [error]);
+
+  return (
+    <div className="p-6">
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold text-red-600">
+              [Feature] Error
+            </CardTitle>
+            <CardDescription>
+              Something went wrong loading [feature description]
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-600 text-center">
+              {error.message || 'An unexpected error occurred'}
+            </p>
+            <div className="flex gap-2">
+              <Button onClick={reset} variant="outline" className="flex-1">
+                Try Again
+              </Button>
+              <Button 
+                onClick={() => window.location.href = '/admin'} 
+                className="flex-1"
+              >
+                Go to Dashboard
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+```
 
 ### Component Specifications
 ```typescript
@@ -143,7 +229,7 @@ interface [Component]Props {
 }
 
 const [Component]: React.FC<[Component]Props> = ({ [props] }) => {
-  // Component implementation
+  // Component implementation using shadcn/ui components
 };
 ```
 

@@ -15,7 +15,7 @@ export default function Home() {
         router.push('/admin');
       } else {
         // Redirect unauthenticated users to login
-        router.push('/auth/login');
+        router.push('/login');
       }
     }
   }, [isAuthenticated, isLoading, router]);

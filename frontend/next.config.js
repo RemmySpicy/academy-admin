@@ -21,7 +21,6 @@ const nextConfig = {
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   },
   // Production optimizations
-  swcMinify: true,
   poweredByHeader: false,
   compress: true,
   // Security headers

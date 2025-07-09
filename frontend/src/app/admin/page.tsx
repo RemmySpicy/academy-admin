@@ -30,7 +30,7 @@ interface QuickAction {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   color: string;
-  roles?: ('super_admin' | 'program_admin')[];
+  roles?: ('admin' | 'manager')[];
 }
 
 const mockStats: StatCard[] = [
@@ -98,7 +98,7 @@ const quickActions: QuickAction[] = [
     href: '/admin/users',
     icon: Users,
     color: 'bg-red-500',
-    roles: ['super_admin']
+    roles: ['admin']
   },
   {
     title: 'Settings',

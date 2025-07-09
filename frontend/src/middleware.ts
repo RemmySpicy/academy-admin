@@ -6,10 +6,10 @@ import type { NextRequest } from 'next/server';
 import { AUTH_STORAGE_KEY } from '@/lib/constants';
 
 // Public routes that don't require authentication
-const publicRoutes = ['/auth/login', '/auth/register'];
+const publicRoutes = ['/login', '/register'];
 
 // Auth routes that should redirect to dashboard if already authenticated
-const authRoutes = ['/auth/login', '/auth/register'];
+const authRoutes = ['/login', '/register'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -25,7 +25,7 @@ export function middleware(request: NextRequest) {
   
   // If user is not authenticated and trying to access protected routes, redirect to login
   if (!isAuthenticated && !publicRoutes.includes(pathname) && pathname.startsWith('/admin')) {
-    return NextResponse.redirect(new URL('/auth/login', request.url));
+    return NextResponse.redirect(new URL('/login', request.url));
   }
   
   // Allow the request to continue

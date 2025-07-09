@@ -13,14 +13,14 @@ export * from './authentication';
 // Students Feature
 export * from './students';
 
-// Curriculum Feature
-export * from './curriculum';
+// Curriculum Feature - empty for now
+// export * from './curriculum';
 
-// Scheduling Feature
-export * from './scheduling';
+// Scheduling Feature - empty for now
+// export * from './scheduling';
 
-// Locations Feature
-export * from './locations';
+// Locations Feature - empty for now
+// export * from './locations';
 
-// Common Feature
-export * from './common';
+// Common Feature - empty for now
+// export * from './common';
