@@ -13,6 +13,19 @@ from app.features.common.models.database import Base
 from app.features.students.models.student import Student
 from app.features.authentication.models.user import User
 
+# Import curriculum models
+from app.features.curriculum.models.program import Program
+from app.features.curriculum.models.course import Course
+from app.features.curriculum.models.curriculum import Curriculum
+from app.features.curriculum.models.level import Level
+from app.features.curriculum.models.module import Module
+from app.features.curriculum.models.section import Section
+from app.features.curriculum.models.lesson import Lesson
+from app.features.curriculum.models.assessment import AssessmentRubric, AssessmentCriteria
+from app.features.curriculum.models.equipment import EquipmentRequirement
+from app.features.curriculum.models.media import MediaLibrary
+from app.features.curriculum.models.content_version import ContentVersion
+
 # This ensures all models are imported and available for Alembic
 __all__ = [
     "Base",
@@ -20,4 +33,16 @@ __all__ = [
     "TimestampMixin",
     "Student",
     "User",
+    "Program",
+    "Course",
+    "Curriculum",
+    "Level",
+    "Module",
+    "Section",
+    "Lesson",
+    "AssessmentRubric",
+    "AssessmentCriteria",
+    "EquipmentRequirement",
+    "MediaLibrary",
+    "ContentVersion",
 ]

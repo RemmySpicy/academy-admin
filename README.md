@@ -2,6 +2,32 @@
 
 A comprehensive Academy Management System built with modern full-stack technologies for educational institution management.
 
+## 🎯 Current Status (Last Updated: 2025-07-10)
+
+### ✅ Working Features
+- **🔐 Authentication System**: JWT-based login with admin user
+- **📚 Curriculum Management**: Programs CRUD with test data
+- **🗄️ Database**: PostgreSQL with proper migrations
+- **🌐 API**: FastAPI with comprehensive endpoints
+- **🖥️ Frontend**: Next.js with shadcn/ui components
+- **🐳 Docker**: Full containerized development environment
+
+### 🚀 Quick Start
+```bash
+# Start the entire application
+docker compose up
+
+# Access the application
+Frontend: http://localhost:3000
+Backend API: http://localhost:8000/docs
+Admin Login: admin@academy.com / admin123
+```
+
+### 📊 Demo Data Available
+- **5 Test Programs**: Robotics, AI/ML, Web Development, Sports, Arts
+- **Admin User**: Ready to use with default credentials
+- **Database**: Fully migrated with test data
+
 ## 🚀 Technology Stack
 
 ### Frontend
@@ -62,28 +88,45 @@ academy-admin/
 
 ## 🛠️ Development Commands
 
-### Setup
+### 🐳 Docker Development (Recommended)
+```bash
+# Start all services (frontend, backend, database)
+docker compose up
+
+# Start specific services
+docker compose up backend
+docker compose up frontend
+
+# View logs
+docker compose logs backend
+docker compose logs frontend
+
+# Stop all services
+docker compose down
+
+# Rebuild containers
+docker compose up --build
+```
+
+### 🗄️ Database Management
+```bash
+# Run migrations
+docker compose exec backend alembic upgrade head
+
+# Create new migration
+docker compose exec backend alembic revision --autogenerate -m "description"
+
+# Create admin user (already done)
+docker compose exec backend python setup_db.py
+```
+
+### 💻 Local Development (Alternative)
 ```bash
 # Install all dependencies (frontend + backend)
 npm run install:all
 
-# Install frontend dependencies only
-npm run install:frontend
-
-# Install backend dependencies only
-npm run install:backend
-```
-
-### Development
-```bash
-# Start both frontend and backend in development mode
-npm run dev
-
-# Start frontend only (port 3000)
-npm run frontend:dev
-
-# Start backend only (port 8000)
-npm run backend:dev
+# Start with local PostgreSQL
+npm run dev:local
 ```
 
 ### Production
@@ -155,17 +198,46 @@ CORS_ORIGINS=http://localhost:3000
 
 ## 🌐 API Endpoints
 
+### 🔗 Application URLs
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8000
 - **API Documentation**: http://localhost:8000/docs
-- **Health Check**: http://localhost:8000/api/v1/health
+- **Health Check**: http://localhost:8000/api/v1/health/
+
+### 🔑 Authentication Required Endpoints
+- `POST /api/v1/auth/login` - User login
+- `GET /api/v1/curriculum/programs/` - List programs
+- `POST /api/v1/curriculum/programs/` - Create program
+- Most CRUD operations require authentication
+
+### 📚 Curriculum API
+All curriculum endpoints are under `/api/v1/curriculum/` and require authentication:
+- **Programs**: `/programs/` - Manage educational programs
+- **Courses**: `/courses/` - Manage courses within programs  
+- **Curricula**: `/curricula/` - Manage specific curricula
 
 ## 🗄️ Database
 
+### 🔧 Database Strategy
 - **All Environments**: PostgreSQL (unified database strategy)
-- **Development**: PostgreSQL via Docker or local installation
+- **Development**: PostgreSQL via Docker (included in docker-compose)
 - **Production**: Managed PostgreSQL (Supabase, AWS RDS, etc.)
 - **Migrations**: Handled by Alembic with proper PostgreSQL configuration
+
+### 📊 Current Schema
+- **Users**: Authentication and user management
+- **Students**: Student records and information
+- **Programs**: Educational program definitions
+- **Courses**: Courses within programs
+- **Curricula**: Specific curriculum implementations
+
+### 🧪 Test Data
+Database includes 5 sample programs ready for testing:
+1. **Robotics Engineering** (ROBOT-ENG) - Engineering category
+2. **AI & Machine Learning** (AI-ML) - Technology category  
+3. **Web Development** (WEB-DEV) - Technology category
+4. **Sports Training** (SPORTS) - Sports category
+5. **Arts & Creative** (ARTS) - Arts category
 
 ## 🧪 Testing & Quality
 

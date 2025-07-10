@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.api_v1.api import api_router
-from app.middleware.security import SecurityHeadersMiddleware, RateLimitMiddleware, LoggingMiddleware
+# from app.middleware.security import SecurityHeadersMiddleware, RateLimitMiddleware, LoggingMiddleware
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -12,9 +12,9 @@ app = FastAPI(
 )
 
 # Add security middleware (order matters - add from innermost to outermost)
-app.add_middleware(SecurityHeadersMiddleware)
-app.add_middleware(RateLimitMiddleware, calls=100, period=60)
-app.add_middleware(LoggingMiddleware)
+# app.add_middleware(SecurityHeadersMiddleware)
+# app.add_middleware(RateLimitMiddleware, calls=100, period=60)
+# app.add_middleware(LoggingMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

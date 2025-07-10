@@ -87,3 +87,58 @@ class CommunicationPreference(str, enum.Enum):
     PHONE = "phone"
     SMS = "sms"
     WHATSAPP = "whatsapp"
+
+
+# Curriculum Management Enums
+
+class CurriculumStatus(str, enum.Enum):
+    """Curriculum status enumeration."""
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    DRAFT = "draft"
+    ARCHIVED = "archived"
+
+
+class DifficultyLevel(str, enum.Enum):
+    """Difficulty level enumeration."""
+    BEGINNER = "beginner"
+    INTERMEDIATE = "intermediate"
+    ADVANCED = "advanced"
+    EXPERT = "expert"
+
+
+class EquipmentType(str, enum.Enum):
+    """Equipment type enumeration."""
+    SAFETY = "safety"
+    INSTRUCTIONAL = "instructional"
+    ASSESSMENT = "assessment"
+    ENHANCEMENT = "enhancement"
+
+
+class RubricType(str, enum.Enum):
+    """Assessment rubric type enumeration."""
+    FORMATIVE = "formative"
+    SUMMATIVE = "summative"
+    DIAGNOSTIC = "diagnostic"
+
+
+class MediaType(str, enum.Enum):
+    """Media file type enumeration."""
+    VIDEO = "video"
+    AUDIO = "audio"
+    DOCUMENT = "document"
+    IMAGE = "image"
+    INTERACTIVE = "interactive"
+
+
+class ContentType(str, enum.Enum):
+    """Content type enumeration for versioning."""
+    PROGRAM = "program"
+    COURSE = "course"
+    CURRICULUM = "curriculum"
+    LEVEL = "level"
+    MODULE = "module"
+    SECTION = "section"
+    LESSON = "lesson"
+    RUBRIC = "rubric"
+    EQUIPMENT = "equipment"
