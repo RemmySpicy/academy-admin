@@ -66,6 +66,11 @@ class Program(BaseModel):
     )
     
     # Relationships
+    user_assignments = relationship(
+        "UserProgramAssignment",
+        back_populates="program",
+        cascade="all, delete-orphan"
+    )
     # Note: Relationship to courses will be defined when course model is created
     # courses = relationship("Course", back_populates="program", cascade="all, delete-orphan")
     

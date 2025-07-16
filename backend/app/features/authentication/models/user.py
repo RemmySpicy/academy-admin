@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import Boolean, Column, DateTime, String, text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.features.common.models.base import BaseModel
 
@@ -56,8 +56,8 @@ class User(BaseModel):
     role: Mapped[str] = mapped_column(
         String(20),
         nullable=False,
-        default="user",
-        comment="User role (admin, manager, user)",
+        default="program_admin",
+        comment="User role (super_admin, program_admin, program_coordinator, tutor)",
     )
     
     # Status
@@ -75,6 +75,14 @@ class User(BaseModel):
         comment="Last login timestamp",
     )
     
+    # Relationships
+    program_assignments = relationship(
+        "UserProgramAssignment",
+        foreign_keys="[UserProgramAssignment.user_id]",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    
     # Indexes for performance
     __table_args__ = (
         {"extend_existing": True}  # Allow extending existing table
@@ -84,29 +92,41 @@ class User(BaseModel):
         """Check if user has a specific role."""
         return self.role == role
     
-    def is_admin(self) -> bool:
-        """Check if user is an admin."""
-        return self.role == "admin"
+    def is_super_admin(self) -> bool:
+        """Check if user is a super admin."""
+        return self.role == "super_admin"
     
-    def is_manager(self) -> bool:
-        """Check if user is a manager."""
-        return self.role in ["admin", "manager"]
+    def is_program_admin(self) -> bool:
+        """Check if user is a program admin."""
+        return self.role == "program_admin"
+    
+    def is_program_coordinator(self) -> bool:
+        """Check if user is a program coordinator."""
+        return self.role == "program_coordinator"
+    
+    def is_tutor(self) -> bool:
+        """Check if user is a tutor."""
+        return self.role == "tutor"
+    
+    def has_admin_dashboard_access(self) -> bool:
+        """Check if user has access to admin dashboard."""
+        return self.role in ["super_admin", "program_admin"]
     
     def can_access(self, resource: str) -> bool:
         """Check if user can access a resource based on role."""
         if not self.is_active:
             return False
             
-        # Admin can access everything
-        if self.is_admin():
+        # Super admin can access everything
+        if self.is_super_admin():
             return True
             
-        # Manager can access most things
-        if self.is_manager():
-            return resource not in ["user_management", "system_settings"]
+        # Program admin can access program-specific resources
+        if self.is_program_admin():
+            return resource not in ["system_management", "programs_management"]
             
-        # Regular users have limited access
-        return resource in ["dashboard", "profile", "students_view"]
+        # Program coordinators and tutors have limited access (future implementation)
+        return False
     
     def __repr__(self) -> str:
         """String representation of the user."""

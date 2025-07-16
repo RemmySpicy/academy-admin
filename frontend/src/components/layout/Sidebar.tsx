@@ -11,55 +11,99 @@ import {
   Calendar,
   MapPin,
   Settings,
+  GraduationCap,
+  UserCheck,
+  CreditCard,
+  Building,
   ChevronLeft,
   ChevronRight,
-  GraduationCap
+  LogOut
 } from 'lucide-react';
-import { useAuth } from '@/features/authentication/hooks/useRealAuth';
+import { useAuth } from '@/features/authentication/hooks';
+import { useProgramContextHooks } from '@/store';
 
 interface NavItem {
   title: string;
-  href: string;
+  href?: string;
   icon: React.ComponentType<{ className?: string }>;
-  roles?: ('super_admin' | 'program_admin')[];
+  roles?: ('super_admin' | 'program_admin' | 'program_coordinator' | 'tutor')[];
+  children?: NavItem[];
+  onClick?: () => void;
 }
 
-const navItems: NavItem[] = [
+interface NavSection {
+  title: string;
+  items: NavItem[];
+  roles?: ('super_admin' | 'program_admin' | 'program_coordinator' | 'tutor')[];
+  collapsible?: boolean;
+}
+
+const navigationSections: NavSection[] = [
+  // Main Navigation - Available to all roles
   {
-    title: 'Dashboard',
-    href: '/admin',
-    icon: LayoutDashboard
+    title: '',
+    items: [
+      {
+        title: 'Dashboard',
+        href: '/admin',
+        icon: LayoutDashboard
+      },
+      {
+        title: 'Students',
+        href: '/admin/students',
+        icon: GraduationCap
+      },
+      {
+        title: 'Curriculum',
+        href: '/admin/curriculum',
+        icon: BookOpen
+      },
+      {
+        title: 'Locations',
+        href: '/admin/locations',
+        icon: MapPin
+      },
+      {
+        title: 'Scheduling',
+        href: '/admin/scheduling',
+        icon: Calendar
+      },
+      {
+        title: 'Team',
+        href: '/admin/team',
+        icon: UserCheck
+      },
+      {
+        title: 'Payments',
+        href: '/admin/payments',
+        icon: CreditCard
+      }
+    ]
   },
+  
+  // Academy Administration - Super Admin Only
   {
-    title: 'Students',
-    href: '/admin/students',
-    icon: GraduationCap
+    title: '',
+    roles: ['super_admin'],
+    items: [
+      {
+        title: 'Academy Admin',
+        href: '/admin/academy/programs',
+        icon: Building
+      }
+    ]
   },
+  
+  // Settings and Logout - Available to all roles
   {
-    title: 'Curriculum',
-    href: '/admin/curriculum',
-    icon: BookOpen
-  },
-  {
-    title: 'Scheduling',
-    href: '/admin/scheduling',
-    icon: Calendar
-  },
-  {
-    title: 'Locations',
-    href: '/admin/locations',
-    icon: MapPin
-  },
-  {
-    title: 'User Management',
-    href: '/admin/users',
-    icon: Users,
-    roles: ['super_admin'] // Only super admins can see this
-  },
-  {
-    title: 'Settings',
-    href: '/admin/settings',
-    icon: Settings
+    title: '',
+    items: [
+      {
+        title: 'Settings',
+        href: '/admin/settings',
+        icon: Settings
+      }
+    ]
   }
 ];
 
@@ -71,12 +115,80 @@ export function Sidebar({ className }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
   const { user } = useAuth();
+  const { currentProgram } = useProgramContextHooks();
 
-  // Filter nav items based on user role
-  const filteredNavItems = navItems.filter(item => {
-    if (!item.roles) return true; // Show items without role restrictions
-    return item.roles.includes(user?.role as any);
+  // Filter sections based on user role
+  const filteredSections = navigationSections.filter(section => {
+    if (!section.roles) return true;
+    return section.roles.includes(user?.role as any);
   });
+
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
+  const renderNavItem = (item: NavItem) => {
+    const Icon = item.icon;
+    const isActive = item.href && (pathname === item.href || 
+      (item.href !== '/admin' && pathname.startsWith(item.href)));
+
+    if (item.onClick) {
+      return (
+        <button
+          key={item.title}
+          onClick={item.onClick}
+          className={cn(
+            "group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors w-full text-left",
+            "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+          )}
+          title={isCollapsed ? item.title : undefined}
+        >
+          <Icon
+            className={cn(
+              "h-5 w-5 flex-shrink-0",
+              "text-gray-400 group-hover:text-gray-600"
+            )}
+          />
+          {!isCollapsed && (
+            <span className="ml-3 truncate">{item.title}</span>
+          )}
+        </button>
+      );
+    }
+
+    if (!item.href) return null;
+
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        className={cn(
+          "group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+          isActive
+            ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
+            : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+        )}
+        title={isCollapsed ? item.title : undefined}
+      >
+        <Icon
+          className={cn(
+            "h-5 w-5 flex-shrink-0",
+            isActive ? "text-blue-700" : "text-gray-400 group-hover:text-gray-600"
+          )}
+        />
+        {!isCollapsed && (
+          <span className="ml-3 truncate">{item.title}</span>
+        )}
+      </Link>
+    );
+  };
 
   return (
     <div
@@ -103,56 +215,69 @@ export function Sidebar({ className }: SidebarProps) {
         </button>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 space-y-1 px-2 py-4">
-        {filteredNavItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href || 
-            (item.href !== '/admin' && pathname.startsWith(item.href));
+      {/* Program Context Display */}
+      {currentProgram && !isCollapsed && (
+        <div className="px-4 py-3 bg-blue-50 border-b border-blue-100">
+          <div className="flex items-center space-x-2">
+            <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+            <span className="text-sm font-medium text-blue-900">
+              {currentProgram.name}
+            </span>
+          </div>
+        </div>
+      )}
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "group flex items-center rounded-md px-2 py-2 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              )}
-              title={isCollapsed ? item.title : undefined}
-            >
-              <Icon
-                className={cn(
-                  "h-5 w-5 flex-shrink-0",
-                  isActive ? "text-blue-600" : "text-gray-400 group-hover:text-gray-500"
-                )}
-              />
-              {!isCollapsed && (
-                <span className="ml-3 truncate">{item.title}</span>
-              )}
-            </Link>
-          );
-        })}
+      {/* Navigation */}
+      <nav className="flex-1 px-3 py-4 space-y-6 overflow-y-auto">
+        {filteredSections.map((section, sectionIndex) => (
+          <div key={sectionIndex}>
+            <div className="space-y-1">
+              {section.items.map((item) => renderNavItem(item))}
+            </div>
+            {/* Add separator between sections when collapsed */}
+            {isCollapsed && sectionIndex < filteredSections.length - 1 && (
+              <div className="border-t border-gray-200 my-4"></div>
+            )}
+          </div>
+        ))}
+        
+        {/* Logout button */}
+        <div className="pt-4 border-t border-gray-200">
+          <button
+            onClick={handleLogout}
+            className="group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors w-full text-left text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+            title={isCollapsed ? 'Logout' : undefined}
+          >
+            <LogOut className="h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-gray-600" />
+            {!isCollapsed && (
+              <span className="ml-3 truncate">Logout</span>
+            )}
+          </button>
+        </div>
       </nav>
 
       {/* User info at bottom */}
-      {!isCollapsed && user && (
+      {user && (
         <div className="border-t border-gray-200 p-4">
           <div className="flex items-center">
-            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+            <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center">
               <span className="text-sm font-medium text-blue-600">
                 {user.full_name.split(' ')[0][0]}{user.full_name.split(' ')[1]?.[0] || ''}
               </span>
             </div>
-            <div className="ml-3 flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {user.full_name}
-              </p>
-              <p className="text-xs text-gray-500 truncate">
-                {user.role === 'admin' ? 'Administrator' : 'User'}
-              </p>
-            </div>
+            {!isCollapsed && (
+              <div className="ml-3 flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {user.full_name}
+                </p>
+                <p className="text-xs text-gray-500 truncate">
+                  {user.role === 'super_admin' ? 'Super Admin' : 
+                   user.role === 'program_admin' ? 'Program Admin' :
+                   user.role === 'program_coordinator' ? 'Program Coordinator' :
+                   user.role === 'tutor' ? 'Tutor' : 'User'}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}

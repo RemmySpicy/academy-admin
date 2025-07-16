@@ -21,7 +21,7 @@ import {
 import { studentApi } from '@/features/students/api/studentApi';
 import { Student, StudentStats } from '@/features/students/types';
 import { isApiSuccess, getApiErrorMessage } from '@/lib/api';
-import { useAuth } from '@/features/authentication/hooks/useRealAuth';
+import { useAuth } from '@/features/authentication/hooks';
 
 // Helper function to calculate age from date of birth
 const calculateAge = (dateOfBirth: string): number => {

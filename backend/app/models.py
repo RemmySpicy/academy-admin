@@ -12,6 +12,7 @@ from app.features.common.models.database import Base
 # Import all model classes
 from app.features.students.models.student import Student
 from app.features.authentication.models.user import User
+from app.features.authentication.models.user_program_assignment import UserProgramAssignment
 
 # Import curriculum models
 from app.features.curriculum.models.program import Program
@@ -33,6 +34,7 @@ __all__ = [
     "TimestampMixin",
     "Student",
     "User",
+    "UserProgramAssignment",
     "Program",
     "Course",
     "Curriculum",

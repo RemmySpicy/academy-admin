@@ -96,7 +96,7 @@ export function CurriculumCard({
         <div className="space-y-1 flex-1">
           <CardTitle className="text-sm font-medium">{item.name}</CardTitle>
           <CardDescription className="text-xs text-muted-foreground">
-            {item.code}
+            {item.code || 'No code'}
           </CardDescription>
         </div>
         <DropdownMenu>
@@ -137,14 +137,16 @@ export function CurriculumCard({
               variant="secondary"
               className={cn("text-xs", statusColors[item.status])}
             >
-              {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+              {item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Unknown'}
             </Badge>
-            <Badge
-              variant="outline"
-              className={cn("text-xs", difficultyColors[item.difficulty_level])}
-            >
-              {item.difficulty_level.charAt(0).toUpperCase() + item.difficulty_level.slice(1)}
-            </Badge>
+            {'difficulty_level' in item && item.difficulty_level && (
+              <Badge
+                variant="outline"
+                className={cn("text-xs", difficultyColors[item.difficulty_level])}
+              >
+                {item.difficulty_level.charAt(0).toUpperCase() + item.difficulty_level.slice(1)}
+              </Badge>
+            )}
           </div>
           <span className="text-muted-foreground">
             {formatDuration(item.duration_hours || (item as Program).duration_weeks)}

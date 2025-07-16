@@ -1,10 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { RealAuthProvider } from '@/features/authentication/hooks/useRealAuth'
-import { QueryProvider } from '@/components/providers/QueryProvider'
-import { ToastProvider } from '@/components/providers/ToastProvider'
-import { Toaster } from '@/components/ui/toaster'
+import { ClientProviders } from '@/components/providers/ClientProviders'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -21,13 +18,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className} suppressHydrationWarning={true}>
-        <QueryProvider>
-          <RealAuthProvider>
-            {children}
-            <ToastProvider />
-            <Toaster />
-          </RealAuthProvider>
-        </QueryProvider>
+        <ClientProviders>
+          {children}
+        </ClientProviders>
       </body>
     </html>
   )

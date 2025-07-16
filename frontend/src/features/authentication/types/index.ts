@@ -3,7 +3,8 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'super_admin' | 'program_admin';
+  full_name: string;
+  role: 'super_admin' | 'program_admin' | 'program_coordinator' | 'tutor';
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -41,13 +42,13 @@ export interface CreateUserData {
   password: string;
   firstName: string;
   lastName: string;
-  role: 'super_admin' | 'program_admin';
+  role: 'super_admin' | 'program_admin' | 'program_coordinator' | 'tutor';
   programIds?: string[];
 }
 
 export interface UpdateUserData {
   firstName?: string;
   lastName?: string;
-  role?: 'super_admin' | 'program_admin';
+  role?: 'super_admin' | 'program_admin' | 'program_coordinator' | 'tutor';
   isActive?: boolean;
 }

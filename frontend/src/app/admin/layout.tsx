@@ -1,4 +1,5 @@
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { RouteGuard } from '@/features/authentication/components/RouteGuard';
 
 export default function AdminLayout({
   children,
@@ -6,8 +7,10 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <DashboardLayout>
-      {children}
-    </DashboardLayout>
+    <RouteGuard>
+      <DashboardLayout>
+        {children}
+      </DashboardLayout>
+    </RouteGuard>
   );
 }

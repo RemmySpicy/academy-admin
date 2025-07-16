@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     
     # CORS origins
-    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+    CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
     
     @property
     def BACKEND_CORS_ORIGINS(self) -> List[str]:

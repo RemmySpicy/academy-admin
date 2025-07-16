@@ -7,11 +7,11 @@ from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field, validator
 
 from .common import (
-    CurriculumStatusEnum,
     DifficultyLevelEnum,
     TimestampMixin,
     PaginatedResponse,
 )
+from app.features.common.models.enums import CurriculumStatus
 
 
 class ProgramBase(BaseModel):
@@ -21,7 +21,7 @@ class ProgramBase(BaseModel):
     description: Optional[str] = Field(None, description="Program description")
     program_code: str = Field(..., min_length=1, max_length=20, description="Unique program code")
     category: Optional[str] = Field(None, max_length=100, description="Program category")
-    status: CurriculumStatusEnum = Field(default=CurriculumStatusEnum.DRAFT, description="Program status")
+    status: CurriculumStatus = Field(default=CurriculumStatus.ACTIVE, description="Program status")
     display_order: int = Field(default=0, description="Display order for sorting")
     
     @validator('program_code')
@@ -51,7 +51,7 @@ class ProgramUpdate(BaseModel):
     description: Optional[str] = Field(None)
     program_code: Optional[str] = Field(None, min_length=1, max_length=20)
     category: Optional[str] = Field(None, max_length=100)
-    status: Optional[CurriculumStatusEnum] = Field(None)
+    status: Optional[CurriculumStatus] = Field(None)
     display_order: Optional[int] = Field(None)
     
     @validator('program_code')
@@ -109,7 +109,7 @@ class ProgramSearchParams(BaseModel):
     """Parameters for program search and filtering."""
     
     search: Optional[str] = Field(None, min_length=1, max_length=255, description="Search query")
-    status: Optional[CurriculumStatusEnum] = Field(None, description="Filter by status")
+    status: Optional[CurriculumStatus] = Field(None, description="Filter by status")
     category: Optional[str] = Field(None, description="Filter by category")
     sort_by: Optional[str] = Field("display_order", description="Sort field")
     sort_order: Optional[str] = Field("asc", pattern="^(asc|desc)$", description="Sort order")
@@ -131,7 +131,7 @@ class ProgramTreeResponse(BaseModel):
     id: str = Field(..., description="Program ID")
     name: str = Field(..., description="Program name")
     program_code: str = Field(..., description="Program code")
-    status: CurriculumStatusEnum = Field(..., description="Program status")
+    status: CurriculumStatus = Field(..., description="Program status")
     courses: List[Dict[str, Any]] = Field(default=[], description="List of courses with their curricula")
     
     class Config:

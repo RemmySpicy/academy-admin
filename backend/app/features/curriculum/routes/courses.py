@@ -66,7 +66,7 @@ async def list_courses(
     per_page: int = Query(20, ge=1, le=100, description="Items per page"),
     search: Optional[str] = Query(None, description="Search query"),
     program_id: Optional[str] = Query(None, description="Filter by program ID"),
-    status: Optional[str] = Query(None, description="Filter by status"),
+    status_filter: Optional[str] = Query(None, description="Filter by status"),
     duration_weeks_min: Optional[int] = Query(None, ge=1, description="Minimum duration weeks"),
     duration_weeks_max: Optional[int] = Query(None, ge=1, description="Maximum duration weeks"),
     sort_by: Optional[str] = Query("display_order", description="Sort field"),
@@ -80,11 +80,11 @@ async def list_courses(
     try:
         # Build search parameters
         search_params = None
-        if any([search, program_id, status, duration_weeks_min, duration_weeks_max, sort_by]):
+        if any([search, program_id, status_filter, duration_weeks_min, duration_weeks_max, sort_by]):
             search_params = CourseSearchParams(
                 search=search,
                 program_id=program_id,
-                status=status,
+                status=status_filter,
                 duration_weeks_min=duration_weeks_min,
                 duration_weeks_max=duration_weeks_max,
                 sort_by=sort_by,

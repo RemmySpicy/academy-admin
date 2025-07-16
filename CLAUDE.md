@@ -3,42 +3,143 @@
 ## Project Overview
 Academy Management System built with modern full-stack technologies for comprehensive educational institution management.
 
-## Current Implementation Status (Last Updated: 2025-07-10)
+## Current Implementation Status (Last Updated: 2025-07-16)
 
 ### ✅ Completed Features
 - **Database Schema**: PostgreSQL with Alembic migrations
   - Core tables: users, students, programs, courses, curricula
+  - **NEW**: `user_program_assignments` junction table for many-to-many relationships
   - UUID extension enabled for primary keys
   - Proper foreign key relationships and indexes
-- **Authentication System**: JWT-based authentication with admin user
-  - Default admin credentials: `admin@academy.com` / `admin123`
+  - **NEW**: Updated user role system (super_admin, program_admin, program_coordinator, tutor)
+
+- **Authentication System**: JWT-based authentication with role-based access control
+  - **UPDATED**: Role-based user accounts and credentials
+  - Default admin credentials: `admin@academy.com` / `admin123` (Super Admin)
+  - Program admin credentials: `swim.admin@academy.com` / `swim123` (Program Admin)
+  - **NEW**: Role-based authentication flow with automatic redirects
+  - **NEW**: Route protection with RouteGuard component
+  - **FIXED**: CORS configuration properly working for cross-origin requests
+  - **FIXED**: SQLAlchemy model relationships and imports
+  - **NEW**: Standardized `useAuth` naming convention throughout codebase
   - Protected API endpoints with middleware
+
 - **Backend API**: FastAPI with comprehensive curriculum endpoints
   - Health checks, authentication routes
   - Curriculum management: programs, courses, curricula
+  - **NEW**: User program assignment management
+  - **NEW**: Program context middleware for API calls
   - Proper error handling and validation
+
 - **Frontend Foundation**: Next.js 15 with App Router
   - Route groups for auth and dashboard
   - shadcn/ui components integrated
   - React Query for data fetching
-  - Authentication flow working
-- **Curriculum Management**: Basic CRUD operations
+  - **NEW**: Complete role-based authentication flow
+  - **NEW**: Program context management with Zustand store
+  - **NEW**: Simple HTTP client for reliable API communication
+  - **FIXED**: Client/server component separation for Next.js 15 compatibility
+
+- **Program-Centric Architecture**: Complete restructuring for multi-program support
+  - **NEW**: Program switcher component in header
+  - **NEW**: Program context state management
+  - **NEW**: Automatic program context injection into API calls
+  - **NEW**: Program-based data filtering throughout application
+
+- **Navigation & UI**: Completely reorganized interface
+  - **NEW**: Sectioned sidebar navigation (Program Management + Academy Administration)
+  - **NEW**: Role-based sidebar filtering
+  - **NEW**: Maintained collapse/expand functionality
+  - **NEW**: Academy Administration module for super admins
+
+- **User Management**: Multi-role system implementation
+  - **NEW**: Team management pages with role-based access
+  - **NEW**: Payments management placeholder pages
+  - **NEW**: User program assignment system
+  - **NEW**: Migrated existing data to Swimming program
+
+- **Curriculum Management**: Enhanced with program context
   - Programs: 5 test programs created (Robotics, AI/ML, Web Dev, Sports, Arts)
   - API endpoints: `/api/v1/curriculum/programs/`
   - Frontend pages: `/admin/curriculum` with tabbed interface
+  - **NEW**: Program-scoped curriculum management
 
-### 🚧 In Progress
-- Frontend curriculum pages refinement
-- API error handling improvements
-- Additional curriculum hierarchy levels
+### 🚧 Recently Completed (2025-07-16)
+- **Authentication & API Fixes**: 
+  - Resolved CORS and 500 error issues with login functionality
+  - Fixed SQLAlchemy UserProgramAssignment model import errors
+  - Created robust HTTP client for reliable API communication
+  - Standardized authentication naming (`useAuth` throughout codebase)
+- **Program-Centric Architecture**: Complete restructuring with role-based access control
+- **Authentication Flow**: Role-based redirects and route protection
+- **Program Context Management**: Global state management with Zustand
+- **Academy Administration**: Super admin module for system-wide management
+- **User Management**: Team and Payment management pages with role-based access
 
 ### 📋 Planned Features
-- Students management CRUD
-- Location management
-- Scheduling system
-- Assessment and grading
-- Payment management
-- Reporting and analytics
+- Enhanced students management with program context
+- Location management system
+- Advanced scheduling system
+- Assessment and grading modules
+- Enhanced payment processing
+- Comprehensive reporting and analytics
+
+## Recent Issue Resolutions & Troubleshooting (2025-07-16)
+
+### 🚨 **Critical Authentication & CORS Issues Fixed**
+
+#### **Issue 1: CORS Policy Blocking Login Requests**
+**Symptoms**: 
+```
+Access to fetch at 'http://localhost:8000/api/v1/auth/login/json' from origin 'http://localhost:3000' 
+has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present
+```
+
+**Root Cause**: Missing HTTP methods (`POST`, `GET`, etc.) in the API client
+
+**Solution**: Created dedicated HTTP client (`/frontend/src/lib/api/httpClient.ts`) with proper:
+- CORS-compatible headers
+- Standard HTTP methods (`GET`, `POST`, `PUT`, `DELETE`)
+- Consistent error handling and response formatting
+
+#### **Issue 2: Backend 500 Internal Server Error**
+**Symptoms**: Authentication API returning 500 errors during login attempts
+
+**Root Cause**: SQLAlchemy model relationship error - `UserProgramAssignment` not properly imported
+
+**Solution**: 
+- Added `UserProgramAssignment` to `/backend/app/models.py` imports
+- Updated `/backend/app/features/authentication/models/__init__.py` exports
+- Fixed SQLAlchemy relationship mapping in User model
+
+#### **Issue 3: Frontend Build Errors with JSX**
+**Symptoms**: `.ts` files containing JSX causing compilation errors
+
+**Solution**:
+- Renamed `programContextInitializer.ts` → `programContextInitializer.tsx`
+- Added React import: `import React, { useEffect } from 'react';`
+- Created `ClientProviders.tsx` wrapper for proper client/server component separation
+
+#### **Issue 4: Authentication Hook Naming Conflicts**
+**Symptoms**: Import conflicts between `useAuth` and `useRealAuth`
+
+**Solution**:
+- Standardized to `useAuth` throughout codebase
+- Removed `useRealAuth` naming and related exports
+- Updated all import statements to use consistent authentication hooks
+
+### 🔧 **Key Files Modified for Fixes**:
+- `/backend/app/models.py` - Added UserProgramAssignment imports
+- `/frontend/src/lib/api/httpClient.ts` - New HTTP client implementation
+- `/frontend/src/features/authentication/api/authApiService.ts` - Updated to use HTTP client
+- `/frontend/src/features/authentication/hooks/useAuth.tsx` - Standardized naming
+- `/frontend/src/components/providers/ClientProviders.tsx` - Client/server separation
+
+### ✅ **Verification Steps**:
+1. **Backend Health**: `curl http://localhost:8000/api/v1/health/`
+2. **Authentication Test**: `curl -X POST http://localhost:8000/api/v1/auth/login/json -H "Content-Type: application/json" -d '{"username":"admin","password":"admin123"}'`
+3. **Frontend Build**: All containers should show "healthy" status
+4. **Login Flow**: Should work without CORS or 500 errors
 
 ## Technology Stack (Updated 2025)
 
@@ -179,20 +280,39 @@ If you encounter issues with Docker setup:
 - Test data already created: 5 curriculum programs in the database
 - `npm run db:setup` - Run production database setup script
 
-### Default Admin User Setup
-✅ **Admin user already created and ready to use:**
+### Multi-Role User Setup (UPDATED)
+✅ **Role-based user accounts are created and ready to use:**
 
-**Default Admin Credentials:**
+#### **Super Admin Account**
 - **Username**: `admin`
 - **Email**: `admin@academy.com`
 - **Password**: `admin123`
+- **Role**: `super_admin`
+- **Access**: All programs + Academy Administration
 
-**Login Process:**
+#### **Program Admin Account**
+- **Username**: `swim.admin`
+- **Email**: `swim.admin@academy.com`
+- **Password**: `swim123`
+- **Role**: `program_admin`
+- **Access**: Swimming program only
+
+#### **Login Process & Role-Based Redirects:**
 1. Navigate to `http://localhost:3000/login`
-2. Enter admin credentials
-3. Access curriculum management at `http://localhost:3000/admin/curriculum`
+2. Enter credentials for desired role
+3. **Automatic role-based redirect**:
+   - **Super Admin** → `/admin` (main dashboard)
+   - **Program Admin** → `/admin` (program dashboard)
+   - **Coordinators** → `/admin/students` (student-focused)
+   - **Tutors** → `/admin/students` (student interaction)
 
-⚠️ **Important**: Change the default password immediately after first login in production!
+#### **Testing Different Role Experiences:**
+- Login as Super Admin to access Academy Administration
+- Login as Program Admin to experience program-scoped interface
+- Use the program switcher (Super Admin) to test multi-program access
+- Test route protection by accessing unauthorized URLs
+
+⚠️ **Important**: Change all default passwords immediately after first login in production!
 
 ### Local PostgreSQL Database
 - `npm run db:local:up` - Start PostgreSQL database only
@@ -231,6 +351,142 @@ If you encounter issues with Docker setup:
 - `npm run clean` - Clean build artifacts and dependencies
 - `npm run build:all` - Build all applications for production
 
+## Program-Centric Architecture (NEW)
+
+The Academy Admin system has been completely restructured to support multi-program organizations with role-based access control.
+
+### 🏗️ **Architecture Overview**
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Super Admin   │    │  Program Admin  │    │ Prog. Coord/    │
+│                 │    │                 │    │ Tutor           │
+│ • All Programs  │    │ • Assigned      │    │ • Assigned      │
+│ • Academy Mgmt  │    │   Programs      │    │   Programs      │
+│ • User Mgmt     │    │ • Team Mgmt     │    │ • Student Focus │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+        │                        │                        │
+        └────────────────────────┼────────────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │  Program Context │
+                    │   Management     │
+                    │                 │
+                    │ • Auto Context  │
+                    │ • API Filtering │
+                    │ • State Mgmt    │
+                    └─────────────────┘
+```
+
+### 🎯 **Role-Based Access Control**
+
+#### **Super Admin** (`super_admin`)
+- **Access**: All programs + Academy Administration
+- **Landing**: `/admin` (main dashboard)
+- **Capabilities**:
+  - Manage all programs across the academy
+  - Create/edit/delete programs and locations
+  - Manage user accounts and assign program access
+  - Access Academy Administration section
+  - Override program context for system-wide operations
+
+#### **Program Admin** (`program_admin`)
+- **Access**: Assigned programs only
+- **Landing**: `/admin` (program dashboard)
+- **Capabilities**:
+  - Full management within assigned programs
+  - Team management and user coordination
+  - Payment processing for their programs
+  - Student and curriculum management
+  - Cannot access Academy Administration
+
+#### **Program Coordinator** (`program_coordinator`)
+- **Access**: Assigned programs only
+- **Landing**: `/admin/students` (student-focused)
+- **Capabilities**:
+  - Student management and progress tracking
+  - Curriculum access and scheduling
+  - Limited team visibility
+  - Cannot manage payments or administrative functions
+
+#### **Tutor** (`tutor`)
+- **Access**: Assigned programs only
+- **Landing**: `/admin/students` (student interaction)
+- **Capabilities**:
+  - Student interaction and basic management
+  - View curriculum and schedules
+  - Limited access to program information
+  - Cannot manage other users or payments
+
+### 🔄 **Program Context Management**
+
+#### **Context Switching**
+- **Header Program Switcher**: Users with access to multiple programs can switch context
+- **Automatic API Filtering**: All API calls automatically include program context
+- **State Persistence**: Program selection persists across browser sessions
+- **Real-time Updates**: Context changes immediately affect all data views
+
+#### **Data Scoping**
+```typescript
+// Automatic program context injection
+const students = await studentApi.getStudents(); // Automatically filtered by current program
+const payments = await paymentApi.getPayments(); // Program-scoped data only
+
+// Academy Administration bypass
+const allPrograms = await programApi.getPrograms({ bypassProgramFilter: true }); // Super admin only
+```
+
+### 🗂️ **Navigation Structure**
+
+#### **Program Management Section**
+Available to all roles (data scoped by program):
+- **Students**: Student management and progress tracking
+- **Curriculum**: Program-specific curriculum management
+- **Scheduling**: Program scheduling and calendar
+- **Team**: Team member management (admin roles only)
+- **Payments**: Payment processing (admin roles only)
+
+#### **Academy Administration Section**
+Available to Super Admin only:
+- **Programs**: Create/manage academy programs
+- **Locations**: Manage academy locations and facilities
+- **Users**: User account management and program assignments
+- **Settings**: System-wide configuration and settings
+
+### 🔐 **Security Implementation**
+
+#### **Route Protection**
+- **RouteGuard Component**: Protects all admin routes
+- **Role Validation**: Checks user permissions for each route
+- **Program Requirements**: Validates program access for non-super-admin users
+- **Automatic Redirects**: Redirects unauthorized users to appropriate pages
+
+#### **API Security**
+- **Program Context Middleware**: Automatically scopes API requests
+- **Role-Based Endpoints**: Different access levels per endpoint
+- **Data Isolation**: Users only see data for their assigned programs
+- **Super Admin Override**: Bypass program filtering for system operations
+
+### 📊 **User Experience**
+
+#### **Seamless Context Switching**
+- Users with multiple program access can switch seamlessly
+- All data views update automatically with context changes
+- Persistent program selection across sessions
+- Clear visual indicators of current program context
+
+#### **Role-Appropriate Landing**
+- **Super Admin**: Full dashboard with academy overview
+- **Program Admin**: Program-focused dashboard with management tools
+- **Coordinators**: Student-centric view with program context
+- **Tutors**: Simple interface focused on student interaction
+
+#### **Progressive Access Control**
+- Features progressively available based on role hierarchy
+- Graceful degradation for insufficient permissions
+- Clear feedback for access-denied scenarios
+- Contextual help and navigation guidance
+
 ## API Endpoints
 
 ### Base URLs
@@ -241,13 +497,29 @@ If you encounter issues with Docker setup:
 - **Database**: PostgreSQL on localhost:5432 (consistent across all environments)
 
 ### Working API Endpoints
-✅ **Authentication**:
-- `POST /api/v1/auth/login` - User login
-- `POST /api/v1/auth/logout` - User logout
-- `GET /api/v1/auth/me` - Get current user
 
-✅ **Curriculum Management**:
-- `GET /api/v1/curriculum/programs/` - List programs (requires auth)
+✅ **Authentication** (Enhanced with role-based features - **VERIFIED WORKING**):
+- `POST /api/v1/auth/login` - OAuth2 form-based login
+- `POST /api/v1/auth/login/json` - **PRIMARY**: JSON-based login (used by frontend)
+- `POST /api/v1/auth/logout` - User logout
+- `GET /api/v1/auth/me` - Get current user with role and program assignments
+
+✅ **Program Management** (NEW - Program Context):
+- `GET /api/v1/programs/` - List all programs (Super Admin) or assigned programs
+- `POST /api/v1/programs/` - Create program (Super Admin only)
+- `GET /api/v1/programs/{id}` - Get specific program
+- `PUT /api/v1/programs/{id}` - Update program (Admin roles)
+- `DELETE /api/v1/programs/{id}` - Delete program (Super Admin only)
+- `GET /api/v1/programs/{id}/users` - Get program users (Admin roles)
+- `POST /api/v1/programs/{id}/users` - Assign user to program (Super Admin)
+
+✅ **User Program Assignments** (NEW):
+- `GET /api/v1/users/{user_id}/programs` - Get user's program assignments
+- `POST /api/v1/users/{user_id}/programs` - Assign user to program (Super Admin)
+- `DELETE /api/v1/users/{user_id}/programs/{program_id}` - Remove program assignment
+
+✅ **Curriculum Management** (Enhanced with program context):
+- `GET /api/v1/curriculum/programs/` - List programs (automatically program-scoped)
 - `POST /api/v1/curriculum/programs/` - Create program (requires auth)
 - `GET /api/v1/curriculum/programs/{id}` - Get specific program
 - `PUT /api/v1/curriculum/programs/{id}` - Update program
@@ -256,9 +528,34 @@ If you encounter issues with Docker setup:
 ✅ **Health & Status**:
 - `GET /api/v1/health/` - API health check (no auth required)
 
-### Test Data Available
-- 5 Programs: Robotics Engineering, AI & Machine Learning, Web Development, Sports Training, Arts & Creative
-- All programs have proper IDs, codes, categories, and descriptions
+### Program Context API Behavior
+
+All API endpoints now support program context parameters:
+
+```typescript
+// Automatic program context (for non-super-admin users)
+GET /api/v1/students/ → Returns students for current program only
+
+// Manual program context
+GET /api/v1/students/?program_id=123 → Returns students for specific program
+
+// Bypass program filtering (Super Admin only)
+GET /api/v1/students/?bypass_program_filter=true → Returns all students across programs
+```
+
+### Role-Based API Access
+- **Super Admin**: Full access to all endpoints, can bypass program filtering
+- **Program Admin**: Access to endpoints within assigned programs
+- **Program Coordinator**: Limited access within assigned programs
+- **Tutor**: Read-only access within assigned programs
+
+### Test Data Available ✅ **VERIFIED WORKING**
+- **5 Programs**: Robotics Engineering, AI & Machine Learning, Web Development, Sports Training, Arts & Creative
+- **User Accounts** (Login tested and functional): 
+  - **Super Admin**: `admin@academy.com` / `admin123` → Full access + Academy Administration
+  - **Program Admin**: `swim.admin@academy.com` / `swim123` → Swimming program access only
+- **Program Assignments**: Existing data migrated to Swimming program
+- **Authentication Flow**: CORS and 500 errors resolved, login working properly
 
 ## shadcn/ui Configuration
 The project uses shadcn/ui as the primary UI component library:
@@ -510,15 +807,21 @@ Claude will automatically spawn sub-agents for:
 5. **Testing**: Write comprehensive tests for all layers
 6. **Documentation**: Update API docs and user guides
 
-## Version Information (Last Updated: 2025-01-08)
-This project is configured with the latest stable versions as of January 2025. Key framework versions:
+## Version Information (Last Updated: 2025-07-16)
+This project is configured with the latest stable versions as of July 2025. Key framework versions:
 - Next.js 15.3.5 (latest stable)
 - React 18.3.1 
 - TypeScript 5.7.2
 - Tailwind CSS 3.4.17
 - FastAPI 0.115.12
 
-### Recent Updates
+### Recent Updates (2025-07-16)
+- ✅ **Critical Bug Fixes**: Resolved authentication CORS and 500 errors
+- ✅ **HTTP Client**: New reliable API communication layer
+- ✅ **Model Relationships**: Fixed SQLAlchemy UserProgramAssignment imports
+- ✅ **Authentication Standardization**: Unified `useAuth` naming convention
+- ✅ **Client/Server Separation**: Proper Next.js 15 component architecture
+- ✅ **Production Ready**: All containers healthy and login functional
 - ✅ **Deployment Optimization**: Separate deployment strategy implemented
 - ✅ **Environment Configuration**: Production-ready environment setup
 - ✅ **Database Strategy**: Managed database service integration

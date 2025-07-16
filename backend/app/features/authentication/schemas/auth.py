@@ -91,13 +91,13 @@ class UserCreate(BaseModel):
     email: EmailStr = Field(..., description="Email address")
     password: str = Field(..., min_length=8, max_length=255, description="Password")
     full_name: str = Field(..., min_length=1, max_length=200, description="Full name")
-    role: str = Field(default="user", description="User role")
+    role: str = Field(default="program_admin", description="User role")
     is_active: bool = Field(default=True, description="Whether user is active")
     
     @validator("role")
     def validate_role(cls, v):
         """Validate user role."""
-        allowed_roles = ["user", "manager", "admin"]
+        allowed_roles = ["super_admin", "program_admin", "program_coordinator", "tutor"]
         if v not in allowed_roles:
             raise ValueError(f"Role must be one of: {allowed_roles}")
         return v
@@ -109,7 +109,7 @@ class UserCreate(BaseModel):
                 "email": "john.doe@academy.com",
                 "password": "securepassword123",
                 "full_name": "John Doe",
-                "role": "user",
+                "role": "program_admin",
                 "is_active": True
             }
         }
@@ -128,7 +128,7 @@ class UserUpdate(BaseModel):
     def validate_role(cls, v):
         """Validate user role."""
         if v is not None:
-            allowed_roles = ["user", "manager", "admin"]
+            allowed_roles = ["super_admin", "program_admin", "program_coordinator", "tutor"]
             if v not in allowed_roles:
                 raise ValueError(f"Role must be one of: {allowed_roles}")
         return v

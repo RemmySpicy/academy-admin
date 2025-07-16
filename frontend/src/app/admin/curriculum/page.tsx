@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, BookOpen, Users, Target, BarChart3, GraduationCap } from 'lucide-react';
 import Link from 'next/link';
-import { usePrograms, useCourses, useCurricula } from '@/lib/hooks/useCurriculum';
+import { useCourses, useCurricula } from '@/lib/hooks/useCurriculum';
 import { CurriculumCard } from '@/components/curriculum/CurriculumCard';
 import { SearchAndFilter } from '@/components/curriculum/SearchAndFilter';
 import { Pagination } from '@/components/curriculum/Pagination';
@@ -16,16 +16,13 @@ import { SearchParams } from '@/lib/api/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CurriculumPage() {
-  const [activeTab, setActiveTab] = useState('programs');
+  const [activeTab, setActiveTab] = useState('courses');
   const [searchParams, setSearchParams] = useState<SearchParams>({
     page: 1,
     per_page: 12,
   });
 
   // Fetch data based on active tab
-  const { data: programsData, isLoading: programsLoading } = usePrograms(
-    activeTab === 'programs' ? searchParams : { page: 1, per_page: 1 }
-  );
   const { data: coursesData, isLoading: coursesLoading } = useCourses(
     activeTab === 'courses' ? searchParams : { page: 1, per_page: 1 }
   );
@@ -58,8 +55,6 @@ export default function CurriculumPage() {
 
   const getCurrentData = () => {
     switch (activeTab) {
-      case 'programs':
-        return { data: programsData, isLoading: programsLoading };
       case 'courses':
         return { data: coursesData, isLoading: coursesLoading };
       case 'curricula':
@@ -77,33 +72,19 @@ export default function CurriculumPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Curriculum Management</h1>
           <p className="text-muted-foreground">
-            Manage your academy's educational content and structure
+            Manage courses and curricula within your program
           </p>
         </div>
         <Button asChild>
-          <Link href="/admin/curriculum/programs/new">
+          <Link href="/admin/curriculum/courses/new">
             <Plus className="mr-2 h-4 w-4" />
-            New Program
+            New Course
           </Link>
         </Button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Programs</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {programsData?.total || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Educational programs
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Courses</CardTitle>
@@ -148,8 +129,7 @@ export default function CurriculumPage() {
 
       {/* Main Content with Tabs */}
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="programs">Programs</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="courses">Courses</TabsTrigger>
           <TabsTrigger value="curricula">Curricula</TabsTrigger>
         </TabsList>
@@ -162,56 +142,6 @@ export default function CurriculumPage() {
           />
         </div>
 
-        <TabsContent value="programs" className="space-y-4">
-          {currentLoading ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i}>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <div className="space-y-1 flex-1">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-3 w-32" />
-                    </div>
-                    <Skeleton className="h-8 w-8" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between text-sm mb-4">
-                      <Skeleton className="h-4 w-16" />
-                      <Skeleton className="h-4 w-12" />
-                    </div>
-                    <div className="flex gap-2">
-                      <Skeleton className="h-8 w-16" />
-                      <Skeleton className="h-8 w-16" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {currentData?.items?.map((program) => (
-                  <CurriculumCard
-                    key={program.id}
-                    item={program}
-                    type="program"
-                    onView={(item) => window.location.href = `/admin/curriculum/programs/${item.id}`}
-                    onEdit={(item) => window.location.href = `/admin/curriculum/programs/${item.id}/edit`}
-                    onDelete={(item) => console.log('Delete:', item)}
-                  />
-                ))}
-              </div>
-              
-              {currentData && currentData.total_pages > 1 && (
-                <Pagination
-                  currentPage={currentData.page}
-                  totalPages={currentData.total_pages}
-                  onPageChange={handlePageChange}
-                />
-              )}
-            </>
-          )}
-        </TabsContent>
 
         <TabsContent value="courses" className="space-y-4">
           {currentLoading ? (

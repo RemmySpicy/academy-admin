@@ -69,7 +69,7 @@ async def list_curricula(
     course_id: Optional[str] = Query(None, description="Filter by course ID"),
     program_id: Optional[str] = Query(None, description="Filter by program ID"),
     difficulty_level: Optional[str] = Query(None, description="Filter by difficulty level"),
-    status: Optional[str] = Query(None, description="Filter by status"),
+    status_filter: Optional[str] = Query(None, description="Filter by status"),
     min_age_from: Optional[int] = Query(None, ge=3, description="Minimum age filter from"),
     min_age_to: Optional[int] = Query(None, ge=3, description="Minimum age filter to"),
     sort_by: Optional[str] = Query("display_order", description="Sort field"),
@@ -83,13 +83,13 @@ async def list_curricula(
     try:
         # Build search parameters
         search_params = None
-        if any([search, course_id, program_id, difficulty_level, status, min_age_from, min_age_to, sort_by]):
+        if any([search, course_id, program_id, difficulty_level, status_filter, min_age_from, min_age_to, sort_by]):
             search_params = CurriculumSearchParams(
                 search=search,
                 course_id=course_id,
                 program_id=program_id,
                 difficulty_level=difficulty_level,
-                status=status,
+                status=status_filter,
                 min_age_from=min_age_from,
                 min_age_to=min_age_to,
                 sort_by=sort_by,

@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { Eye, EyeOff, Loader2, GraduationCap, Shield, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '../hooks/useRealAuth';
+import { useAuth } from '../hooks';
 
 const loginSchema = z.object({
   username: z
@@ -23,7 +23,7 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 interface LoginFormProps {
-  onSuccess?: () => void;
+  onSuccess?: (user: any) => void;
 }
 
 export function LoginForm({ onSuccess }: LoginFormProps) {
@@ -50,7 +50,10 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
     try {
       await login(data);
-      onSuccess?.();
+      // The user should be available in the auth context after successful login
+      // We'll pass it to the success callback for role-based redirect
+      const { user: loggedInUser } = useAuth();
+      onSuccess?.(loggedInUser);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {

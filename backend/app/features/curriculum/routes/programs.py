@@ -63,7 +63,7 @@ async def list_programs(
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(20, ge=1, le=100, description="Items per page"),
     search: Optional[str] = Query(None, description="Search query"),
-    status: Optional[str] = Query(None, description="Filter by status"),
+    status_filter: Optional[str] = Query(None, description="Filter by status"),
     category: Optional[str] = Query(None, description="Filter by category"),
     sort_by: Optional[str] = Query("display_order", description="Sort field"),
     sort_order: Optional[str] = Query("asc", pattern="^(asc|desc)$", description="Sort order")
@@ -76,10 +76,10 @@ async def list_programs(
     try:
         # Build search parameters
         search_params = None
-        if any([search, status, category, sort_by]):
+        if any([search, status_filter, category, sort_by]):
             search_params = ProgramSearchParams(
                 search=search,
-                status=status,
+                status=status_filter,
                 category=category,
                 sort_by=sort_by,
                 sort_order=sort_order

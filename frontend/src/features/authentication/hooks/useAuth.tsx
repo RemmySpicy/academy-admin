@@ -1,8 +1,33 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, LoginCredentials, AuthContextType } from '../types';
-import { authService } from '../api/authService';
+import { authApiService } from '../api/authApiService';
+
+// Types for the auth context
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  full_name: string;
+  role: string;
+  is_active: boolean;
+  last_login?: string;
+  created_at: string;
+}
+
+interface LoginCredentials {
+  username: string;
+  password: string;
+}
+
+interface AuthContextType {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -14,24 +39,47 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check authentication status on mount
+  // Initialize authentication on mount
   useEffect(() => {
-    const checkAuth = () => {
-      if (authService.isAuthenticated()) {
-        const currentUser = authService.getCurrentUser();
-        setUser(currentUser);
+    const initAuth = async () => {
+      try {
+        // Initialize auth from storage and set up API client
+        const storedUser = authApiService.initializeAuth();
+        if (storedUser && authApiService.isAuthenticated()) {
+          setUser(storedUser);
+          
+          // Verify with server
+          const response = await authApiService.getCurrentUser();
+          if (response.success) {
+            setUser(response.data);
+          } else {
+            // If server verification fails, clear auth
+            authApiService.clearAuth();
+            setUser(null);
+          }
+        }
+      } catch (error) {
+        // Clear auth on any error
+        authApiService.clearAuth();
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
-    checkAuth();
+    initAuth();
   }, []);
 
   const login = async (credentials: LoginCredentials): Promise<void> => {
     setIsLoading(true);
     try {
-      const response = await authService.login(credentials);
-      setUser(response.user);
+      const response = await authApiService.login(credentials.username, credentials.password);
+      
+      if (response.success) {
+        setUser(response.data.user);
+      } else {
+        throw new Error(response.error || 'Login failed');
+      }
     } catch (error) {
       throw error;
     } finally {
@@ -39,9 +87,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const logout = (): void => {
-    authService.logout();
-    setUser(null);
+  const logout = async (): Promise<void> => {
+    setIsLoading(true);
+    try {
+      // Call logout API (optional, don't throw on failure)
+      await authApiService.logout();
+    } catch (error) {
+      // Ignore logout API errors
+      console.warn('Logout API call failed:', error);
+    } finally {
+      // Always clear local auth data
+      authApiService.clearAuth();
+      setUser(null);
+      setIsLoading(false);
+    }
+  };
+
+  const refreshUser = async (): Promise<void> => {
+    try {
+      const response = await authApiService.getCurrentUser();
+      if (response.success) {
+        setUser(response.data);
+      } else {
+        // If refresh fails, clear auth
+        authApiService.clearAuth();
+        setUser(null);
+      }
+    } catch (error) {
+      authApiService.clearAuth();
+      setUser(null);
+    }
   };
 
   const value: AuthContextType = {
@@ -49,7 +124,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isAuthenticated: !!user,
     isLoading,
     login,
-    logout
+    logout,
+    refreshUser,
   };
 
   return (
