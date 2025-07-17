@@ -3,7 +3,7 @@
 ## Project Overview
 Academy Management System built with modern full-stack technologies for comprehensive educational institution management.
 
-## Current Implementation Status (Last Updated: 2025-07-16)
+## Current Implementation Status (Last Updated: 2025-07-17)
 
 ### ✅ Completed Features
 - **Database Schema**: PostgreSQL with Alembic migrations
@@ -29,6 +29,9 @@ Academy Management System built with modern full-stack technologies for comprehe
   - Curriculum management: programs, courses, curricula
   - **NEW**: User program assignment management
   - **NEW**: Program context middleware for API calls
+  - **NEW**: HTTP header-based program context (`X-Program-Context`)
+  - **NEW**: Super admin bypass functionality (`X-Bypass-Program-Filter`)
+  - **NEW**: Automatic program filtering for all course endpoints
   - Proper error handling and validation
 
 - **Frontend Foundation**: Next.js 15 with App Router
@@ -37,14 +40,19 @@ Academy Management System built with modern full-stack technologies for comprehe
   - React Query for data fetching
   - **NEW**: Complete role-based authentication flow
   - **NEW**: Program context management with Zustand store
-  - **NEW**: Simple HTTP client for reliable API communication
+  - **NEW**: Enhanced HTTP client with automatic program context injection
+  - **NEW**: Unsaved changes protection system
+  - **NEW**: Safe program switching with data loss prevention
   - **FIXED**: Client/server component separation for Next.js 15 compatibility
 
 - **Program-Centric Architecture**: Complete restructuring for multi-program support
-  - **NEW**: Program switcher component in header
-  - **NEW**: Program context state management
-  - **NEW**: Automatic program context injection into API calls
+  - **NEW**: Program switcher component with unsaved changes indicators
+  - **NEW**: Program context state management with Zustand
+  - **NEW**: Automatic program context injection via HTTP headers
   - **NEW**: Program-based data filtering throughout application
+  - **NEW**: Super admin explicit program selection (one at a time)
+  - **NEW**: Role-based program access validation
+  - **NEW**: Data isolation and security enforcement
 
 - **Navigation & UI**: Completely reorganized interface
   - **NEW**: Sectioned sidebar navigation (Program Management + Academy Administration)
@@ -60,21 +68,29 @@ Academy Management System built with modern full-stack technologies for comprehe
 
 - **Curriculum Management**: Enhanced with program context
   - Programs: 5 test programs created (Robotics, AI/ML, Web Dev, Sports, Arts)
-  - API endpoints: `/api/v1/curriculum/programs/`
+  - API endpoints: `/api/v1/programs/` and `/api/v1/courses/`
   - Frontend pages: `/admin/curriculum` with tabbed interface
   - **NEW**: Program-scoped curriculum management
+  - **NEW**: Course management with full program context integration
+  - **NEW**: Automatic program filtering for all course operations
+  - **NEW**: Role-based course access control
 
-### 🚧 Recently Completed (2025-07-16)
-- **Authentication & API Fixes**: 
-  - Resolved CORS and 500 error issues with login functionality
-  - Fixed SQLAlchemy UserProgramAssignment model import errors
-  - Created robust HTTP client for reliable API communication
-  - Standardized authentication naming (`useAuth` throughout codebase)
-- **Program-Centric Architecture**: Complete restructuring with role-based access control
-- **Authentication Flow**: Role-based redirects and route protection
-- **Program Context Management**: Global state management with Zustand
-- **Academy Administration**: Super admin module for system-wide management
-- **User Management**: Team and Payment management pages with role-based access
+### 🚧 Recently Completed (2025-07-17)
+- **Program-Centric Architecture Implementation**: Complete integration across backend and frontend
+  - HTTP header-based program context (`X-Program-Context`, `X-Bypass-Program-Filter`)
+  - Backend middleware for automatic program filtering and access control
+  - Frontend HTTP client with automatic context injection
+  - Course management system fully integrated with program context
+- **Unsaved Changes Protection**: Data loss prevention during program switching
+  - Unsaved changes detection and tracking system
+  - Safe program switching with user confirmation dialogs
+  - Visual indicators for unsaved changes in program switcher
+  - Context switching safeguards with save/discard options
+- **Enhanced Security & Data Isolation**: 
+  - Role-based program access validation
+  - Automatic data scoping for all API endpoints
+  - Super admin bypass functionality for cross-program operations
+  - Program context validation and error handling
 
 ### 📋 Planned Features
 - Enhanced students management with program context
@@ -84,62 +100,6 @@ Academy Management System built with modern full-stack technologies for comprehe
 - Enhanced payment processing
 - Comprehensive reporting and analytics
 
-## Recent Issue Resolutions & Troubleshooting (2025-07-16)
-
-### 🚨 **Critical Authentication & CORS Issues Fixed**
-
-#### **Issue 1: CORS Policy Blocking Login Requests**
-**Symptoms**: 
-```
-Access to fetch at 'http://localhost:8000/api/v1/auth/login/json' from origin 'http://localhost:3000' 
-has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present
-```
-
-**Root Cause**: Missing HTTP methods (`POST`, `GET`, etc.) in the API client
-
-**Solution**: Created dedicated HTTP client (`/frontend/src/lib/api/httpClient.ts`) with proper:
-- CORS-compatible headers
-- Standard HTTP methods (`GET`, `POST`, `PUT`, `DELETE`)
-- Consistent error handling and response formatting
-
-#### **Issue 2: Backend 500 Internal Server Error**
-**Symptoms**: Authentication API returning 500 errors during login attempts
-
-**Root Cause**: SQLAlchemy model relationship error - `UserProgramAssignment` not properly imported
-
-**Solution**: 
-- Added `UserProgramAssignment` to `/backend/app/models.py` imports
-- Updated `/backend/app/features/authentication/models/__init__.py` exports
-- Fixed SQLAlchemy relationship mapping in User model
-
-#### **Issue 3: Frontend Build Errors with JSX**
-**Symptoms**: `.ts` files containing JSX causing compilation errors
-
-**Solution**:
-- Renamed `programContextInitializer.ts` → `programContextInitializer.tsx`
-- Added React import: `import React, { useEffect } from 'react';`
-- Created `ClientProviders.tsx` wrapper for proper client/server component separation
-
-#### **Issue 4: Authentication Hook Naming Conflicts**
-**Symptoms**: Import conflicts between `useAuth` and `useRealAuth`
-
-**Solution**:
-- Standardized to `useAuth` throughout codebase
-- Removed `useRealAuth` naming and related exports
-- Updated all import statements to use consistent authentication hooks
-
-### 🔧 **Key Files Modified for Fixes**:
-- `/backend/app/models.py` - Added UserProgramAssignment imports
-- `/frontend/src/lib/api/httpClient.ts` - New HTTP client implementation
-- `/frontend/src/features/authentication/api/authApiService.ts` - Updated to use HTTP client
-- `/frontend/src/features/authentication/hooks/useAuth.tsx` - Standardized naming
-- `/frontend/src/components/providers/ClientProviders.tsx` - Client/server separation
-
-### ✅ **Verification Steps**:
-1. **Backend Health**: `curl http://localhost:8000/api/v1/health/`
-2. **Authentication Test**: `curl -X POST http://localhost:8000/api/v1/auth/login/json -H "Content-Type: application/json" -d '{"username":"admin","password":"admin123"}'`
-3. **Frontend Build**: All containers should show "healthy" status
-4. **Login Flow**: Should work without CORS or 500 errors
 
 ## Technology Stack (Updated 2025)
 
@@ -244,33 +204,12 @@ For backend development, choose one of these approaches:
 - `docker compose exec frontend sh` - Access frontend container shell
 
 ### Docker Troubleshooting
-If you encounter issues with Docker setup:
-
-1. **Environment Variables Not Loading**:
-   - Use `docker compose --env-file .env.docker up` to explicitly specify env file
-   - Verify `.env.docker` exists and contains all required variables
-
-2. **Build Context Too Large**:
-   - Ensure `.dockerignore` files exist in both `frontend/` and `backend/` directories
-   - `.dockerignore` should exclude `node_modules`, `.next`, `__pycache__`, etc.
-
-3. **Database Connection Issues**:
-   - Ensure PostgreSQL is running and accessible
-   - Backend should connect to PostgreSQL at `postgresql://admin:password@db:5432/academy_admin`
-
-4. **CORS Errors**:
-   - Frontend in Docker accesses backend via `http://localhost:8000` (external)
-   - Backend CORS should allow `http://localhost:3000` origin
-   - Check browser console for specific CORS error messages
-
-5. **Port Conflicts**:
-   - Ensure ports 3000, 8000, 5432 are not in use by other services
-   - Use `docker compose down` to clean up before restarting
-
-6. **Container Dependencies**:
-   - Database must be healthy before backend starts
-   - Backend must be healthy before frontend starts
-   - Check logs with `docker compose logs [service]`
+Common Docker issues:
+- **Environment Variables**: Use `docker compose --env-file .env.docker up` 
+- **Build Context**: Ensure `.dockerignore` files exist in both directories
+- **Database Connection**: Backend connects to `postgresql://admin:password@db:5432/academy_admin`
+- **Port Conflicts**: Ensure ports 3000, 8000, 5432 are available
+- **Container Dependencies**: Database → Backend → Frontend startup order
 
 ### Database Management
 - `docker compose exec backend alembic upgrade head` - Run database migrations
@@ -378,6 +317,43 @@ The Academy Admin system has been completely restructured to support multi-progr
                     └─────────────────┘
 ```
 
+### 🚨 **CRITICAL: Route Structure Architecture**
+
+**⚠️ IMPORTANT: Programs are the TOP-LEVEL CONTEXT, not nested under courses!**
+
+```
+✅ CORRECT STRUCTURE:
+/admin/academy/programs/        ← Academy Administration (Super Admin)
+/admin/courses/                 ← Program-scoped courses
+/admin/students/                ← Program-scoped students
+/admin/locations/               ← Program-scoped locations
+
+❌ INCORRECT STRUCTURE:
+/admin/courses/programs/        ← NEVER nest programs under courses!
+```
+
+**Why This Matters:**
+- **Programs define the data context** - they determine what data users can see
+- **Courses exist within programs** - not the other way around
+- **Program selection filters ALL data** across students, courses, locations, etc.
+- **Academy Administration** manages programs themselves (Super Admin only)
+- **Program Management** operates within the selected program context
+
+**API Endpoints Structure:**
+```
+✅ CORRECT:
+/api/v1/programs/              ← Program management (Academy Admin)
+/api/v1/courses/               ← Program-scoped courses
+/api/v1/students/              ← Program-scoped students
+
+❌ INCORRECT:
+/api/v1/courses/programs/      ← NEVER nest programs under courses!
+/api/v1/curriculum/programs/   ← Old deprecated structure
+```
+
+**Development Rule:**
+> **When adding new features, always ask: "Is this Academy Administration (managing programs) or Program Management (operating within a program)?"**
+
 ### 🎯 **Role-Based Access Control**
 
 #### **Super Admin** (`super_admin`)
@@ -418,40 +394,69 @@ The Academy Admin system has been completely restructured to support multi-progr
   - Limited access to program information
   - Cannot manage other users or payments
 
-### 🔄 **Program Context Management**
+### 🔄 **Program Context Management** (FULLY IMPLEMENTED)
 
-#### **Context Switching**
-- **Header Program Switcher**: Users with access to multiple programs can switch context
-- **Automatic API Filtering**: All API calls automatically include program context
+#### **HTTP Header-Based Context Injection**
+- **X-Program-Context**: Current program ID automatically included in all API requests
+- **X-Bypass-Program-Filter**: Super admin bypass flag for cross-program operations
+- **Automatic Validation**: Backend middleware validates program access for each request
+- **Security Enforcement**: Users can only access data from their assigned programs
+
+#### **Context Switching with Data Protection**
+- **Safe Program Switching**: Unsaved changes detection prevents data loss
+- **Visual Indicators**: Program switcher shows unsaved changes status
+- **User Confirmation**: Prompt to save/discard before switching programs
 - **State Persistence**: Program selection persists across browser sessions
 - **Real-time Updates**: Context changes immediately affect all data views
 
-#### **Data Scoping**
+#### **Implementation Architecture**
 ```typescript
-// Automatic program context injection
-const students = await studentApi.getStudents(); // Automatically filtered by current program
-const payments = await paymentApi.getPayments(); // Program-scoped data only
+// Frontend: Automatic program context injection
+const courses = await courseApi.getCourses(); // Automatically includes X-Program-Context header
+const students = await studentApi.getStudents(); // Program-scoped data only
 
-// Academy Administration bypass
-const allPrograms = await programApi.getPrograms({ bypassProgramFilter: true }); // Super admin only
+// Backend: Automatic program filtering
+@router.get("/courses")
+async def get_courses(
+    program_context: str = Depends(get_program_filter),  # Auto-injected from header
+    current_user: dict = Depends(get_current_active_user)
+):
+    # All data automatically filtered by program_context
+
+// Super Admin: Explicit bypass for cross-program operations
+httpClient.setBypassProgramFilter(true);
+const allPrograms = await programApi.getPrograms(); // Bypass program filtering
 ```
 
 ### 🗂️ **Navigation Structure**
 
-#### **Program Management Section**
-Available to all roles (data scoped by program):
-- **Students**: Student management and progress tracking
-- **Curriculum**: Program-specific curriculum management
-- **Scheduling**: Program scheduling and calendar
-- **Team**: Team member management (admin roles only)
-- **Payments**: Payment processing (admin roles only)
+#### **Program Management Section** (All Roles - Program-Scoped)
+**Routes**: `/admin/students/`, `/admin/courses/`, `/admin/locations/`, etc.
+**Context**: Data filtered by current program selection
+**Available to**: All roles (data scoped by their assigned programs)
 
-#### **Academy Administration Section**
-Available to Super Admin only:
-- **Programs**: Create/manage academy programs
-- **Locations**: Manage academy locations and facilities
-- **Users**: User account management and program assignments
-- **Settings**: System-wide configuration and settings
+- **Students** (`/admin/students/`): Student management and progress tracking
+- **Courses** (`/admin/courses/`): Program-specific course management
+- **Locations** (`/admin/locations/`): Program-specific location management
+- **Scheduling** (`/admin/scheduling/`): Program scheduling and calendar
+- **Team** (`/admin/team/`): Team member management (admin roles only)
+- **Payments** (`/admin/payments/`): Payment processing (admin roles only)
+
+#### **Academy Administration Section** (Super Admin Only)
+**Routes**: `/admin/academy/programs/`, `/admin/academy/users/`, etc.
+**Context**: Academy-wide operations, bypasses program filtering
+**Available to**: Super Admin only
+
+- **Programs** (`/admin/academy/programs/`): Create/manage academy programs
+- **Users** (`/admin/academy/users/`): User account management and program assignments
+- **Locations** (`/admin/academy/locations/`): Manage academy locations and facilities
+- **Settings** (`/admin/academy/settings/`): System-wide configuration and settings
+
+#### **Key Architectural Principles**
+1. **Programs are managed in Academy Administration** (`/admin/academy/programs/`)
+2. **Everything else operates within program context** (`/admin/courses/`, `/admin/students/`, etc.)
+3. **Never nest programs under other features** - programs are the top-level context
+4. **API endpoints follow the same pattern** - `/api/v1/programs/` vs `/api/v1/courses/`
 
 ### 🔐 **Security Implementation**
 
@@ -461,19 +466,23 @@ Available to Super Admin only:
 - **Program Requirements**: Validates program access for non-super-admin users
 - **Automatic Redirects**: Redirects unauthorized users to appropriate pages
 
-#### **API Security**
-- **Program Context Middleware**: Automatically scopes API requests
-- **Role-Based Endpoints**: Different access levels per endpoint
-- **Data Isolation**: Users only see data for their assigned programs
-- **Super Admin Override**: Bypass program filtering for system operations
+#### **API Security** (FULLY IMPLEMENTED)
+- **Program Context Middleware**: HTTP header extraction and validation (`app/middleware/program_context.py`)
+- **Dependency Injection**: `get_program_filter` dependency for automatic context injection
+- **Role-Based Filtering**: Different access levels per user role
+- **Data Isolation**: Strict program-based data filtering for all endpoints
+- **Access Validation**: Backend validates user program assignments before data access
+- **Super Admin Override**: `X-Bypass-Program-Filter` header for cross-program operations
 
 ### 📊 **User Experience**
 
-#### **Seamless Context Switching**
-- Users with multiple program access can switch seamlessly
-- All data views update automatically with context changes
-- Persistent program selection across sessions
-- Clear visual indicators of current program context
+#### **Seamless Context Switching with Data Protection**
+- **Safe Switching**: Unsaved changes protection prevents data loss during program switches
+- **Visual Feedback**: Program switcher shows context status and unsaved changes indicators
+- **User Confirmation**: Automatic prompts to save/discard unsaved changes
+- **Context Memory**: Program selection persists across browser sessions
+- **Real-time Updates**: All data views update automatically with context changes
+- **Error Handling**: Clear feedback for access-denied scenarios
 
 #### **Role-Appropriate Landing**
 - **Super Admin**: Full dashboard with academy overview
@@ -518,30 +527,51 @@ Available to Super Admin only:
 - `POST /api/v1/users/{user_id}/programs` - Assign user to program (Super Admin)
 - `DELETE /api/v1/users/{user_id}/programs/{program_id}` - Remove program assignment
 
-✅ **Curriculum Management** (Enhanced with program context):
-- `GET /api/v1/curriculum/programs/` - List programs (automatically program-scoped)
-- `POST /api/v1/curriculum/programs/` - Create program (requires auth)
-- `GET /api/v1/curriculum/programs/{id}` - Get specific program
-- `PUT /api/v1/curriculum/programs/{id}` - Update program
-- `DELETE /api/v1/curriculum/programs/{id}` - Delete program
+
+✅ **Course Management** (NEW - Full Program Context Integration):
+- `GET /api/v1/courses/` - List courses (program-filtered automatically)
+- `POST /api/v1/courses/` - Create course (program context enforced)
+- `GET /api/v1/courses/{id}` - Get course (program access validated)
+- `PUT /api/v1/courses/{id}` - Update course (program scoped)
+- `DELETE /api/v1/courses/{id}` - Delete course (program scoped)
+- `GET /api/v1/courses/stats/` - Course statistics (program filtered)
+- `GET /api/v1/courses/{id}/tree` - Course tree structure
+- `GET /api/v1/courses/curricula/` - List curricula under courses
+- `GET /api/v1/courses/lessons/` - List lessons under courses
+- `GET /api/v1/courses/assessments/` - List assessments under courses
 
 ✅ **Health & Status**:
 - `GET /api/v1/health/` - API health check (no auth required)
 
-### Program Context API Behavior
+### Program Context API Behavior (FULLY IMPLEMENTED)
 
-All API endpoints now support program context parameters:
+All API endpoints now support automatic program context via HTTP headers:
 
 ```typescript
-// Automatic program context (for non-super-admin users)
-GET /api/v1/students/ → Returns students for current program only
+// Frontend: Automatic program context injection
+const courses = await courseApi.getCourses(); 
+// → Request includes: X-Program-Context: current-program-id
+// → Returns: Only courses for current program
 
-// Manual program context
-GET /api/v1/students/?program_id=123 → Returns students for specific program
+// Backend: Automatic program filtering
+@router.get("/courses")
+async def get_courses(
+    program_context: str = Depends(get_program_filter)  # Auto-injected from header
+):
+    # program_context contains validated program ID or None for super admin bypass
 
-// Bypass program filtering (Super Admin only)
-GET /api/v1/students/?bypass_program_filter=true → Returns all students across programs
+// Super Admin: Explicit bypass for cross-program operations
+httpClient.setBypassProgramFilter(true);
+const allCourses = await courseApi.getCourses();
+// → Request includes: X-Bypass-Program-Filter: true
+// → Returns: All courses across all programs
 ```
+
+### HTTP Header Implementation
+- **X-Program-Context**: `program-id` - Current program context (auto-injected by frontend)
+- **X-Bypass-Program-Filter**: `true` - Super admin bypass flag (manual control)
+- **Automatic Validation**: Backend middleware validates program access for each request
+- **Security**: Users can only access data from their assigned programs
 
 ### Role-Based API Access
 - **Super Admin**: Full access to all endpoints, can bypass program filtering
@@ -651,38 +681,11 @@ Always run these before committing:
 
 ## Security Configuration
 
-### Security Headers Middleware
-The backend now includes comprehensive security headers:
-
-- **Content Security Policy (CSP)**: Restricts resource loading
-- **HTTP Strict Transport Security (HSTS)**: Forces HTTPS in production
-- **X-Frame-Options**: Prevents clickjacking (DENY)
-- **X-Content-Type-Options**: Prevents MIME type sniffing (nosniff)
-- **X-XSS-Protection**: Enables XSS filtering
-- **Referrer-Policy**: Controls referrer information
-- **Permissions-Policy**: Restricts browser features
-
-### Rate Limiting Middleware
-- **Default Limits**: 100 requests per 60 seconds per IP
-- **Temporary Blocking**: 5-minute block after rate limit exceeded
-- **Excluded Paths**: `/health`, `/docs`, `/openapi.json`
+### Security Features
+- **Security Headers**: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, X-XSS-Protection
+- **Rate Limiting**: 100 requests per 60 seconds per IP with temporary blocking
+- **Request Logging**: Method, path, client IP, processing time
 - **Configuration**: Customizable in `backend/app/middleware/security.py`
-
-### Request Logging Middleware
-- **Request Logging**: Method, path, client IP, user agent
-- **Response Logging**: Status code, processing time
-- **Performance Headers**: X-Process-Time header added to responses
-- **Security Events**: Rate limit violations and blocked IPs logged
-
-### Security Implementation
-```python
-# Security middleware is automatically applied in main.py
-from app.middleware.security import SecurityHeadersMiddleware, RateLimitMiddleware, LoggingMiddleware
-
-app.add_middleware(SecurityHeadersMiddleware)
-app.add_middleware(RateLimitMiddleware, calls=100, period=60)
-app.add_middleware(LoggingMiddleware)
-```
 
 ### Component Development
 - Use shadcn/ui components as the foundation
@@ -715,49 +718,51 @@ The Academy Admin system is designed for **separate deployment** of frontend, ba
 ```
 
 ### Deployment Options
-
-#### Recommended Stack (PaaS)
-- **Frontend**: [Vercel](https://vercel.com) - Optimized for Next.js
-- **Backend**: [Railway](https://railway.app) - Simple FastAPI deployment
-- **Database**: [Supabase](https://supabase.com) - Managed PostgreSQL
-
-#### Alternative Options
-- **Frontend**: Netlify, Cloudflare Pages, AWS Amplify
-- **Backend**: Render, Heroku, Fly.io, DigitalOcean App Platform
-- **Database**: AWS RDS, Google Cloud SQL, PlanetScale
-
-### Environment Configuration
-
-#### Development vs Production
-- **Development**: Uses Docker Compose for local development
-- **Production**: Uses managed cloud services for scalability
-
-#### Database Folder Usage
-- **Development**: `database/init/` scripts initialize local PostgreSQL
-- **Production**: Run `python database/production_setup.py` once on managed database
-- **Ongoing**: Backend uses Alembic migrations for schema changes
+- **Frontend**: Vercel (recommended), Netlify, Cloudflare Pages
+- **Backend**: Railway (recommended), Render, Heroku, Fly.io
+- **Database**: Supabase (recommended), AWS RDS, Google Cloud SQL
 
 ### Deployment Commands
-```bash
-# Setup production environment
-npm run setup:prod
-
-# Database setup (run once)
-npm run db:setup --database-url "your-production-database-url"
-
-# Production build and deployment checks
-npm run deploy:build
-```
-
-### Quick Deployment Guide
-1. **Database**: Create Supabase project and run initialization script
-2. **Backend**: Deploy to Railway with environment variables
-3. **Frontend**: Deploy to Vercel with API URL configuration
-4. **Configuration**: Update CORS origins and environment variables
-
-For detailed deployment instructions, see [`DEPLOYMENT.md`](./DEPLOYMENT.md).
+- `npm run setup:prod` - Setup production environment
+- `npm run deploy:build` - Production build and deployment checks
 
 ## New Feature Development
+
+### 🚨 **CRITICAL: Program Context Architecture Rules**
+
+**Before implementing ANY new feature, determine its architectural placement:**
+
+#### **Academy Administration Features** (`/admin/academy/`)
+**When**: Managing programs, users, system settings
+**Who**: Super Admin only
+**API**: `/api/v1/programs/`, `/api/v1/users/`, `/api/v1/settings/`
+**Context**: Academy-wide, bypasses program filtering
+
+**Examples:**
+- Creating/editing/deleting programs
+- Managing user accounts and program assignments
+- System-wide settings and configurations
+- Academy-wide reporting and analytics
+
+#### **Program Management Features** (`/admin/`)
+**When**: Managing data within a specific program
+**Who**: All roles (data scoped by program)
+**API**: `/api/v1/courses/`, `/api/v1/students/`, `/api/v1/locations/`
+**Context**: Program-scoped, automatic filtering
+
+**Examples:**
+- Student management and enrollment
+- Course creation and curriculum design
+- Location management and scheduling
+- Program-specific reporting and analytics
+
+#### **Development Checklist**
+Before creating any new feature:
+- [ ] **Is this Academy Administration or Program Management?**
+- [ ] **What role(s) should have access?**
+- [ ] **Should data be program-scoped or academy-wide?**
+- [ ] **Are you following the correct route structure?**
+- [ ] **Are you using the correct API endpoints?**
 
 ### Adding New Features
 When adding features not currently in the specs:
@@ -805,9 +810,8 @@ Claude will automatically spawn sub-agents for:
 3. **Backend**: Implement API endpoints and business logic
 4. **Frontend**: Build UI components and integration
 5. **Testing**: Write comprehensive tests for all layers
-6. **Documentation**: Update API docs and user guides
 
-## Version Information (Last Updated: 2025-07-16)
+## Version Information (Last Updated: 2025-07-17)
 This project is configured with the latest stable versions as of July 2025. Key framework versions:
 - Next.js 15.3.5 (latest stable)
 - React 18.3.1 
@@ -815,19 +819,20 @@ This project is configured with the latest stable versions as of July 2025. Key 
 - Tailwind CSS 3.4.17
 - FastAPI 0.115.12
 
-### Recent Updates (2025-07-16)
-- ✅ **Critical Bug Fixes**: Resolved authentication CORS and 500 errors
-- ✅ **HTTP Client**: New reliable API communication layer
-- ✅ **Model Relationships**: Fixed SQLAlchemy UserProgramAssignment imports
-- ✅ **Authentication Standardization**: Unified `useAuth` naming convention
-- ✅ **Client/Server Separation**: Proper Next.js 15 component architecture
-- ✅ **Production Ready**: All containers healthy and login functional
-- ✅ **Deployment Optimization**: Separate deployment strategy implemented
-- ✅ **Environment Configuration**: Production-ready environment setup
-- ✅ **Database Strategy**: Managed database service integration
-- ✅ **Production Scripts**: Comprehensive build and deployment automation
-- ✅ **Docker Support**: Optional containerized deployment configurations
-- ✅ **Next.js 15 Structure**: Route groups and loading/error boundaries implemented
+### Recent Updates (2025-07-17)
+- ✅ **Program-Centric Architecture**: Complete HTTP header-based implementation
+- ✅ **Course Management**: Full program context integration with security
+- ✅ **Unsaved Changes Protection**: Data loss prevention during context switching
+- ✅ **Enhanced HTTP Client**: Automatic program context injection
+- ✅ **Backend Middleware**: Program filtering and access validation
+- ✅ **Safe Program Switching**: User confirmation with save/discard options
+- ✅ **Visual Feedback**: Program switcher with context status indicators
+- ✅ **Security Enforcement**: Role-based data isolation and access control
+- ✅ **ARCHITECTURAL CLARIFICATION**: Fixed incorrect program nesting structure
+  - **REMOVED**: `/admin/courses/programs/` (incorrect nesting)
+  - **CONFIRMED**: `/admin/academy/programs/` (Academy Administration)
+  - **PRINCIPLE**: Programs are TOP-LEVEL CONTEXT, never nested under courses
+  - **DOCUMENTATION**: Added comprehensive architectural guidelines to prevent future confusion
 
 ## Next.js 15 Folder Structure Standards
 
@@ -878,80 +883,10 @@ When adding new routes/features, **ALWAYS** include:
 2. **error.tsx** - Error boundary with recovery options
 3. **page.tsx** - Main route component
 
-#### Loading UI Standards
-```typescript
-// loading.tsx template
-export default function FeatureLoading() {
-  return (
-    <div className="p-6 space-y-6">
-      <div className="animate-pulse">
-        {/* Feature-specific skeleton */}
-        <div className="h-8 bg-gray-200 rounded w-48 mb-6"></div>
-        <div className="space-y-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-4 bg-gray-200 rounded"></div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-```
-
-#### Error UI Standards  
-```typescript
-// error.tsx template
-'use client';
-
-import { useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-
-export default function FeatureError({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
-  useEffect(() => {
-    console.error('Feature error:', error);
-  }, [error]);
-
-  return (
-    <div className="p-6">
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-red-600">
-              Feature Error
-            </CardTitle>
-            <CardDescription>
-              Something went wrong loading this feature
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-gray-600 text-center">
-              {error.message || 'An unexpected error occurred'}
-            </p>
-            <div className="flex gap-2">
-              <Button onClick={reset} variant="outline" className="flex-1">
-                Try Again
-              </Button>
-              <Button 
-                onClick={() => window.location.href = '/admin'} 
-                className="flex-1"
-              >
-                Go to Dashboard
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-```
+#### Loading & Error UI Standards
+- **loading.tsx**: Skeleton UI with `animate-pulse` class
+- **error.tsx**: Error boundary with recovery options and "Try Again" button
+- **Templates**: Use shadcn/ui components for consistent styling
 
 ### New Feature Development Rules
 
