@@ -78,7 +78,7 @@ class User(BaseModel):
     # Relationships
     program_assignments = relationship(
         "UserProgramAssignment",
-        foreign_keys="[UserProgramAssignment.user_id]",
+        foreign_keys="UserProgramAssignment.user_id",
         back_populates="user",
         cascade="all, delete-orphan"
     )

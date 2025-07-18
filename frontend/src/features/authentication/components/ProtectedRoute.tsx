@@ -3,6 +3,7 @@
 import { useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../hooks';
+import { useProgramContextInitializer } from '@/store';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
@@ -18,6 +19,9 @@ export function ProtectedRoute({
 }: ProtectedRouteProps) {
   const { isAuthenticated, user, isLoading } = useAuth();
   const router = useRouter();
+  
+  // Initialize program context when authenticated
+  const { isInitialized } = useProgramContextInitializer();
 
   useEffect(() => {
     if (!isLoading) {

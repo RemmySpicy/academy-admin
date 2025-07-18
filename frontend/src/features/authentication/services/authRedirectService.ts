@@ -47,16 +47,22 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
     description: 'Student management'
   },
   {
-    path: '/admin/curriculum',
+    path: '/admin/courses',
     allowedRoles: ['super_admin', 'program_admin', 'program_coordinator', 'tutor'],
     requiresProgram: true,
-    description: 'Curriculum management'
+    description: 'Courses management'
   },
   {
     path: '/admin/scheduling',
     allowedRoles: ['super_admin', 'program_admin', 'program_coordinator', 'tutor'],
     requiresProgram: true,
     description: 'Scheduling management'
+  },
+  {
+    path: '/admin/facilities',
+    allowedRoles: ['super_admin', 'program_admin', 'program_coordinator', 'tutor'],
+    requiresProgram: true,
+    description: 'Facility management'
   },
   {
     path: '/admin/team',
@@ -85,10 +91,10 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
     description: 'Academy program management'
   },
   {
-    path: '/admin/academy/locations',
+    path: '/admin/academy/facilities',
     allowedRoles: ['super_admin'],
     requiresProgram: false,
-    description: 'Academy location management'
+    description: 'Academy facility management'
   },
   {
     path: '/admin/academy/users',

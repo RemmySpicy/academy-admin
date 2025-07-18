@@ -19,8 +19,8 @@ export * from './students';
 // Scheduling Feature - empty for now
 // export * from './scheduling';
 
-// Locations Feature - empty for now
-// export * from './locations';
+// Facilities Feature - empty for now
+// export * from './facilities';
 
 // Common Feature - empty for now
 // export * from './common';

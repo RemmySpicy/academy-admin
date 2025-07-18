@@ -43,16 +43,18 @@ export function AcademyPrograms() {
   };
 
   const handleCreateProgram = () => {
-    // Navigate to create program page
-    window.location.href = '/admin/curriculum/programs/new';
+    // TODO: Implement inline program creation modal
+    console.log('Create program - to be implemented');
   };
 
   const handleViewProgram = (program: any) => {
-    window.location.href = `/admin/curriculum/programs/${program.id}`;
+    // TODO: Implement program details view/modal
+    console.log('View program:', program);
   };
 
   const handleEditProgram = (program: any) => {
-    window.location.href = `/admin/curriculum/programs/${program.id}/edit`;
+    // TODO: Implement inline program editing modal
+    console.log('Edit program:', program);
   };
 
   const handleDeleteProgram = async (program: any) => {

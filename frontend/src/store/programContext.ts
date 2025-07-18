@@ -12,6 +12,7 @@ import { ProgramContextState, Program, UserProgramAssignment, ProgramContextStor
 // API imports (temporary implementation until APIs are set up)
 import { programsApi } from '@/features/programs/api';
 import { userProgramAssignmentsApi } from '@/features/authentication/api/userProgramAssignments';
+import { httpClient } from '@/lib/api/httpClient';
 
 /**
  * Program Context Store
@@ -41,6 +42,9 @@ export const useProgramContext = create<ProgramContextState>()(
             currentProgram: program,
             error: null
           });
+          
+          // Update httpClient with program context
+          httpClient.setProgramContext(program?.id || null);
         },
 
         switchProgram: async (programId: string) => {
@@ -76,6 +80,9 @@ export const useProgramContext = create<ProgramContextState>()(
               currentProgram: program,
               isSwitchingProgram: false
             });
+            
+            // Update httpClient with new program context
+            httpClient.setProgramContext(program.id);
 
             // Optionally, trigger a refresh of program-specific data
             // This would be handled by individual feature stores
@@ -92,11 +99,14 @@ export const useProgramContext = create<ProgramContextState>()(
           set({ isLoadingPrograms: true, error: null });
 
           try {
+            console.log('Fetching program assignments for user:', userId);
             // Load user's program assignments
             const assignments = await userProgramAssignmentsApi.getUserProgramAssignments(userId);
+            console.log('Received program assignments:', assignments);
             
             // Extract programs from assignments
             const programs = assignments.map(assignment => assignment.program);
+            console.log('Extracted programs:', programs);
             
             // Set available programs and assignments
             set({ 
@@ -112,6 +122,9 @@ export const useProgramContext = create<ProgramContextState>()(
               if (defaultProgram) {
                 get().setCurrentProgram(defaultProgram);
               }
+            } else if (currentProgram) {
+              // Ensure httpClient is synced with current program
+              httpClient.setProgramContext(currentProgram.id);
             }
 
           } catch (error) {

@@ -54,13 +54,13 @@ const navigationSections: NavSection[] = [
         icon: GraduationCap
       },
       {
-        title: 'Curriculum',
-        href: '/admin/curriculum',
+        title: 'Courses',
+        href: '/admin/courses',
         icon: BookOpen
       },
       {
-        title: 'Locations',
-        href: '/admin/locations',
+        title: 'Facilities',
+        href: '/admin/facilities',
         icon: MapPin
       },
       {

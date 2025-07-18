@@ -72,9 +72,9 @@ const quickActions: QuickAction[] = [
     color: 'bg-blue-500'
   },
   {
-    title: 'Curriculum Management',
-    description: 'Build and organize curriculum, lessons, and assessments',
-    href: '/admin/curriculum',
+    title: 'Courses Management',
+    description: 'Build and organize courses, curricula, and content',
+    href: '/admin/courses',
     icon: BookOpen,
     color: 'bg-green-500'
   },
@@ -86,9 +86,9 @@ const quickActions: QuickAction[] = [
     color: 'bg-purple-500'
   },
   {
-    title: 'Location Management',
-    description: 'Manage academy locations and facility operations',
-    href: '/admin/locations',
+    title: 'Facility Management',
+    description: 'Manage academy facilities and equipment operations',
+    href: '/admin/facilities',
     icon: MapPin,
     color: 'bg-orange-500'
   },

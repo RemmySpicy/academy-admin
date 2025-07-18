@@ -21,7 +21,7 @@ from passlib.context import CryptContext
 from app.core.config import settings
 from app.features.authentication.models.user import User
 from app.features.authentication.models.user_program_assignment import UserProgramAssignment
-from app.features.curriculum.models.program import Program
+from app.features.courses.models.program import Program
 from app.features.students.models.student import Student
 
 

@@ -41,7 +41,7 @@ export const programsApi = {
     category?: string;
     search?: string;
   }): Promise<ProgramsApiResponse> => {
-    const response = await apiClient.get('/curriculum/programs/', { params });
+    const response = await apiClient.get('/programs/', { params });
     return response.data;
   },
 
@@ -66,7 +66,7 @@ export const programsApi = {
    * Get a single program by ID
    */
   getProgram: async (id: string): Promise<Program> => {
-    const response = await apiClient.get(`/curriculum/programs/${id}`);
+    const response = await apiClient.get(`/programs/${id}`);
     return response.data;
   },
 
@@ -74,7 +74,7 @@ export const programsApi = {
    * Create a new program
    */
   createProgram: async (data: CreateProgramData): Promise<Program> => {
-    const response = await apiClient.post('/curriculum/programs/', data);
+    const response = await apiClient.post('/programs/', data);
     return response.data;
   },
 
@@ -82,7 +82,7 @@ export const programsApi = {
    * Update an existing program
    */
   updateProgram: async (id: string, data: Partial<CreateProgramData>): Promise<Program> => {
-    const response = await apiClient.put(`/curriculum/programs/${id}`, data);
+    const response = await apiClient.put(`/programs/${id}`, data);
     return response.data;
   },
 
@@ -90,7 +90,7 @@ export const programsApi = {
    * Delete a program
    */
   deleteProgram: async (id: string): Promise<void> => {
-    await apiClient.delete(`/curriculum/programs/${id}`);
+    await apiClient.delete(`/programs/${id}`);
   },
 
   /**

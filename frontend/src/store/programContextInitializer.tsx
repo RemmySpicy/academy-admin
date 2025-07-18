@@ -36,8 +36,14 @@ export const useProgramContextInitializer = () => {
 
   useEffect(() => {
     if (authData.isAuthenticated && authData.user?.id) {
+      console.log('Loading programs for user:', authData.user.id);
       // Load user's programs when authenticated
       loadUserPrograms(authData.user.id);
+    } else {
+      console.log('User not authenticated or no user ID:', { 
+        isAuthenticated: authData.isAuthenticated, 
+        userId: authData.user?.id 
+      });
     }
   }, [authData.isAuthenticated, authData.user?.id, loadUserPrograms]);
 

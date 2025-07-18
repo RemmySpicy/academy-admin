@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { useProgramContextHooks } from '@/store';
+import { useSafeProgramSwitch } from '@/hooks/useSafeProgramSwitch';
 
 /**
  * Program Switcher Component
@@ -24,14 +25,19 @@ export function ProgramSwitcher() {
   const {
     currentProgram,
     availablePrograms,
-    switchProgram,
     error,
     clearError,
     isLoading,
-    isSwitchingProgram,
     canSwitchPrograms,
     currentProgramName,
   } = useProgramContextHooks();
+
+  const { 
+    switchProgram: safeSwitchProgram, 
+    isSwitching, 
+    canSwitch,
+    lastSwitchError 
+  } = useSafeProgramSwitch();
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -42,8 +48,11 @@ export function ProgramSwitcher() {
     }
 
     try {
-      await switchProgram(programId);
-      setIsOpen(false);
+      const switchSuccess = await safeSwitchProgram(programId);
+      if (switchSuccess) {
+        setIsOpen(false);
+      }
+      // If switch failed due to unsaved changes, dropdown stays open
     } catch (error) {
       console.error('Failed to switch program:', error);
     }
@@ -80,10 +89,10 @@ export function ProgramSwitcher() {
 
   return (
     <div className="flex items-center space-x-2">
-      {error && (
+      {(error || lastSwitchError) && (
         <div className="flex items-center space-x-1 px-2 py-1 bg-red-50 rounded-md">
           <AlertCircle className="h-3 w-3 text-red-500" />
-          <span className="text-xs text-red-600">{error}</span>
+          <span className="text-xs text-red-600">{error || lastSwitchError}</span>
           <Button
             variant="ghost"
             size="sm"
@@ -100,10 +109,11 @@ export function ProgramSwitcher() {
           <Button
             variant="ghost"
             className="flex items-center space-x-2 hover:bg-gray-50 px-3 py-1.5"
-            disabled={isSwitchingProgram}
+            disabled={isSwitching || !canSwitch}
+            title={!canSwitch ? "You have unsaved changes. Save or discard them before switching programs." : undefined}
           >
             <div className="flex items-center space-x-2">
-              <div className="h-2 w-2 bg-blue-500 rounded-full" />
+              <div className={`h-2 w-2 rounded-full ${canSwitch ? 'bg-blue-500' : 'bg-orange-500'}`} />
               <span className="text-sm font-medium text-gray-900">
                 {currentProgram?.name || 'Select Program'}
               </span>
@@ -112,8 +122,13 @@ export function ProgramSwitcher() {
                   {currentProgram.code}
                 </Badge>
               )}
+              {!canSwitch && (
+                <Badge variant="outline" className="text-xs text-orange-600">
+                  Unsaved
+                </Badge>
+              )}
             </div>
-            {isSwitchingProgram ? (
+            {isSwitching ? (
               <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
             ) : (
               <ChevronDown className="h-4 w-4 text-gray-400" />

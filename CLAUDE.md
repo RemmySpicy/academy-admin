@@ -75,6 +75,15 @@ Academy Management System built with modern full-stack technologies for comprehe
   - **NEW**: Automatic program filtering for all course operations
   - **NEW**: Role-based course access control
 
+- **Facility Management**: Complete physical facility management system
+  - **NEW**: Facilities API endpoints: `/api/v1/facilities/`
+  - **NEW**: Frontend facility management: `/admin/facilities/`
+  - **NEW**: Physical facility focus (pools, courts, gyms, fields)
+  - **NEW**: Equipment and amenities tracking
+  - **NEW**: Program-scoped facility management
+  - **NEW**: Role-based facility access control
+  - **NEW**: Comprehensive facility types and status management
+
 ### 🚧 Recently Completed (2025-07-17)
 - **Program-Centric Architecture Implementation**: Complete integration across backend and frontend
   - HTTP header-based program context (`X-Program-Context`, `X-Bypass-Program-Filter`)
@@ -91,10 +100,15 @@ Academy Management System built with modern full-stack technologies for comprehe
   - Automatic data scoping for all API endpoints
   - Super admin bypass functionality for cross-program operations
   - Program context validation and error handling
+- **Facility Management System Implementation**: Complete locations-to-facilities rename
+  - Renamed all "locations" references to "facilities" throughout codebase
+  - Updated mock data to reflect physical facilities (pools, courts, gyms)
+  - Enhanced facility management with equipment and amenities tracking
+  - Program context integration for facility management
+  - Updated navigation, API endpoints, and UI components
 
 ### 📋 Planned Features
 - Enhanced students management with program context
-- Location management system
 - Advanced scheduling system
 - Assessment and grading modules
 - Enhanced payment processing
@@ -326,7 +340,7 @@ The Academy Admin system has been completely restructured to support multi-progr
 /admin/academy/programs/        ← Academy Administration (Super Admin)
 /admin/courses/                 ← Program-scoped courses
 /admin/students/                ← Program-scoped students
-/admin/locations/               ← Program-scoped locations
+/admin/facilities/              ← Program-scoped facilities
 
 ❌ INCORRECT STRUCTURE:
 /admin/courses/programs/        ← NEVER nest programs under courses!
@@ -335,7 +349,7 @@ The Academy Admin system has been completely restructured to support multi-progr
 **Why This Matters:**
 - **Programs define the data context** - they determine what data users can see
 - **Courses exist within programs** - not the other way around
-- **Program selection filters ALL data** across students, courses, locations, etc.
+- **Program selection filters ALL data** across students, courses, facilities, etc.
 - **Academy Administration** manages programs themselves (Super Admin only)
 - **Program Management** operates within the selected program context
 
@@ -361,7 +375,7 @@ The Academy Admin system has been completely restructured to support multi-progr
 - **Landing**: `/admin` (main dashboard)
 - **Capabilities**:
   - Manage all programs across the academy
-  - Create/edit/delete programs and locations
+  - Create/edit/delete programs and facilities
   - Manage user accounts and assign program access
   - Access Academy Administration section
   - Override program context for system-wide operations
@@ -431,13 +445,13 @@ const allPrograms = await programApi.getPrograms(); // Bypass program filtering
 ### 🗂️ **Navigation Structure**
 
 #### **Program Management Section** (All Roles - Program-Scoped)
-**Routes**: `/admin/students/`, `/admin/courses/`, `/admin/locations/`, etc.
+**Routes**: `/admin/students/`, `/admin/courses/`, `/admin/facilities/`, etc.
 **Context**: Data filtered by current program selection
 **Available to**: All roles (data scoped by their assigned programs)
 
 - **Students** (`/admin/students/`): Student management and progress tracking
 - **Courses** (`/admin/courses/`): Program-specific course management
-- **Locations** (`/admin/locations/`): Program-specific location management
+- **Facilities** (`/admin/facilities/`): Program-specific facility management
 - **Scheduling** (`/admin/scheduling/`): Program scheduling and calendar
 - **Team** (`/admin/team/`): Team member management (admin roles only)
 - **Payments** (`/admin/payments/`): Payment processing (admin roles only)
@@ -449,7 +463,7 @@ const allPrograms = await programApi.getPrograms(); // Bypass program filtering
 
 - **Programs** (`/admin/academy/programs/`): Create/manage academy programs
 - **Users** (`/admin/academy/users/`): User account management and program assignments
-- **Locations** (`/admin/academy/locations/`): Manage academy locations and facilities
+- **Facilities** (`/admin/academy/facilities/`): Manage academy facilities and equipment
 - **Settings** (`/admin/academy/settings/`): System-wide configuration and settings
 
 #### **Key Architectural Principles**
@@ -526,6 +540,14 @@ const allPrograms = await programApi.getPrograms(); // Bypass program filtering
 - `GET /api/v1/users/{user_id}/programs` - Get user's program assignments
 - `POST /api/v1/users/{user_id}/programs` - Assign user to program (Super Admin)
 - `DELETE /api/v1/users/{user_id}/programs/{program_id}` - Remove program assignment
+
+✅ **Facility Management** (NEW - Full Program Context Integration):
+- `GET /api/v1/facilities/` - List facilities (program-filtered automatically)
+- `POST /api/v1/facilities/` - Create facility (program context enforced)
+- `GET /api/v1/facilities/{id}` - Get facility (program access validated)
+- `PUT /api/v1/facilities/{id}` - Update facility (program scoped)
+- `DELETE /api/v1/facilities/{id}` - Delete facility (program scoped)
+- `GET /api/v1/facilities/stats/` - Facility statistics (program filtered)
 
 
 ✅ **Course Management** (NEW - Full Program Context Integration):
@@ -635,7 +657,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
   - `auth` - Authentication tests
   - `database` - Database tests
   - `api` - API tests
-  - `student`, `curriculum`, `location`, `scheduling` - Feature-specific tests
+  - `student`, `curriculum`, `facility`, `scheduling` - Feature-specific tests
 
 ### Code Formatting & Linting
 
@@ -747,13 +769,13 @@ The Academy Admin system is designed for **separate deployment** of frontend, ba
 #### **Program Management Features** (`/admin/`)
 **When**: Managing data within a specific program
 **Who**: All roles (data scoped by program)
-**API**: `/api/v1/courses/`, `/api/v1/students/`, `/api/v1/locations/`
+**API**: `/api/v1/courses/`, `/api/v1/students/`, `/api/v1/facilities/`
 **Context**: Program-scoped, automatic filtering
 
 **Examples:**
 - Student management and enrollment
 - Course creation and curriculum design
-- Location management and scheduling
+- Facility management and scheduling
 - Program-specific reporting and analytics
 
 #### **Development Checklist**
@@ -857,7 +879,7 @@ src/app/
 │   │   ├── loading.tsx        # Loading UI for students
 │   │   └── error.tsx          # Error UI for students
 │   ├── curriculum/            # Route: /admin/curriculum
-│   ├── locations/             # Route: /admin/locations
+│   ├── facilities/           # Route: /admin/facilities
 │   ├── scheduling/            # Route: /admin/scheduling
 │   ├── settings/              # Route: /admin/settings
 │   ├── users/                 # Route: /admin/users

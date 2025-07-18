@@ -3,6 +3,7 @@
  */
 
 import { httpClient, ApiResponse } from '@/lib/api/httpClient';
+import { apiClient } from '@/lib/api';
 import { AUTH_STORAGE_KEY } from '@/lib/constants';
 
 // Types for authentication
@@ -90,6 +91,7 @@ export class AuthApiService {
       
       // Set token for future requests
       httpClient.setToken(access_token);
+      apiClient.setToken(access_token);
     }
 
     return response;
@@ -109,6 +111,7 @@ export class AuthApiService {
     document.cookie = `${TOKEN_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
     
     httpClient.setToken(null);
+    apiClient.setToken(null);
 
     return response;
   }
@@ -172,6 +175,7 @@ export class AuthApiService {
 
       // Set token for API client
       httpClient.setToken(token);
+      apiClient.setToken(token);
       
       // Ensure cookie is set (in case it was cleared)
       document.cookie = `${TOKEN_KEY}=${token}; path=/; max-age=${60 * 60 * 24 * 7}; secure; samesite=strict`;
@@ -194,6 +198,7 @@ export class AuthApiService {
     document.cookie = `${TOKEN_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
     
     httpClient.setToken(null);
+    apiClient.setToken(null);
   }
 
   /**

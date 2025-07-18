@@ -21,7 +21,7 @@ import type {
  * Academy Programs API Service
  */
 export class AcademyProgramsApiService {
-  private static readonly BASE_PATH = '/api/v1/curriculum/programs';
+  private static readonly BASE_PATH = '/api/v1/programs';
 
   /**
    * Get all programs (academy-wide, no program filtering)
