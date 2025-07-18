@@ -25,6 +25,15 @@ from app.features.courses.schemas.media import (
 )
 from .base_service import BaseService
 
+# Import related models for program context filtering
+from app.features.courses.models.lesson import Lesson
+from app.features.courses.models.section import Section
+from app.features.courses.models.module import Module
+from app.features.courses.models.level import Level
+from app.features.courses.models.curriculum import Curriculum
+from app.features.courses.models.course import Course
+from app.features.courses.models.program import Program
+
 
 class MediaService(BaseService[MediaLibrary, MediaLibraryCreate, MediaLibraryUpdate]):
     """Service for media library operations."""
@@ -103,9 +112,22 @@ class MediaService(BaseService[MediaLibrary, MediaLibraryCreate, MediaLibraryUpd
         
         return self._to_media_response(db, media)
     
-    def get_media(self, db: Session, media_id: str) -> Optional[MediaLibraryResponse]:
+    def get_media(self, db: Session, media_id: str, program_context: Optional[str] = None) -> Optional[MediaLibraryResponse]:
         """Get media by ID."""
-        media = self.get(db, media_id)
+        query = db.query(MediaLibrary).filter(MediaLibrary.id == media_id)
+        
+        # Apply program context filtering if provided
+        if program_context:
+            query = query.join(Lesson, MediaLibrary.lesson_id == Lesson.id)\
+                        .join(Section, Lesson.section_id == Section.id)\
+                        .join(Module, Section.module_id == Module.id)\
+                        .join(Level, Module.level_id == Level.id)\
+                        .join(Curriculum, Level.curriculum_id == Curriculum.id)\
+                        .join(Course, Curriculum.course_id == Course.id)\
+                        .join(Program, Course.program_id == Program.id)\
+                        .filter(Program.id == program_context)
+        
+        media = query.first()
         if not media:
             return None
         
@@ -115,8 +137,15 @@ class MediaService(BaseService[MediaLibrary, MediaLibraryCreate, MediaLibraryUpd
                     db: Session, 
                     media_id: str, 
                     media_data: MediaLibraryUpdate,
-                    updated_by: Optional[str] = None) -> Optional[MediaLibraryResponse]:
+                    updated_by: Optional[str] = None,
+                    program_context: Optional[str] = None) -> Optional[MediaLibraryResponse]:
         """Update media information."""
+        # First get the media with program context validation
+        media_response = self.get_media(db, media_id, program_context)
+        if not media_response:
+            return None
+        
+        # Get the actual media object for updating
         media = self.get(db, media_id)
         if not media:
             return None
@@ -126,8 +155,13 @@ class MediaService(BaseService[MediaLibrary, MediaLibraryCreate, MediaLibraryUpd
         
         return self._to_media_response(db, updated_media)
     
-    def delete_media(self, db: Session, media_id: str) -> bool:
+    def delete_media(self, db: Session, media_id: str, program_context: Optional[str] = None) -> bool:
         """Delete media and associated files."""
+        # First validate media exists and user has access via program context
+        media_response = self.get_media(db, media_id, program_context)
+        if not media_response:
+            return False
+        
         media = self.get(db, media_id)
         if not media:
             return False
@@ -150,9 +184,30 @@ class MediaService(BaseService[MediaLibrary, MediaLibraryCreate, MediaLibraryUpd
                   db: Session,
                   search_params: Optional[MediaSearchParams] = None,
                   page: int = 1,
-                  per_page: int = 20) -> Tuple[List[MediaLibraryResponse], int]:
+                  per_page: int = 20,
+                  program_context: Optional[str] = None) -> Tuple[List[MediaLibraryResponse], int]:
         """List media with optional search and pagination."""
         query = db.query(MediaLibrary)
+        
+        # Apply program context filtering if provided
+        if program_context:
+            # Join through: MediaLibrary → Lesson → Section → Module → Level → Curriculum → Course → Program
+            from app.features.courses.models.lesson import Lesson
+            from app.features.courses.models.section import Section
+            from app.features.courses.models.module import Module
+            from app.features.courses.models.level import Level
+            from app.features.courses.models.curriculum import Curriculum
+            from app.features.courses.models.course import Course
+            from app.features.courses.models.program import Program
+            
+            query = query.join(Lesson, MediaLibrary.lesson_id == Lesson.id)\
+                        .join(Section, Lesson.section_id == Section.id)\
+                        .join(Module, Section.module_id == Module.id)\
+                        .join(Level, Module.level_id == Level.id)\
+                        .join(Curriculum, Level.curriculum_id == Curriculum.id)\
+                        .join(Course, Curriculum.course_id == Course.id)\
+                        .join(Program, Course.program_id == Program.id)\
+                        .filter(Program.id == program_context)
         
         # Apply filters
         if search_params:
@@ -228,27 +283,39 @@ class MediaService(BaseService[MediaLibrary, MediaLibraryCreate, MediaLibraryUpd
         
         return media_responses, total_count
     
-    def get_media_stats(self, db: Session) -> MediaStatsResponse:
+    def get_media_stats(self, db: Session, program_context: Optional[str] = None) -> MediaStatsResponse:
         """Get media library statistics."""
+        # Base query for media items
+        base_query = db.query(MediaLibrary)
+        
+        # Apply program context filtering if provided
+        if program_context:
+            base_query = base_query.join(Lesson, MediaLibrary.lesson_id == Lesson.id)\
+                                 .join(Section, Lesson.section_id == Section.id)\
+                                 .join(Module, Section.module_id == Module.id)\
+                                 .join(Level, Module.level_id == Level.id)\
+                                 .join(Curriculum, Level.curriculum_id == Curriculum.id)\
+                                 .join(Course, Curriculum.course_id == Course.id)\
+                                 .join(Program, Course.program_id == Program.id)\
+                                 .filter(Program.id == program_context)
+        
         # Total media items
-        total_media_items = db.query(func.count(MediaLibrary.id)).scalar()
+        total_media_items = base_query.count()
         
         # Media by type
-        type_stats = db.query(
+        type_stats = base_query.with_entities(
             MediaLibrary.media_type,
             func.count(MediaLibrary.id)
         ).group_by(MediaLibrary.media_type).all()
         media_by_type = dict(type_stats)
         
         # Storage usage
-        total_storage_bytes = db.query(func.sum(MediaLibrary.file_size)).scalar() or 0
+        total_storage_bytes = base_query.with_entities(func.sum(MediaLibrary.file_size)).scalar() or 0
         total_storage_mb = total_storage_bytes / (1024 * 1024)
         total_storage_gb = total_storage_mb / 1024
         
         # Public vs private
-        public_count = db.query(func.count(MediaLibrary.id)).filter(
-            MediaLibrary.is_public == True
-        ).scalar()
+        public_count = base_query.filter(MediaLibrary.is_public == True).count()
         private_count = total_media_items - public_count
         
         # Most downloaded (placeholder)
@@ -264,7 +331,7 @@ class MediaService(BaseService[MediaLibrary, MediaLibraryCreate, MediaLibraryUpd
         ]
         
         # Recent uploads
-        recent_uploads = db.query(MediaLibrary).order_by(
+        recent_uploads = base_query.order_by(
             desc(MediaLibrary.created_at)
         ).limit(5).all()
         
