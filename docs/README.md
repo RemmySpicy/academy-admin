@@ -4,7 +4,7 @@
 
 ### 🚀 **Setup & Getting Started**
 - [`setup/PROJECT_SETUP.md`](setup/PROJECT_SETUP.md) - Quick start and daily development commands
-- [`setup/DEPLOYMENT.md`](../DEPLOYMENT.md) - Production deployment guide
+- [`setup/DEPLOYMENT.md`](setup/DEPLOYMENT.md) - Production deployment guide
 
 ### 🏗️ **Architecture & Design**
 - [`architecture/SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md) - High-level system architecture
@@ -23,7 +23,7 @@
 - [`features/facilities/README.md`](features/facilities/README.md) - Facility management system
 - [`features/students/README.md`](features/students/README.md) - Student management system *(to be updated)*
 - [`features/scheduling/README.md`](features/scheduling/README.md) - Scheduling system *(to be updated)*
-- [`features/authentication/README.md`](features/authentication/README.md) - Authentication & authorization *(to be updated)*
+- [`features/authentication/README.md`](features/authentication/README.md) - Authentication & authorization system
 
 ## 🎯 **Quick Access by Role**
 
