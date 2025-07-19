@@ -188,6 +188,3 @@ alembic/versions/*.py
 
 # Redis dump
 dump.rdb
-
-# Mobile app deployment temporary directories
-mobile-repos/
