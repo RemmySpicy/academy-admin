@@ -55,7 +55,7 @@ check_remote() {
 setup_remotes() {
     log_info "Setting up remote repositories..."
     
-    # Academy repository URLs
+    # Academy repository URLs (using SSH for authenticated access)
     local tutor_repo_url="git@github.com:RemmySpicy/academy-tutor-app.git"
     local student_repo_url="git@github.com:RemmySpicy/academy-students-app.git"
     
