@@ -133,6 +133,46 @@ npm run subtree:push:student
 npm run subtree:sync
 ```
 
+## 🔄 **Git Subtree Commands Reference**
+
+### **Setup Commands** (One-time)
+```bash
+# Add remotes (done automatically by scripts)
+./scripts/subtree-commands.sh setup-remotes
+
+# Check subtree status
+./scripts/subtree-commands.sh status
+```
+
+### **Daily Development Commands**
+```bash
+# Sync shared resources to mobile apps
+npm run subtree:sync
+
+# Push changes to mobile repositories
+npm run subtree:push:tutor      # Tutor app only
+npm run subtree:push:student    # Student app only
+npm run subtree:push            # Both apps
+
+# Pull changes from mobile repositories (if edited externally)
+./scripts/subtree-commands.sh pull-tutor
+./scripts/subtree-commands.sh pull-student
+```
+
+### **Manual Git Subtree Commands**
+```bash
+# Push specific app
+git subtree push --prefix=apps/academy-tutor-app tutor-mobile-origin main
+git subtree push --prefix=apps/academy-students-app student-mobile-origin main
+
+# Pull specific app
+git subtree pull --prefix=apps/academy-tutor-app tutor-mobile-origin main --squash
+git subtree pull --prefix=apps/academy-students-app student-mobile-origin main --squash
+
+# Force push (use with caution)
+git subtree push --prefix=apps/academy-tutor-app tutor-mobile-origin main --force
+```
+
 ## 📋 **Best Practices**
 
 ### **Development**
@@ -140,6 +180,13 @@ npm run subtree:sync
 2. **Make changes in** `apps/academy-tutor-app/` and `apps/academy-students-app/`
 3. **Update shared resources** in `shared/` directory
 4. **Use Git subtrees for deployment** to standalone repositories
+
+### **Daily Workflow**
+1. **Start of day**: Pull any external mobile changes (if applicable)
+2. **During development**: Work in `apps/` directories
+3. **After shared changes**: Run `npm run subtree:sync` 
+4. **Before commits**: Test all apps with `npm run dev:all`
+5. **Deploy changes**: Use `npm run subtree:push`
 
 ### **Deployment**
 1. **Test changes** in the main repository first
@@ -151,6 +198,20 @@ npm run subtree:sync
 1. **Update types** in `shared/types/` when backend changes
 2. **Extend API client** in `shared/api-client/` for new endpoints
 3. **Keep utilities generic** in `shared/utils/` for reusability
+
+### **Conflict Resolution**
+```bash
+# If subtree push fails
+./scripts/subtree-commands.sh status  # Check current state
+git status                            # Check for uncommitted changes
+
+# If subtree pull conflicts occur
+git subtree pull --prefix=apps/academy-tutor-app tutor-mobile-origin main --squash --strategy=ours
+
+# For manual resolution
+git mergetool
+git commit -m "resolve: merge conflicts in mobile subtree"
+```
 
 ## ⚠️ **Important Notes**
 
