@@ -166,7 +166,7 @@ EOF
 
 🤖 Generated with Claude Code"
     
-    if git push origin main 2>/dev/null || git push origin master 2>/dev/null; then
+    if git push origin main 2>/dev/null; then
         log_success "Academy Tutor App deployed successfully!"
     else
         log_error "Failed to push tutor app"
@@ -293,7 +293,7 @@ EOF
 
 🤖 Generated with Claude Code"
     
-    if git push origin main 2>/dev/null || git push origin master 2>/dev/null; then
+    if git push origin main 2>/dev/null; then
         log_success "Academy Students App deployed successfully!"
     else
         log_error "Failed to push student app"
