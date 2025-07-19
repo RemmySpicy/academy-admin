@@ -91,6 +91,7 @@ class StudentCreate(StudentBase):
     """Schema for creating a new student."""
     
     # Academy information
+    program_id: str = Field(..., description="Program ID this student belongs to")
     referral_source: Optional[str] = Field(None, max_length=100, description="How student heard about academy")
     enrollment_date: date = Field(..., description="Date of enrollment")
     status: StatusEnum = Field(default=StatusEnum.ACTIVE, description="Student status")
@@ -183,6 +184,8 @@ class StudentResponse(StudentBase, TimestampMixin):
     student_id: str = Field(..., description="Student ID (STU-YYYY-NNNN)")
     
     # Academy information
+    program_id: str = Field(..., description="Program ID this student belongs to")
+    program_name: Optional[str] = Field(None, description="Program name")
     referral_source: Optional[str] = Field(None, description="How student heard about academy")
     enrollment_date: date = Field(..., description="Date of enrollment")
     status: StatusEnum = Field(..., description="Student status")
@@ -273,6 +276,7 @@ class StudentSearchParams(BaseModel):
     
     search: Optional[str] = Field(None, min_length=1, max_length=255, description="Search query")
     status: Optional[StatusEnum] = Field(None, description="Filter by status")
+    program_id: Optional[str] = Field(None, description="Filter by program ID")
     enrollment_date_from: Optional[date] = Field(None, description="Filter by enrollment date from")
     enrollment_date_to: Optional[date] = Field(None, description="Filter by enrollment date to")
     age_from: Optional[int] = Field(None, ge=0, le=120, description="Filter by age from")

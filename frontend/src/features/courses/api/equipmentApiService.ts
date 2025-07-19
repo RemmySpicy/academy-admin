@@ -3,7 +3,7 @@
  * Handles all equipment-related API operations with automatic program context
  */
 
-import { httpClient } from '@/lib/api/client';
+import { httpClient } from '@/lib/api/httpClient';
 import { PaginatedResponse } from '@/lib/api/types';
 
 export interface Equipment {

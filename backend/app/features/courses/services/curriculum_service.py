@@ -36,21 +36,37 @@ class CurriculumService(BaseService[Curriculum, CurriculumCreate, CurriculumUpda
     def create_curriculum(self, 
                          db: Session, 
                          curriculum_data: CurriculumCreate, 
-                         created_by: Optional[str] = None) -> CurriculumResponse:
+                         created_by: Optional[str] = None,
+                         program_context: Optional[str] = None) -> CurriculumResponse:
         """Create a new curriculum."""
-        # Verify course exists
-        course = db.query(Course).filter(Course.id == curriculum_data.course_id).first()
+        # Verify course exists and program access
+        course_query = db.query(Course).filter(Course.id == curriculum_data.course_id)
+        if program_context:
+            course_query = course_query.filter(Course.program_id == program_context)
+        
+        course = course_query.first()
         if not course:
-            raise ValueError(f"Course with ID '{curriculum_data.course_id}' not found")
+            raise ValueError(f"Course with ID '{curriculum_data.course_id}' not found or access denied")
+        
+        # 🔒 PROGRAM CONTEXT VALIDATION
+        if program_context and course.program_id != program_context:
+            raise PermissionError(f"Cannot create curriculum for course in different program context")
         
         # Create curriculum
         curriculum = self.create(db, curriculum_data, created_by)
         
         return self._to_curriculum_response(db, curriculum)
     
-    def get_curriculum(self, db: Session, curriculum_id: str) -> Optional[CurriculumResponse]:
+    def get_curriculum(self, db: Session, curriculum_id: str, program_context: Optional[str] = None) -> Optional[CurriculumResponse]:
         """Get curriculum by ID."""
-        curriculum = self.get(db, curriculum_id)
+        # Build query with program context filtering
+        query = db.query(Curriculum).filter(Curriculum.id == curriculum_id)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            query = query.join(Course).filter(Course.program_id == program_context)
+        
+        curriculum = query.first()
         if not curriculum:
             return None
         
@@ -60,25 +76,52 @@ class CurriculumService(BaseService[Curriculum, CurriculumCreate, CurriculumUpda
                          db: Session, 
                          curriculum_id: str, 
                          curriculum_data: CurriculumUpdate,
-                         updated_by: Optional[str] = None) -> Optional[CurriculumResponse]:
+                         updated_by: Optional[str] = None,
+                         program_context: Optional[str] = None) -> Optional[CurriculumResponse]:
         """Update curriculum information."""
-        curriculum = self.get(db, curriculum_id)
+        # Get curriculum with program context filtering
+        query = db.query(Curriculum).filter(Curriculum.id == curriculum_id)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            query = query.join(Course).filter(Course.program_id == program_context)
+        
+        curriculum = query.first()
         if not curriculum:
             return None
         
-        # Verify new course exists if being updated
+        # Verify new course exists and program access if being updated
         if curriculum_data.course_id and curriculum_data.course_id != curriculum.course_id:
-            course = db.query(Course).filter(Course.id == curriculum_data.course_id).first()
+            course_query = db.query(Course).filter(Course.id == curriculum_data.course_id)
+            if program_context:
+                course_query = course_query.filter(Course.program_id == program_context)
+            
+            course = course_query.first()
             if not course:
-                raise ValueError(f"Course with ID '{curriculum_data.course_id}' not found")
+                raise ValueError(f"Course with ID '{curriculum_data.course_id}' not found or access denied")
+            
+            # 🔒 PROGRAM CONTEXT VALIDATION
+            if program_context and course.program_id != program_context:
+                raise PermissionError(f"Cannot move curriculum to course in different program context")
         
         # Update curriculum
         updated_curriculum = self.update(db, curriculum, curriculum_data, updated_by)
         
         return self._to_curriculum_response(db, updated_curriculum)
     
-    def delete_curriculum(self, db: Session, curriculum_id: str) -> bool:
+    def delete_curriculum(self, db: Session, curriculum_id: str, program_context: Optional[str] = None) -> bool:
         """Delete a curriculum."""
+        # Verify curriculum exists and program access
+        curriculum_query = db.query(Curriculum).filter(Curriculum.id == curriculum_id)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            curriculum_query = curriculum_query.join(Course).filter(Course.program_id == program_context)
+        
+        curriculum = curriculum_query.first()
+        if not curriculum:
+            return False
+        
         # Check if curriculum has levels
         level_count = db.query(func.count(Level.id)).filter(
             Level.curriculum_id == curriculum_id
@@ -87,15 +130,23 @@ class CurriculumService(BaseService[Curriculum, CurriculumCreate, CurriculumUpda
         if level_count > 0:
             raise ValueError(f"Cannot delete curriculum with {level_count} levels. Delete levels first.")
         
-        return self.delete(db, curriculum_id)
+        # Delete the curriculum using the validated instance
+        db.delete(curriculum)
+        db.commit()
+        return True
     
     def list_curricula(self, 
                       db: Session,
                       search_params: Optional[CurriculumSearchParams] = None,
                       page: int = 1,
-                      per_page: int = 20) -> Tuple[List[CurriculumResponse], int]:
+                      per_page: int = 20,
+                      program_context: Optional[str] = None) -> Tuple[List[CurriculumResponse], int]:
         """List curricula with optional search and pagination."""
         query = db.query(Curriculum).join(Course).join(Program)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            query = query.filter(Course.program_id == program_context)
         
         # Apply filters
         if search_params:
@@ -160,8 +211,20 @@ class CurriculumService(BaseService[Curriculum, CurriculumCreate, CurriculumUpda
                                db: Session, 
                                course_id: str,
                                page: int = 1,
-                               per_page: int = 20) -> Tuple[List[CurriculumResponse], int]:
+                               per_page: int = 20,
+                               program_context: Optional[str] = None) -> Tuple[List[CurriculumResponse], int]:
         """Get all curricula for a specific course."""
+        # Verify course access first
+        course_query = db.query(Course).filter(Course.id == course_id)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            course_query = course_query.filter(Course.program_id == program_context)
+        
+        course = course_query.first()
+        if not course:
+            return [], 0
+        
         query = db.query(Curriculum).filter(Curriculum.course_id == course_id)
         query = query.order_by(asc(Curriculum.sequence))
         
@@ -177,41 +240,73 @@ class CurriculumService(BaseService[Curriculum, CurriculumCreate, CurriculumUpda
         
         return curriculum_responses, total_count
     
-    def get_curriculum_stats(self, db: Session) -> CurriculumStatsResponse:
+    def get_curriculum_stats(self, db: Session, program_context: Optional[str] = None) -> CurriculumStatsResponse:
         """Get curriculum statistics."""
+        # Base query with program context filtering
+        base_query = db.query(Curriculum).join(Course)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            base_query = base_query.filter(Course.program_id == program_context)
+        
         # Total curricula
-        total_curricula = db.query(func.count(Curriculum.id)).scalar()
+        total_curricula = base_query.count()
         
         # Curricula by status
-        status_stats = db.query(
+        status_query = db.query(
             Curriculum.status,
             func.count(Curriculum.id)
-        ).group_by(Curriculum.status).all()
+        ).join(Course)
+        
+        if program_context:
+            status_query = status_query.filter(Course.program_id == program_context)
+        
+        status_stats = status_query.group_by(Curriculum.status).all()
         curricula_by_status = dict(status_stats)
         
         # Curricula by difficulty
-        difficulty_stats = db.query(
+        difficulty_query = db.query(
             Curriculum.difficulty_level,
             func.count(Curriculum.id)
-        ).group_by(Curriculum.difficulty_level).all()
+        ).join(Course)
+        
+        if program_context:
+            difficulty_query = difficulty_query.filter(Course.program_id == program_context)
+        
+        difficulty_stats = difficulty_query.group_by(Curriculum.difficulty_level).all()
         curricula_by_difficulty = dict(difficulty_stats)
         
         # Curricula by course
-        course_stats = db.query(
+        course_query = db.query(
             Course.name,
             func.count(Curriculum.id)
-        ).join(Course).group_by(Course.name).all()
+        ).join(Course)
+        
+        if program_context:
+            course_query = course_query.filter(Course.program_id == program_context)
+        
+        course_stats = course_query.group_by(Course.name).all()
         curricula_by_course = dict(course_stats)
         
         # Curricula by program
-        program_stats = db.query(
+        program_query = db.query(
             Program.name,
             func.count(Curriculum.id)
-        ).join(Course).join(Program).group_by(Program.name).all()
+        ).join(Course).join(Program)
+        
+        if program_context:
+            program_query = program_query.filter(Course.program_id == program_context)
+        
+        program_stats = program_query.group_by(Program.name).all()
         curricula_by_program = dict(program_stats)
         
         # Average levels per curriculum
-        level_counts = db.query(func.count(Level.id)).join(Curriculum).scalar() or 0
+        level_query = db.query(func.count(Level.id)).join(Curriculum).join(Course)
+        
+        if program_context:
+            level_query = level_query.filter(Course.program_id == program_context)
+        
+        level_counts = level_query.scalar() or 0
         avg_levels_per_curriculum = level_counts / total_curricula if total_curricula > 0 else 0
         
         # Age range distribution
@@ -219,9 +314,14 @@ class CurriculumService(BaseService[Curriculum, CurriculumCreate, CurriculumUpda
             "3-6": 0, "7-10": 0, "11-14": 0, "15-18": 0, "Adult": 0
         }
         
-        curricula_with_age = db.query(Curriculum.min_age, Curriculum.max_age).filter(
+        age_query = db.query(Curriculum.min_age, Curriculum.max_age).join(Course).filter(
             and_(Curriculum.min_age.isnot(None), Curriculum.max_age.isnot(None))
-        ).all()
+        )
+        
+        if program_context:
+            age_query = age_query.filter(Course.program_id == program_context)
+        
+        curricula_with_age = age_query.all()
         
         for min_age, max_age in curricula_with_age:
             if max_age <= 6:
@@ -245,14 +345,20 @@ class CurriculumService(BaseService[Curriculum, CurriculumCreate, CurriculumUpda
             age_range_distribution=age_ranges
         )
     
-    def get_curriculum_tree(self, db: Session, curriculum_id: str) -> Optional[CurriculumTreeResponse]:
+    def get_curriculum_tree(self, db: Session, curriculum_id: str, program_context: Optional[str] = None) -> Optional[CurriculumTreeResponse]:
         """Get curriculum with full tree structure of levels, modules, and lessons."""
-        curriculum = db.query(Curriculum).options(
+        query = db.query(Curriculum).options(
             joinedload(Curriculum.levels)
             .joinedload(Level.modules)
             .joinedload(Module.sections)
             .joinedload(Section.lessons)
-        ).filter(Curriculum.id == curriculum_id).first()
+        ).filter(Curriculum.id == curriculum_id)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            query = query.join(Course).filter(Course.program_id == program_context)
+        
+        curriculum = query.first()
         
         if not curriculum:
             return None
@@ -322,18 +428,35 @@ class CurriculumService(BaseService[Curriculum, CurriculumCreate, CurriculumUpda
                             db: Session, 
                             curriculum_id: str,
                             request: CurriculumDuplicateRequest,
-                            created_by: Optional[str] = None) -> CurriculumResponse:
+                            created_by: Optional[str] = None,
+                            program_context: Optional[str] = None) -> CurriculumResponse:
         """Duplicate a curriculum with all its content."""
-        # Get original curriculum
-        original = db.query(Curriculum).filter(Curriculum.id == curriculum_id).first()
-        if not original:
-            raise ValueError(f"Curriculum with ID '{curriculum_id}' not found")
+        # Get original curriculum with program context filtering
+        original_query = db.query(Curriculum).filter(Curriculum.id == curriculum_id)
         
-        # Determine target course
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            original_query = original_query.join(Course).filter(Course.program_id == program_context)
+        
+        original = original_query.first()
+        if not original:
+            raise ValueError(f"Curriculum with ID '{curriculum_id}' not found or access denied")
+        
+        # Determine target course with program context validation
         target_course_id = request.target_course_id or original.course_id
-        target_course = db.query(Course).filter(Course.id == target_course_id).first()
+        target_course_query = db.query(Course).filter(Course.id == target_course_id)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            target_course_query = target_course_query.filter(Course.program_id == program_context)
+        
+        target_course = target_course_query.first()
         if not target_course:
-            raise ValueError(f"Target course with ID '{target_course_id}' not found")
+            raise ValueError(f"Target course with ID '{target_course_id}' not found or access denied")
+        
+        # 🔒 PROGRAM CONTEXT VALIDATION
+        if program_context and target_course.program_id != program_context:
+            raise PermissionError(f"Cannot duplicate curriculum to course in different program context")
         
         # Create new curriculum
         new_curriculum_data = {
@@ -374,19 +497,37 @@ class CurriculumService(BaseService[Curriculum, CurriculumCreate, CurriculumUpda
     def bulk_move_curricula(self, 
                            db: Session, 
                            request: CurriculumBulkMoveRequest,
-                           updated_by: Optional[str] = None) -> Dict[str, Any]:
+                           updated_by: Optional[str] = None,
+                           program_context: Optional[str] = None) -> Dict[str, Any]:
         """Bulk move curricula to a different course."""
-        # Verify target course exists
-        target_course = db.query(Course).filter(Course.id == request.target_course_id).first()
+        # Verify target course exists and program access
+        target_course_query = db.query(Course).filter(Course.id == request.target_course_id)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            target_course_query = target_course_query.filter(Course.program_id == program_context)
+        
+        target_course = target_course_query.first()
         if not target_course:
-            raise ValueError(f"Target course with ID '{request.target_course_id}' not found")
+            raise ValueError(f"Target course with ID '{request.target_course_id}' not found or access denied")
+        
+        # 🔒 PROGRAM CONTEXT VALIDATION
+        if program_context and target_course.program_id != program_context:
+            raise PermissionError(f"Cannot move curricula to course in different program context")
         
         successful = []
         failed = []
         
         for curriculum_id in request.curriculum_ids:
             try:
-                curriculum = self.get(db, curriculum_id)
+                # Get curriculum with program context filtering
+                curriculum_query = db.query(Curriculum).filter(Curriculum.id == curriculum_id)
+                
+                # 🔒 PROGRAM CONTEXT FILTERING
+                if program_context:
+                    curriculum_query = curriculum_query.join(Course).filter(Course.program_id == program_context)
+                
+                curriculum = curriculum_query.first()
                 if curriculum:
                     curriculum.course_id = request.target_course_id
                     
@@ -421,8 +562,24 @@ class CurriculumService(BaseService[Curriculum, CurriculumCreate, CurriculumUpda
     def bulk_update_status(self, 
                           db: Session, 
                           request: CurriculumBulkStatusUpdateRequest,
-                          updated_by: Optional[str] = None) -> Dict[str, Any]:
+                          updated_by: Optional[str] = None,
+                          program_context: Optional[str] = None) -> Dict[str, Any]:
         """Bulk update curriculum status."""
+        # Validate all curricula are accessible in current program context
+        if program_context:
+            accessible_curricula = db.query(Curriculum.id).join(Course).filter(
+                and_(
+                    Curriculum.id.in_(request.curriculum_ids),
+                    Course.program_id == program_context
+                )
+            ).all()
+            
+            accessible_ids = [c[0] for c in accessible_curricula]
+            inaccessible_ids = set(request.curriculum_ids) - set(accessible_ids)
+            
+            if inaccessible_ids:
+                raise PermissionError(f"Access denied for curricula: {list(inaccessible_ids)}")
+        
         result = self.bulk_update(
             db, 
             request.curriculum_ids, 

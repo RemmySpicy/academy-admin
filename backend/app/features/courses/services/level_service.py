@@ -36,12 +36,25 @@ class LevelService(BaseService[Level, LevelCreate, LevelUpdate]):
     def create_level(self, 
                     db: Session, 
                     level_data: LevelCreate, 
-                    created_by: Optional[str] = None) -> LevelResponse:
+                    created_by: Optional[str] = None,
+                    program_context: Optional[str] = None) -> LevelResponse:
         """Create a new level."""
-        # Verify curriculum exists
-        curriculum = db.query(Curriculum).filter(Curriculum.id == level_data.curriculum_id).first()
+        # Verify curriculum exists and program access
+        curriculum_query = db.query(Curriculum).join(Course).filter(Curriculum.id == level_data.curriculum_id)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            curriculum_query = curriculum_query.filter(Course.program_id == program_context)
+        
+        curriculum = curriculum_query.first()
         if not curriculum:
-            raise ValueError(f"Curriculum with ID '{level_data.curriculum_id}' not found")
+            raise ValueError(f"Curriculum with ID '{level_data.curriculum_id}' not found or access denied")
+        
+        # 🔒 PROGRAM CONTEXT VALIDATION
+        if program_context:
+            course = db.query(Course).filter(Course.id == curriculum.course_id).first()
+            if course and course.program_id != program_context:
+                raise PermissionError(f"Cannot create level for curriculum in different program context")
         
         # Check for duplicate sequence in the same curriculum
         existing_level = db.query(Level).filter(
@@ -59,9 +72,16 @@ class LevelService(BaseService[Level, LevelCreate, LevelUpdate]):
         
         return self._to_level_response(db, level)
     
-    def get_level(self, db: Session, level_id: str) -> Optional[LevelResponse]:
+    def get_level(self, db: Session, level_id: str, program_context: Optional[str] = None) -> Optional[LevelResponse]:
         """Get level by ID."""
-        level = self.get(db, level_id)
+        # Build query with program context filtering
+        query = db.query(Level).filter(Level.id == level_id)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            query = query.join(Curriculum).join(Course).filter(Course.program_id == program_context)
+        
+        level = query.first()
         if not level:
             return None
         
@@ -71,9 +91,17 @@ class LevelService(BaseService[Level, LevelCreate, LevelUpdate]):
                     db: Session, 
                     level_id: str, 
                     level_data: LevelUpdate,
-                    updated_by: Optional[str] = None) -> Optional[LevelResponse]:
+                    updated_by: Optional[str] = None,
+                    program_context: Optional[str] = None) -> Optional[LevelResponse]:
         """Update level information."""
-        level = self.get(db, level_id)
+        # Get level with program context filtering
+        query = db.query(Level).filter(Level.id == level_id)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            query = query.join(Curriculum).join(Course).filter(Course.program_id == program_context)
+        
+        level = query.first()
         if not level:
             return None
         
@@ -90,19 +118,42 @@ class LevelService(BaseService[Level, LevelCreate, LevelUpdate]):
             if existing_level:
                 raise ValueError(f"Level with sequence {level_data.sequence} already exists in this curriculum")
         
-        # Verify new curriculum exists if being updated
+        # Verify new curriculum exists and program access if being updated
         if level_data.curriculum_id and level_data.curriculum_id != level.curriculum_id:
-            curriculum = db.query(Curriculum).filter(Curriculum.id == level_data.curriculum_id).first()
+            curriculum_query = db.query(Curriculum).join(Course).filter(Curriculum.id == level_data.curriculum_id)
+            
+            # 🔒 PROGRAM CONTEXT FILTERING
+            if program_context:
+                curriculum_query = curriculum_query.filter(Course.program_id == program_context)
+            
+            curriculum = curriculum_query.first()
             if not curriculum:
-                raise ValueError(f"Curriculum with ID '{level_data.curriculum_id}' not found")
+                raise ValueError(f"Curriculum with ID '{level_data.curriculum_id}' not found or access denied")
+            
+            # 🔒 PROGRAM CONTEXT VALIDATION
+            if program_context:
+                course = db.query(Course).filter(Course.id == curriculum.course_id).first()
+                if course and course.program_id != program_context:
+                    raise PermissionError(f"Cannot move level to curriculum in different program context")
         
         # Update level
         updated_level = self.update(db, level, level_data, updated_by)
         
         return self._to_level_response(db, updated_level)
     
-    def delete_level(self, db: Session, level_id: str) -> bool:
+    def delete_level(self, db: Session, level_id: str, program_context: Optional[str] = None) -> bool:
         """Delete a level."""
+        # Verify level exists and program access
+        level_query = db.query(Level).filter(Level.id == level_id)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            level_query = level_query.join(Curriculum).join(Course).filter(Course.program_id == program_context)
+        
+        level = level_query.first()
+        if not level:
+            return False
+        
         # Check if level has modules
         module_count = db.query(func.count(Module.id)).filter(
             Module.level_id == level_id
@@ -111,15 +162,23 @@ class LevelService(BaseService[Level, LevelCreate, LevelUpdate]):
         if module_count > 0:
             raise ValueError(f"Cannot delete level with {module_count} modules. Delete modules first.")
         
-        return self.delete(db, level_id)
+        # Delete the level using the validated instance
+        db.delete(level)
+        db.commit()
+        return True
     
     def list_levels(self, 
                    db: Session,
                    search_params: Optional[LevelSearchParams] = None,
                    page: int = 1,
-                   per_page: int = 20) -> Tuple[List[LevelResponse], int]:
+                   per_page: int = 20,
+                   program_context: Optional[str] = None) -> Tuple[List[LevelResponse], int]:
         """List levels with optional search and pagination."""
         query = db.query(Level).join(Curriculum).join(Course).join(Program)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            query = query.filter(Course.program_id == program_context)
         
         # Apply filters
         if search_params:
@@ -186,8 +245,20 @@ class LevelService(BaseService[Level, LevelCreate, LevelUpdate]):
                                 db: Session, 
                                 curriculum_id: str,
                                 page: int = 1,
-                                per_page: int = 20) -> Tuple[List[LevelResponse], int]:
+                                per_page: int = 20,
+                                program_context: Optional[str] = None) -> Tuple[List[LevelResponse], int]:
         """Get all levels for a specific curriculum."""
+        # Verify curriculum access first
+        curriculum_query = db.query(Curriculum).join(Course).filter(Curriculum.id == curriculum_id)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            curriculum_query = curriculum_query.filter(Course.program_id == program_context)
+        
+        curriculum = curriculum_query.first()
+        if not curriculum:
+            return [], 0
+        
         query = db.query(Level).filter(Level.curriculum_id == curriculum_id)
         query = query.order_by(asc(Level.sequence))
         
@@ -203,47 +274,84 @@ class LevelService(BaseService[Level, LevelCreate, LevelUpdate]):
         
         return level_responses, total_count
     
-    def get_level_stats(self, db: Session) -> LevelStatsResponse:
+    def get_level_stats(self, db: Session, program_context: Optional[str] = None) -> LevelStatsResponse:
         """Get level statistics."""
+        # Base query with program context filtering
+        base_query = db.query(Level).join(Curriculum).join(Course)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            base_query = base_query.filter(Course.program_id == program_context)
+        
         # Total levels
-        total_levels = db.query(func.count(Level.id)).scalar()
+        total_levels = base_query.count()
         
         # Levels by status
-        status_stats = db.query(
+        status_query = db.query(
             Level.status,
             func.count(Level.id)
-        ).group_by(Level.status).all()
+        ).join(Curriculum).join(Course)
+        
+        if program_context:
+            status_query = status_query.filter(Course.program_id == program_context)
+        
+        status_stats = status_query.group_by(Level.status).all()
         levels_by_status = dict(status_stats)
         
         # Levels by curriculum
-        curriculum_stats = db.query(
+        curriculum_query = db.query(
             Curriculum.name,
             func.count(Level.id)
-        ).join(Curriculum).group_by(Curriculum.name).all()
+        ).join(Curriculum).join(Course)
+        
+        if program_context:
+            curriculum_query = curriculum_query.filter(Course.program_id == program_context)
+        
+        curriculum_stats = curriculum_query.group_by(Curriculum.name).all()
         levels_by_curriculum = dict(curriculum_stats)
         
         # Levels by course
-        course_stats = db.query(
+        course_query = db.query(
             Course.name,
             func.count(Level.id)
-        ).join(Curriculum).join(Course).group_by(Course.name).all()
+        ).join(Curriculum).join(Course)
+        
+        if program_context:
+            course_query = course_query.filter(Course.program_id == program_context)
+        
+        course_stats = course_query.group_by(Course.name).all()
         levels_by_course = dict(course_stats)
         
         # Levels by program
-        program_stats = db.query(
+        program_query = db.query(
             Program.name,
             func.count(Level.id)
-        ).join(Curriculum).join(Course).join(Program).group_by(Program.name).all()
+        ).join(Curriculum).join(Course).join(Program)
+        
+        if program_context:
+            program_query = program_query.filter(Course.program_id == program_context)
+        
+        program_stats = program_query.group_by(Program.name).all()
         levels_by_program = dict(program_stats)
         
         # Average modules per level
-        module_counts = db.query(func.count(Module.id)).join(Level).scalar() or 0
+        module_query = db.query(func.count(Module.id)).join(Level).join(Curriculum).join(Course)
+        
+        if program_context:
+            module_query = module_query.filter(Course.program_id == program_context)
+        
+        module_counts = module_query.scalar() or 0
         avg_modules_per_level = module_counts / total_levels if total_levels > 0 else 0
         
         # Average duration
-        avg_duration = db.query(func.avg(Level.estimated_duration_hours)).filter(
+        duration_query = db.query(func.avg(Level.estimated_duration_hours)).join(Curriculum).join(Course).filter(
             Level.estimated_duration_hours.isnot(None)
-        ).scalar() or 0
+        )
+        
+        if program_context:
+            duration_query = duration_query.filter(Course.program_id == program_context)
+        
+        avg_duration = duration_query.scalar() or 0
         
         # Completion rate stats (placeholder - would need student progress data)
         completion_rate_stats = {
@@ -263,13 +371,19 @@ class LevelService(BaseService[Level, LevelCreate, LevelUpdate]):
             completion_rate_stats=completion_rate_stats
         )
     
-    def get_level_tree(self, db: Session, level_id: str) -> Optional[LevelTreeResponse]:
+    def get_level_tree(self, db: Session, level_id: str, program_context: Optional[str] = None) -> Optional[LevelTreeResponse]:
         """Get level with full tree structure of modules and lessons."""
-        level = db.query(Level).options(
+        query = db.query(Level).options(
             joinedload(Level.modules)
             .joinedload(Module.sections)
             .joinedload(Section.lessons)
-        ).filter(Level.id == level_id).first()
+        ).filter(Level.id == level_id)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            query = query.join(Curriculum).join(Course).filter(Course.program_id == program_context)
+        
+        level = query.first()
         
         if not level:
             return None
@@ -325,14 +439,21 @@ class LevelService(BaseService[Level, LevelCreate, LevelUpdate]):
     def reorder_levels(self, 
                       db: Session, 
                       request: LevelReorderRequest,
-                      updated_by: Optional[str] = None) -> Dict[str, Any]:
+                      updated_by: Optional[str] = None,
+                      program_context: Optional[str] = None) -> Dict[str, Any]:
         """Reorder levels within their curriculum by updating sequence."""
         successful = []
         failed = []
         
-        # Validate that all levels belong to the same curriculum
+        # Validate that all levels belong to the same curriculum and program context
         level_ids = [order["id"] for order in request.level_orders]
-        levels = db.query(Level).filter(Level.id.in_(level_ids)).all()
+        levels_query = db.query(Level).filter(Level.id.in_(level_ids))
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            levels_query = levels_query.join(Curriculum).join(Course).filter(Course.program_id == program_context)
+        
+        levels = levels_query.all()
         
         if len(levels) != len(level_ids):
             raise ValueError("Some levels not found")
@@ -374,8 +495,24 @@ class LevelService(BaseService[Level, LevelCreate, LevelUpdate]):
     def bulk_update_status(self, 
                           db: Session, 
                           request: LevelBulkStatusUpdateRequest,
-                          updated_by: Optional[str] = None) -> Dict[str, Any]:
+                          updated_by: Optional[str] = None,
+                          program_context: Optional[str] = None) -> Dict[str, Any]:
         """Bulk update level status."""
+        # Validate all levels are accessible in current program context
+        if program_context:
+            accessible_levels = db.query(Level.id).join(Curriculum).join(Course).filter(
+                and_(
+                    Level.id.in_(request.level_ids),
+                    Course.program_id == program_context
+                )
+            ).all()
+            
+            accessible_ids = [l[0] for l in accessible_levels]
+            inaccessible_ids = set(request.level_ids) - set(accessible_ids)
+            
+            if inaccessible_ids:
+                raise PermissionError(f"Access denied for levels: {list(inaccessible_ids)}")
+        
         result = self.bulk_update(
             db, 
             request.level_ids, 
@@ -400,9 +537,17 @@ class LevelService(BaseService[Level, LevelCreate, LevelUpdate]):
     
     def get_level_progress_tracking(self, 
                                    db: Session, 
-                                   level_id: str) -> Optional[LevelProgressTrackingResponse]:
+                                   level_id: str,
+                                   program_context: Optional[str] = None) -> Optional[LevelProgressTrackingResponse]:
         """Get progress tracking information for a level."""
-        level = self.get(db, level_id)
+        # Verify level access with program context
+        query = db.query(Level).filter(Level.id == level_id)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            query = query.join(Curriculum).join(Course).filter(Course.program_id == program_context)
+        
+        level = query.first()
         if not level:
             return None
         

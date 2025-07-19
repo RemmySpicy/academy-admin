@@ -34,21 +34,35 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
     def create_course(self, 
                      db: Session, 
                      course_data: CourseCreate, 
-                     created_by: Optional[str] = None) -> CourseResponse:
+                     created_by: Optional[str] = None,
+                     program_context: Optional[str] = None) -> CourseResponse:
         """Create a new course."""
-        # Verify program exists
-        program = db.query(Program).filter(Program.id == course_data.program_id).first()
+        # Verify program exists and is accessible within program context
+        program_query = db.query(Program).filter(Program.id == course_data.program_id)
+        if program_context:
+            program_query = program_query.filter(Program.id == program_context)
+        
+        program = program_query.first()
         if not program:
-            raise ValueError(f"Program with ID '{course_data.program_id}' not found")
+            if program_context:
+                raise ValueError(f"Program with ID '{course_data.program_id}' not found or not accessible in current program context")
+            else:
+                raise ValueError(f"Program with ID '{course_data.program_id}' not found")
         
         # Create course
         course = self.create(db, course_data, created_by)
         
         return self._to_course_response(db, course)
     
-    def get_course(self, db: Session, course_id: str) -> Optional[CourseResponse]:
+    def get_course(self, db: Session, course_id: str, program_context: Optional[str] = None) -> Optional[CourseResponse]:
         """Get course by ID."""
-        course = self.get(db, course_id)
+        query = db.query(Course).filter(Course.id == course_id)
+        
+        # Apply program context filtering if provided
+        if program_context:
+            query = query.filter(Course.program_id == program_context)
+        
+        course = query.first()
         if not course:
             return None
         
@@ -58,8 +72,15 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
                      db: Session, 
                      course_id: str, 
                      course_data: CourseUpdate,
-                     updated_by: Optional[str] = None) -> Optional[CourseResponse]:
+                     updated_by: Optional[str] = None,
+                     program_context: Optional[str] = None) -> Optional[CourseResponse]:
         """Update course information."""
+        # First validate course exists and is accessible via program context
+        course_response = self.get_course(db, course_id, program_context)
+        if not course_response:
+            return None
+        
+        # Get the actual course object for updating
         course = self.get(db, course_id)
         if not course:
             return None
@@ -75,8 +96,13 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
         
         return self._to_course_response(db, updated_course)
     
-    def delete_course(self, db: Session, course_id: str) -> bool:
+    def delete_course(self, db: Session, course_id: str, program_context: Optional[str] = None) -> bool:
         """Delete a course."""
+        # First validate course exists and is accessible via program context
+        course_response = self.get_course(db, course_id, program_context)
+        if not course_response:
+            return False
+        
         # Check if course has curricula
         curriculum_count = db.query(func.count(Curriculum.id)).filter(
             Curriculum.course_id == course_id
@@ -91,9 +117,14 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
                     db: Session,
                     search_params: Optional[CourseSearchParams] = None,
                     page: int = 1,
-                    per_page: int = 20) -> Tuple[List[CourseResponse], int]:
+                    per_page: int = 20,
+                    program_context: Optional[str] = None) -> Tuple[List[CourseResponse], int]:
         """List courses with optional search and pagination."""
         query = db.query(Course)
+        
+        # Apply program context filtering if provided
+        if program_context:
+            query = query.filter(Course.program_id == program_context)
         
         # Apply filters
         if search_params:
@@ -109,7 +140,8 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
                     )
                 )
             
-            if search_params.program_id:
+            # Keep program_id search param for backward compatibility but program_context takes precedence
+            if search_params.program_id and not program_context:
                 query = query.filter(Course.program_id == search_params.program_id)
             
             if search_params.status:
@@ -148,9 +180,15 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
                               db: Session, 
                               program_id: str,
                               page: int = 1,
-                              per_page: int = 20) -> Tuple[List[CourseResponse], int]:
+                              per_page: int = 20,
+                              program_context: Optional[str] = None) -> Tuple[List[CourseResponse], int]:
         """Get all courses for a specific program."""
         query = db.query(Course).filter(Course.program_id == program_id)
+        
+        # Apply program context filtering if provided
+        if program_context:
+            query = query.filter(Course.program_id == program_context)
+        
         query = query.order_by(asc(Course.sequence))
         
         # Get total count
@@ -165,40 +203,50 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
         
         return course_responses, total_count
     
-    def get_course_stats(self, db: Session) -> CourseStatsResponse:
+    def get_course_stats(self, db: Session, program_context: Optional[str] = None) -> CourseStatsResponse:
         """Get course statistics."""
+        # Base query for courses
+        base_query = db.query(Course)
+        
+        # Apply program context filtering if provided
+        if program_context:
+            base_query = base_query.filter(Course.program_id == program_context)
+        
         # Total courses
-        total_courses = db.query(func.count(Course.id)).scalar()
+        total_courses = base_query.count()
         
         # Courses by status
-        status_stats = db.query(
+        status_stats = base_query.with_entities(
             Course.status,
             func.count(Course.id)
         ).group_by(Course.status).all()
         courses_by_status = dict(status_stats)
         
         # Courses by program
-        program_stats = db.query(
+        program_stats = base_query.with_entities(
             Program.name,
             func.count(Course.id)
         ).join(Program).group_by(Program.name).all()
         courses_by_program = dict(program_stats)
         
         # Average duration
-        avg_duration = db.query(func.avg(Course.duration_hours)).filter(
+        avg_duration = base_query.with_entities(func.avg(Course.duration_hours)).filter(
             Course.duration_hours.isnot(None)
         ).scalar() or 0
         
         # Average curricula per course
-        curriculum_counts = db.query(func.count(Curriculum.id)).join(Course).scalar() or 0
+        curriculum_counts = db.query(func.count(Curriculum.id)).join(Course)
+        if program_context:
+            curriculum_counts = curriculum_counts.filter(Course.program_id == program_context)
+        curriculum_counts = curriculum_counts.scalar() or 0
         avg_curricula_per_course = curriculum_counts / total_courses if total_courses > 0 else 0
         
         # Duration stats
-        min_duration = db.query(func.min(Course.duration_hours)).filter(
+        min_duration = base_query.with_entities(func.min(Course.duration_hours)).filter(
             Course.duration_hours.isnot(None)
         ).scalar() or 0
         
-        max_duration = db.query(func.max(Course.duration_hours)).filter(
+        max_duration = base_query.with_entities(func.max(Course.duration_hours)).filter(
             Course.duration_hours.isnot(None)
         ).scalar() or 0
         
@@ -217,11 +265,17 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
             participant_capacity_stats=participant_capacity_stats
         )
     
-    def get_course_tree(self, db: Session, course_id: str) -> Optional[CourseTreeResponse]:
+    def get_course_tree(self, db: Session, course_id: str, program_context: Optional[str] = None) -> Optional[CourseTreeResponse]:
         """Get course with full tree structure of curricula and levels."""
-        course = db.query(Course).options(
+        query = db.query(Course).options(
             joinedload(Course.curricula).joinedload(Curriculum.levels)
-        ).filter(Course.id == course_id).first()
+        ).filter(Course.id == course_id)
+        
+        # Apply program context filtering if provided
+        if program_context:
+            query = query.filter(Course.program_id == program_context)
+        
+        course = query.first()
         
         if not course:
             return None
@@ -265,7 +319,8 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
     def bulk_move_courses(self, 
                          db: Session, 
                          request: CourseBulkMoveRequest,
-                         updated_by: Optional[str] = None) -> Dict[str, Any]:
+                         updated_by: Optional[str] = None,
+                         program_context: Optional[str] = None) -> Dict[str, Any]:
         """Bulk move courses to a different program."""
         # Verify target program exists
         target_program = db.query(Program).filter(Program.id == request.target_program_id).first()
@@ -277,6 +332,12 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
         
         for course_id in request.course_ids:
             try:
+                # First validate course exists and is accessible via program context
+                course_response = self.get_course(db, course_id, program_context)
+                if not course_response:
+                    failed.append({"id": course_id, "error": "Course not found or not accessible"})
+                    continue
+                
                 course = self.get(db, course_id)
                 if course:
                     course.program_id = request.target_program_id
@@ -313,14 +374,42 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
     def bulk_update_status(self, 
                           db: Session, 
                           request: CourseBulkStatusUpdateRequest,
-                          updated_by: Optional[str] = None) -> Dict[str, Any]:
+                          updated_by: Optional[str] = None,
+                          program_context: Optional[str] = None) -> Dict[str, Any]:
         """Bulk update course status."""
-        result = self.bulk_update(
-            db, 
-            request.course_ids, 
-            {"status": request.new_status}, 
-            updated_by
-        )
+        # First validate all courses exist and are accessible via program context
+        successful = []
+        failed = []
+        
+        for course_id in request.course_ids:
+            try:
+                course_response = self.get_course(db, course_id, program_context)
+                if not course_response:
+                    failed.append({"id": course_id, "error": "Course not found or not accessible"})
+                    continue
+                
+                course = self.get(db, course_id)
+                if course:
+                    course.status = request.new_status
+                    if updated_by and hasattr(course, 'updated_by'):
+                        course.updated_by = updated_by
+                    db.add(course)
+                    successful.append(course_id)
+                else:
+                    failed.append({"id": course_id, "error": "Course not found"})
+                    
+            except Exception as e:
+                failed.append({"id": course_id, "error": str(e)})
+        
+        db.commit()
+        
+        result = {
+            "successful": successful,
+            "failed": failed,
+            "total_processed": len(request.course_ids),
+            "total_successful": len(successful),
+            "total_failed": len(failed)
+        }
         
         # Also update curricula status if requested
         if request.update_curricula:
@@ -340,7 +429,8 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
     def reorder_courses(self, 
                        db: Session, 
                        course_orders: List[Dict[str, int]],
-                       updated_by: Optional[str] = None) -> Dict[str, Any]:
+                       updated_by: Optional[str] = None,
+                       program_context: Optional[str] = None) -> Dict[str, Any]:
         """Reorder courses within their program by updating sequence."""
         successful = []
         failed = []
@@ -349,6 +439,12 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
             try:
                 course_id = order_data["id"]
                 new_order = order_data["sequence"]
+                
+                # First validate course exists and is accessible via program context
+                course_response = self.get_course(db, course_id, program_context)
+                if not course_response:
+                    failed.append({"id": course_id, "error": "Course not found or not accessible"})
+                    continue
                 
                 course = self.get(db, course_id)
                 if course:

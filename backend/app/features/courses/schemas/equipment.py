@@ -301,6 +301,35 @@ class EquipmentMaintenanceResponse(BaseModel):
         from_attributes = True
 
 
+class EquipmentInventorySummary(BaseModel):
+    """Schema for equipment inventory summary."""
+    
+    equipment_id: str = Field(..., description="Equipment ID")
+    equipment_name: str = Field(..., description="Equipment name")
+    total_needed: int = Field(..., description="Total quantity needed")
+    available: int = Field(..., description="Available quantity")
+    on_order: int = Field(..., description="Quantity on order")
+    maintenance: int = Field(..., description="Quantity in maintenance")
+    shortage: int = Field(..., description="Shortage quantity")
+    
+    class Config:
+        from_attributes = True
+
+
+class LessonEquipmentSummary(BaseModel):
+    """Schema for lesson equipment summary."""
+    
+    lesson_id: str = Field(..., description="Lesson ID")
+    lesson_name: str = Field(..., description="Lesson name")
+    total_equipment: int = Field(..., description="Total equipment count")
+    mandatory_equipment: int = Field(..., description="Mandatory equipment count")
+    optional_equipment: int = Field(..., description="Optional equipment count")
+    total_cost: float = Field(..., description="Total estimated cost")
+    
+    class Config:
+        from_attributes = True
+
+
 class EquipmentOrderRequest(BaseModel):
     """Schema for equipment ordering."""
     

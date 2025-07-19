@@ -103,6 +103,13 @@ class Student(BaseModel):
     )
     
     # Academy Information
+    program_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("programs.id"),
+        nullable=False,
+        comment="Reference to the program this student belongs to",
+    )
+    
     referral_source: Mapped[Optional[str]] = mapped_column(
         String(100),
         nullable=True,
@@ -181,6 +188,8 @@ class Student(BaseModel):
         Index("idx_students_status", "status"),
         Index("idx_students_enrollment_date", "enrollment_date"),
         Index("idx_students_full_name", "first_name", "last_name"),
+        Index("idx_students_program_id", "program_id"),
+        Index("idx_students_program_status", "program_id", "status"),
     )
     
     @property
