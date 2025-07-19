@@ -110,6 +110,15 @@ class Student(BaseModel):
         comment="Reference to the program this student belongs to",
     )
     
+    # Authentication Link (Optional - for mobile app access)
+    user_id: Mapped[Optional[str]] = mapped_column(
+        String(36),
+        ForeignKey("users.id"),
+        nullable=True,
+        unique=True,
+        comment="Reference to user account for mobile app access",
+    )
+    
     referral_source: Mapped[Optional[str]] = mapped_column(
         String(100),
         nullable=True,

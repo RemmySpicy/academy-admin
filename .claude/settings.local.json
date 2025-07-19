@@ -45,7 +45,9 @@
       "Bash(docker:*)",
       "Bash(docker-compose:*)",
       "Bash(./setup-local-db.sh:*)",
-      "Bash(diff:*)"
+      "Bash(diff:*)",
+      "Bash(tree:*)",
+      "Bash(./scripts/subtree-commands.sh:*)"
     ],
     "deny": []
   }

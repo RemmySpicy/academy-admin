@@ -284,3 +284,264 @@ async def get_student_by_student_id(
         )
     
     return student
+
+
+# Mobile App Specific Endpoints
+
+@router.get("/me", response_model=StudentResponse)
+async def get_my_profile(
+    current_user: Annotated[dict, Depends(get_current_active_user)]
+):
+    """
+    Get current student's profile (for student mobile app).
+    
+    Returns the authenticated student's own profile information.
+    Requires student role.
+    """
+    if current_user["role"] != "student":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only students can access this endpoint"
+        )
+    
+    # For students, get their profile by their user_id
+    student = student_service.get_student_by_user_id(current_user["id"])
+    if not student:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Student profile not found"
+        )
+    
+    return student
+
+
+@router.patch("/me", response_model=StudentResponse)
+async def update_my_profile(
+    student_data: StudentUpdate,
+    current_user: Annotated[dict, Depends(get_current_active_user)]
+):
+    """
+    Update current student's profile (for student mobile app).
+    
+    Allows students to update their own profile information.
+    Limited to certain fields for security.
+    """
+    if current_user["role"] != "student":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only students can access this endpoint"
+        )
+    
+    # Get student record
+    student = student_service.get_student_by_user_id(current_user["id"])
+    if not student:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Student profile not found"
+        )
+    
+    # Restrict what students can update
+    allowed_fields = {
+        "phone", "address", "emergency_contact", "notes"
+    }
+    
+    # Filter the update data to only allowed fields
+    filtered_data = StudentUpdate()
+    for field, value in student_data.model_dump(exclude_unset=True).items():
+        if field in allowed_fields:
+            setattr(filtered_data, field, value)
+    
+    try:
+        updated_student = student_service.update_student(
+            student.id, filtered_data, current_user["id"]
+        )
+        return updated_student
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating profile: {str(e)}"
+        )
+
+
+@router.get("/me/progress")
+async def get_my_progress(
+    current_user: Annotated[dict, Depends(get_current_active_user)]
+):
+    """
+    Get current student's progress across all courses (for student mobile app).
+    
+    Returns comprehensive progress information including:
+    - Course enrollments and progress
+    - Recent assessments
+    - Attendance summary
+    - Upcoming assignments
+    """
+    if current_user["role"] != "student":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only students can access this endpoint"
+        )
+    
+    try:
+        student = student_service.get_student_by_user_id(current_user["id"])
+        if not student:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Student profile not found"
+            )
+        
+        progress_data = student_service.get_student_progress_summary(student.id)
+        return progress_data
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving progress: {str(e)}"
+        )
+
+
+@router.get("/me/attendance")
+async def get_my_attendance(
+    date_from: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
+    date_to: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
+    course_id: Optional[str] = Query(None, description="Filter by course"),
+    current_user: Annotated[dict, Depends(get_current_active_user)]
+):
+    """
+    Get current student's attendance records (for student mobile app).
+    
+    Returns attendance records with optional date and course filtering.
+    """
+    if current_user["role"] != "student":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only students can access this endpoint"
+        )
+    
+    try:
+        student = student_service.get_student_by_user_id(current_user["id"])
+        if not student:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Student profile not found"
+            )
+        
+        attendance_records = student_service.get_student_attendance(
+            student.id, date_from, date_to, course_id
+        )
+        return attendance_records
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving attendance: {str(e)}"
+        )
+
+
+@router.get("/me/assessments")
+async def get_my_assessments(
+    course_id: Optional[str] = Query(None, description="Filter by course"),
+    assessment_type: Optional[str] = Query(None, description="Filter by assessment type"),
+    current_user: Annotated[dict, Depends(get_current_active_user)]
+):
+    """
+    Get current student's assessment results (for student mobile app).
+    
+    Returns assessment results with optional filtering.
+    """
+    if current_user["role"] != "student":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only students can access this endpoint"
+        )
+    
+    try:
+        student = student_service.get_student_by_user_id(current_user["id"])
+        if not student:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Student profile not found"
+            )
+        
+        assessments = student_service.get_student_assessments(
+            student.id, course_id, assessment_type
+        )
+        return assessments
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving assessments: {str(e)}"
+        )
+
+
+@router.get("/me/communications")
+async def get_my_communications(
+    communication_type: Optional[str] = Query(None, description="Filter by type"),
+    status_filter: Optional[str] = Query(None, alias="status", description="Filter by status"),
+    date_from: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
+    date_to: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
+    current_user: Annotated[dict, Depends(get_current_active_user)]
+):
+    """
+    Get current student's communications (for student mobile app).
+    
+    Returns communications sent to or involving the student.
+    """
+    if current_user["role"] != "student":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only students can access this endpoint"
+        )
+    
+    try:
+        student = student_service.get_student_by_user_id(current_user["id"])
+        if not student:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Student profile not found"
+            )
+        
+        communications = student_service.get_student_communications(
+            student.id, communication_type, status_filter, date_from, date_to
+        )
+        return communications
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving communications: {str(e)}"
+        )
+
+
+@router.get("/me/parents")
+async def get_my_parents(
+    current_user: Annotated[dict, Depends(get_current_active_user)]
+):
+    """
+    Get current student's parent/guardian contacts (for student mobile app).
+    
+    Returns list of parent/guardian contacts.
+    """
+    if current_user["role"] != "student":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only students can access this endpoint"
+        )
+    
+    try:
+        student = student_service.get_student_by_user_id(current_user["id"])
+        if not student:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Student profile not found"
+            )
+        
+        parents = student_service.get_student_parents(student.id)
+        return parents
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving parent contacts: {str(e)}"
+        )

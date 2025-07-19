@@ -1,0 +1,88 @@
+# Docker Compose override for development
+# This file is automatically loaded by docker-compose
+# for additional development-specific configurations
+
+version: '3.8'
+
+services:
+  backend:
+    environment:
+      - DEBUG=true
+      - LOG_LEVEL=debug
+      - CORS_ALLOW_ALL=true
+    volumes:
+      - ./backend:/app
+      - backend_cache:/app/__pycache__
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        python -c 'import time; time.sleep(10)' &&
+        echo 'Installing dependencies...' &&
+        pip install -r requirements.txt &&
+        echo 'Running migrations...' &&
+        alembic upgrade head &&
+        echo 'Setting up development data...' &&
+        python setup_db.py || true &&
+        echo 'Starting development server with hot reload...' &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload --log-level debug
+      "
+
+  frontend:
+    environment:
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+      - FAST_REFRESH=true
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+      - ./shared:/app/shared
+    command: >
+      sh -c "
+        echo 'Installing frontend dependencies...' &&
+        npm install &&
+        echo 'Syncing shared resources...' &&
+        mkdir -p /app/src/shared &&
+        cp -r /app/shared/* /app/src/shared/ 2>/dev/null || true &&
+        echo 'Starting Next.js development server...' &&
+        npm run dev
+      "
+
+  tutor-mobile:
+    environment:
+      - NODE_ENV=development
+      - EXPO_DEBUG=true
+      - EXPO_CLI_TELEMETRY_DISABLED=1
+    command: >
+      sh -c "
+        echo 'Installing tutor app dependencies...' &&
+        npm install &&
+        echo 'Installing Expo CLI...' &&
+        npm install -g @expo/cli &&
+        echo 'Syncing shared resources...' &&
+        mkdir -p /app/src/shared &&
+        cp -r /app/shared/* /app/src/shared/ 2>/dev/null || true &&
+        echo 'Starting Expo development server for tutor app...' &&
+        npx expo start --dev-client --clear
+      "
+
+  student-mobile:
+    environment:
+      - NODE_ENV=development
+      - EXPO_DEBUG=true
+      - EXPO_CLI_TELEMETRY_DISABLED=1
+    command: >
+      sh -c "
+        echo 'Installing student app dependencies...' &&
+        npm install &&
+        echo 'Installing Expo CLI...' &&
+        npm install -g @expo/cli &&
+        echo 'Syncing shared resources...' &&
+        mkdir -p /app/src/shared &&
+        cp -r /app/shared/* /app/src/shared/ 2>/dev/null || true &&
+        echo 'Starting Expo development server for student app...' &&
+        npx expo start --dev-client --clear
+      "
+
+volumes:
+  backend_cache:
+  frontend_node_modules:

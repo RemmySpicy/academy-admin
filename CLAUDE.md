@@ -15,6 +15,9 @@ Academy Management System with program-centric architecture, role-based access c
 - **Facility Management**: Complete facility management system
 - **User Management**: Role-based program assignments
 - **Quality Assurance**: Automated program context compliance checking
+- **🆕 Multi-App Development Infrastructure**: Complete setup for tutor/coordinator and student/parent mobile apps
+- **🆕 Shared API Client Library**: Unified TypeScript API client for all applications
+- **🆕 Git Subtree Workflow**: Automated workflow for managing multiple app repositories
 
 **📖 For architecture details, see: [`docs/architecture/PROGRAM_CONTEXT_ARCHITECTURE.md`](docs/architecture/PROGRAM_CONTEXT_ARCHITECTURE.md)**
 
@@ -34,6 +37,12 @@ docker compose up
 
 # Alternative: Local development 
 ./start-dev.sh
+
+# 🆕 Multi-app development (all apps)
+npm run dev:all
+
+# 🆕 Mobile apps only
+npm run mobile:dev
 ```
 
 ### 🛡️ **Quality Assurance (MANDATORY)**
@@ -145,6 +154,130 @@ src/features/[feature]/
 ├── api/                # API services
 └── types/              # TypeScript types
 ```
+
+## 📱 Multi-App Development Infrastructure (NEW)
+
+### 🏗️ **Complete Implementation Status**
+✅ **Multi-App Architecture**: Unified development environment for 3 applications
+- **Admin Dashboard** (Web): Existing Next.js application for academy management
+- **Tutor/Coordinator Mobile App**: React Native/Expo app for staff
+- **Student/Parent Mobile App**: React Native/Expo app for students and parents
+
+✅ **Shared Resources System**:
+- **TypeScript Types**: Complete type definitions extracted from backend schemas
+- **API Client Library**: Unified API client with authentication and program context
+- **Common Utilities**: Shared helper functions and constants
+
+✅ **Git Subtree Workflow**: Automated repository management for separate deployments
+- **Main Repository**: Central development environment
+- **Tutor App Repository**: Independent deployment for app stores
+- **Student App Repository**: Independent deployment for app stores
+
+### 🎯 **Quick Start Commands**
+
+```bash
+# Multi-app development (all apps)
+npm run dev:all
+
+# Mobile apps only
+npm run mobile:dev
+
+# Git subtree management
+npm run subtree:setup    # One-time setup
+npm run subtree:sync     # Sync shared resources
+npm run subtree:push     # Deploy to mobile repositories
+```
+
+### 🔧 **Development Workflow**
+
+#### **Day-to-Day Development**
+1. **Start Development**: `npm run dev:all` (starts all apps + backend)
+2. **Make Changes**: Edit code in main repository
+3. **Sync Shared Resources**: `npm run subtree:sync` (after shared changes)
+4. **Deploy Mobile Apps**: `npm run mobile:deploy` (when ready)
+
+#### **Repository Management**
+- **Main Development**: Work in `/academy-admin/` repository
+- **Mobile Deployment**: Use subtree commands to push to separate repositories
+- **Shared Code**: Automatically synchronized across all apps
+
+### 🎨 **Application Architecture**
+
+#### **Role-Based Access Control** (Enhanced)
+- **Super Admin**: Full access + Academy Administration
+- **Program Admin**: Program management + team coordination
+- **Program Coordinator**: Student management + limited admin access
+- **Tutor**: Student interaction + basic management
+- **🆕 Student**: Mobile app access to own profile, progress, communications
+- **🆕 Parent**: Mobile app access to children's data and communications
+
+#### **API Endpoints** (Enhanced with Mobile Support)
+```
+✅ Mobile-Specific Endpoints Added:
+/api/v1/students/me                    # Student profile (mobile)
+/api/v1/students/me/progress           # Student progress (mobile)
+/api/v1/students/me/attendance         # Student attendance (mobile)
+/api/v1/students/me/assessments        # Student assessments (mobile)
+/api/v1/students/me/communications     # Student messages (mobile)
+/api/v1/students/me/parents           # Parent contacts (mobile)
+```
+
+#### **Docker Development** (Enhanced)
+```bash
+# Full development (recommended)
+docker-compose up
+
+# Mobile-specific development
+docker-compose -f docker-compose.yml -f docker-compose.mobile.yml up
+
+# Individual services
+docker-compose up tutor-mobile
+docker-compose up student-mobile
+```
+
+### 📁 **Directory Structure** (Updated)
+
+```
+academy-admin/                    # Main repository
+├── apps/                         # 🆕 Multi-app directory
+│   ├── README.md                 # App development guide
+│   ├── admin-dashboard/          # Existing admin interface
+│   ├── tutor-mobile/            # Tutor/coordinator mobile app
+│   └── student-mobile/          # Student/parent mobile app
+├── shared/                       # 🆕 Shared resources
+│   ├── types/                   # TypeScript type definitions
+│   ├── api-client/              # Unified API client library
+│   └── utils/                   # Common utilities
+├── backend/                      # FastAPI backend (shared)
+├── frontend/                     # Next.js admin dashboard
+├── scripts/                      # 🆕 Automation scripts
+│   └── subtree-commands.sh       # Git subtree management
+├── git-subtree-workflow.md       # 🆕 Workflow documentation
+├── docker-compose.mobile.yml     # 🆕 Mobile development
+└── docker-compose.override.yml   # 🆕 Development overrides
+```
+
+### 🔄 **Automated Workflows**
+
+#### **Shared Resource Synchronization**
+- **Automatic**: Shared code synced during development
+- **Manual**: `npm run subtree:sync` to force sync
+- **Real-time**: Docker volumes maintain live sync
+
+#### **Repository Deployment**
+- **Tutor App**: `npm run subtree:push:tutor`
+- **Student App**: `npm run subtree:push:student`  
+- **Both Apps**: `npm run subtree:push`
+
+#### **Quality Assurance Integration**
+- **Program Context**: All mobile endpoints follow program filtering rules
+- **Security**: Role-based access control enforced
+- **Testing**: Automated tests for mobile API endpoints
+
+### 📚 **Documentation References**
+- **Git Subtree Workflow**: [`git-subtree-workflow.md`](git-subtree-workflow.md)
+- **Shared API Client**: [`shared/api-client/README.md`](shared/api-client/README.md)
+- **Multi-App Guide**: [`apps/README.md`](apps/README.md)
 
 ## Notes for Claude
 

@@ -57,7 +57,7 @@ class User(BaseModel):
         String(20),
         nullable=False,
         default="program_admin",
-        comment="User role (super_admin, program_admin, program_coordinator, tutor)",
+        comment="User role (super_admin, program_admin, program_coordinator, tutor, student, parent)",
     )
     
     # Status
@@ -108,9 +108,21 @@ class User(BaseModel):
         """Check if user is a tutor."""
         return self.role == "tutor"
     
+    def is_student(self) -> bool:
+        """Check if user is a student."""
+        return self.role == "student"
+    
+    def is_parent(self) -> bool:
+        """Check if user is a parent/guardian."""
+        return self.role == "parent"
+    
     def has_admin_dashboard_access(self) -> bool:
         """Check if user has access to admin dashboard."""
-        return self.role in ["super_admin", "program_admin"]
+        return self.role in ["super_admin", "program_admin", "program_coordinator", "tutor"]
+    
+    def has_mobile_app_access(self) -> bool:
+        """Check if user has access to mobile applications."""
+        return self.role in ["tutor", "program_coordinator", "student", "parent"]
     
     def can_access(self, resource: str) -> bool:
         """Check if user can access a resource based on role."""
@@ -125,7 +137,18 @@ class User(BaseModel):
         if self.is_program_admin():
             return resource not in ["system_management", "programs_management"]
             
-        # Program coordinators and tutors have limited access (future implementation)
+        # Program coordinators and tutors have limited dashboard access
+        if self.is_program_coordinator() or self.is_tutor():
+            return resource in ["student_management", "course_management", "communication"]
+            
+        # Students can only access their own data
+        if self.is_student():
+            return resource in ["student_profile", "student_progress", "student_communications"]
+            
+        # Parents can access their children's data
+        if self.is_parent():
+            return resource in ["children_progress", "parent_communications", "parent_conferences"]
+            
         return False
     
     def __repr__(self) -> str:

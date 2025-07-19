@@ -385,6 +385,96 @@ class StudentService(BaseService[Student, StudentCreate, StudentUpdate]):
             updated_at=student.updated_at
         )
 
+    # Mobile App Support Methods
+    
+    def get_student_by_user_id(self, db: Session, user_id: str) -> Optional[StudentResponse]:
+        """Get student record by user ID (for mobile app authentication)."""
+        try:
+            student = db.query(Student).filter(Student.user_id == user_id).first()
+            if student:
+                return self._to_student_response(db, student)
+            return None
+        except Exception as e:
+            print(f"Error getting student by user ID: {e}")
+            return None
+    
+    def get_student_progress_summary(self, db: Session, student_id: str) -> Dict[str, Any]:
+        """Get comprehensive progress summary for student mobile app."""
+        try:
+            student = db.query(Student).filter(Student.id == student_id).first()
+            if not student:
+                raise ValueError("Student not found")
+            
+            # TODO: Implement when course enrollment and progress models are available
+            return {
+                "student_id": student_id,
+                "overall_progress": 0.0,
+                "current_courses": [],
+                "completed_courses": [],
+                "recent_assessments": [],
+                "attendance_summary": {
+                    "present_days": 0,
+                    "total_days": 0,
+                    "attendance_rate": 0.0
+                },
+                "upcoming_assignments": [],
+                "achievements": []
+            }
+        except Exception as e:
+            print(f"Error getting student progress: {e}")
+            return {}
+    
+    def get_student_attendance(self, 
+                             db: Session, 
+                             student_id: str,
+                             date_from: Optional[str] = None,
+                             date_to: Optional[str] = None,
+                             course_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Get student attendance records for mobile app."""
+        try:
+            # TODO: Implement when attendance model is available
+            return []
+        except Exception as e:
+            print(f"Error getting student attendance: {e}")
+            return []
+    
+    def get_student_assessments(self, 
+                              db: Session, 
+                              student_id: str,
+                              course_id: Optional[str] = None,
+                              assessment_type: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Get student assessment results for mobile app."""
+        try:
+            # TODO: Implement when assessment model is available
+            return []
+        except Exception as e:
+            print(f"Error getting student assessments: {e}")
+            return []
+    
+    def get_student_communications(self, 
+                                 db: Session, 
+                                 student_id: str,
+                                 communication_type: Optional[str] = None,
+                                 status: Optional[str] = None,
+                                 date_from: Optional[str] = None,
+                                 date_to: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Get student communications for mobile app."""
+        try:
+            # TODO: Implement when communication model is available
+            return []
+        except Exception as e:
+            print(f"Error getting student communications: {e}")
+            return []
+    
+    def get_student_parents(self, db: Session, student_id: str) -> List[Dict[str, Any]]:
+        """Get student's parent/guardian contacts for mobile app."""
+        try:
+            # TODO: Implement when parent contact model is available
+            return []
+        except Exception as e:
+            print(f"Error getting student parents: {e}")
+            return []
+
 
 # Global instance
 student_service = StudentService()

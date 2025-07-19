@@ -97,7 +97,7 @@ class UserCreate(BaseModel):
     @validator("role")
     def validate_role(cls, v):
         """Validate user role."""
-        allowed_roles = ["super_admin", "program_admin", "program_coordinator", "tutor"]
+        allowed_roles = ["super_admin", "program_admin", "program_coordinator", "tutor", "student", "parent"]
         if v not in allowed_roles:
             raise ValueError(f"Role must be one of: {allowed_roles}")
         return v
@@ -128,7 +128,7 @@ class UserUpdate(BaseModel):
     def validate_role(cls, v):
         """Validate user role."""
         if v is not None:
-            allowed_roles = ["super_admin", "program_admin", "program_coordinator", "tutor"]
+            allowed_roles = ["super_admin", "program_admin", "program_coordinator", "tutor", "student", "parent"]
             if v not in allowed_roles:
                 raise ValueError(f"Role must be one of: {allowed_roles}")
         return v

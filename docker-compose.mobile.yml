@@ -1,0 +1,121 @@
+# Docker Compose configuration for mobile app development
+# Use: docker-compose -f docker-compose.yml -f docker-compose.mobile.yml up
+
+version: '3.8'
+
+services:
+  # Mobile development requires backend and database
+  db:
+    extends:
+      file: docker-compose.yml
+      service: db
+
+  backend:
+    extends:
+      file: docker-compose.yml
+      service: backend
+    environment:
+      - CORS_ORIGINS=http://localhost:19006,http://localhost:19007,exp://192.168.*:19000,exp://127.0.0.1:19000
+      - MOBILE_API_MODE=true
+
+  # Tutor Mobile App
+  tutor-mobile:
+    build:
+      context: ./apps/tutor-mobile
+      dockerfile: Dockerfile.dev
+    ports:
+      - "19006:19006"  # Expo Metro bundler
+      - "8081:8081"    # Metro dev server
+    volumes:
+      - ./apps/tutor-mobile:/app
+      - ./shared:/app/shared:ro  # Read-only shared resources
+      - tutor_node_modules:/app/node_modules
+    environment:
+      - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
+      - REACT_NATIVE_PACKAGER_HOSTNAME=0.0.0.0
+      - API_BASE_URL=http://host.docker.internal:8000/api/v1
+      - WS_BASE_URL=ws://host.docker.internal:8000/ws
+      - APP_ENV=development
+      - EXPO_CLI_TELEMETRY_DISABLED=1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - default
+    command: >
+      sh -c "
+        echo '🚀 Starting Tutor Mobile App Development...' &&
+        echo '📦 Installing dependencies...' &&
+        npm install &&
+        echo '🔄 Syncing shared resources...' &&
+        mkdir -p /app/src/shared &&
+        cp -r /app/shared/* /app/src/shared/ 2>/dev/null || true &&
+        echo '⚡ Starting Expo development server...' &&
+        npx expo start --clear --dev-client --lan
+      "
+
+  # Student Mobile App
+  student-mobile:
+    build:
+      context: ./apps/student-mobile
+      dockerfile: Dockerfile.dev
+    ports:
+      - "19007:19006"  # Expo Metro bundler (different port)
+      - "8082:8081"    # Metro dev server (different port)
+    volumes:
+      - ./apps/student-mobile:/app
+      - ./shared:/app/shared:ro  # Read-only shared resources
+      - student_node_modules:/app/node_modules
+    environment:
+      - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
+      - REACT_NATIVE_PACKAGER_HOSTNAME=0.0.0.0
+      - API_BASE_URL=http://host.docker.internal:8000/api/v1
+      - WS_BASE_URL=ws://host.docker.internal:8000/ws
+      - APP_ENV=development
+      - EXPO_CLI_TELEMETRY_DISABLED=1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - default
+    command: >
+      sh -c "
+        echo '🚀 Starting Student Mobile App Development...' &&
+        echo '📦 Installing dependencies...' &&
+        npm install &&
+        echo '🔄 Syncing shared resources...' &&
+        mkdir -p /app/src/shared &&
+        cp -r /app/shared/* /app/src/shared/ 2>/dev/null || true &&
+        echo '⚡ Starting Expo development server...' &&
+        npx expo start --clear --dev-client --lan
+      "
+
+  # Shared resources sync service
+  shared-sync:
+    image: alpine:latest
+    volumes:
+      - ./shared:/shared:ro
+      - ./apps/tutor-mobile/src/shared:/tutor-shared
+      - ./apps/student-mobile/src/shared:/student-shared
+    command: >
+      sh -c "
+        echo '🔄 Setting up shared resource sync...' &&
+        while true; do
+          echo '📋 Syncing shared resources to mobile apps...' &&
+          mkdir -p /tutor-shared /student-shared &&
+          cp -r /shared/* /tutor-shared/ 2>/dev/null || true &&
+          cp -r /shared/* /student-shared/ 2>/dev/null || true &&
+          echo '✅ Shared resources synced' &&
+          sleep 30
+        done
+      "
+    profiles:
+      - sync
+
+volumes:
+  tutor_node_modules:
+  student_node_modules:
