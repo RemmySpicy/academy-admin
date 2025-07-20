@@ -4,21 +4,23 @@
  * Scheduling feature module exports.
  * 
  * This module handles:
- * - Session scheduling and booking
- * - Instructor assignment
- * - Schedule conflict prevention
- * - Attendance tracking
- * - Recurring sessions
+ * - Facility-centric session scheduling and booking
+ * - Instructor assignment and availability management
+ * - Schedule conflict prevention and detection
+ * - Participant enrollment and attendance tracking
+ * - Recurring sessions with exception handling
+ * - Notification system for schedule changes
+ * - Program context filtering for all operations
  */
 
-// Components - empty for now
-// export * from './components';
+// Components
+export * from './components';
 
-// Hooks - empty for now
-// export * from './hooks';
+// Hooks
+export * from './hooks';
 
-// Types - empty for now
-// export * from './types';
+// Types
+export * from './types';
 
-// API - empty for now
-// export * from './api';
+// API Services
+export * from './api';

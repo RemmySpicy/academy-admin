@@ -155,3 +155,52 @@ class ContentType(str, enum.Enum):
     LESSON = "lesson"
     RUBRIC = "rubric"
     EQUIPMENT = "equipment"
+
+
+# Scheduling Management Enums
+
+class SessionStatus(str, enum.Enum):
+    """Scheduled session status enumeration."""
+    SCHEDULED = "scheduled"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    POSTPONED = "postponed"
+
+
+class SessionType(str, enum.Enum):
+    """Session type enumeration."""
+    GROUP_LESSON = "group_lesson"
+    PRIVATE_LESSON = "private_lesson"
+    ASSESSMENT = "assessment"
+    PRACTICE = "practice"
+    COMPETITION = "competition"
+    WORKSHOP = "workshop"
+    MEETING = "meeting"
+
+
+class RecurringPattern(str, enum.Enum):
+    """Recurring pattern enumeration."""
+    NONE = "none"
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    BIWEEKLY = "biweekly"
+    MONTHLY = "monthly"
+    CUSTOM = "custom"
+
+
+class ParticipantStatus(str, enum.Enum):
+    """Session participant status enumeration."""
+    ENROLLED = "enrolled"
+    WAITLISTED = "waitlisted"
+    CONFIRMED = "confirmed"
+    CANCELLED = "cancelled"
+    NO_SHOW = "no_show"
+
+
+class NotificationStatus(str, enum.Enum):
+    """Notification status enumeration."""
+    PENDING = "pending"
+    SENT = "sent"
+    FAILED = "failed"
+    SCHEDULED = "scheduled"

@@ -1,4 +1,6 @@
 /**
- * Scheduling components
+ * Scheduling components for facility-centric session management
  */
-// Add scheduling components here when they are created
+
+export { FacilityScheduleManager } from './FacilityScheduleManager';
+export { StudentScheduleManager } from './StudentScheduleManager';

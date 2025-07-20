@@ -278,11 +278,11 @@ class UserService(BaseService[User, dict, dict]):
         include_family: bool = False
     ) -> List[User]:
         """Get all users with a specific role, optionally filtered by program context."""
-        query = db.query(User).filter(User.roles.contains([role]))
+        query = db.query(User).filter(User.roles.any(role))
         
         if program_context:
             # Filter by program assignments or enrollments
-            query = query.join(UserProgramAssignment).filter(
+            query = query.join(UserProgramAssignment, User.id == UserProgramAssignment.user_id).filter(
                 UserProgramAssignment.program_id == program_context
             )
         
@@ -323,7 +323,7 @@ class UserService(BaseService[User, dict, dict]):
                 role_filters = [role_filters]
             
             # User must have at least one of the specified roles
-            role_conditions = [User.roles.contains([role]) for role in role_filters]
+            role_conditions = [User.roles.any(role) for role in role_filters]
             query = query.filter(or_(*role_conditions))
         
         if search_params.get("is_active") is not None:
@@ -331,7 +331,7 @@ class UserService(BaseService[User, dict, dict]):
         
         # Program context filtering
         if program_context:
-            query = query.join(UserProgramAssignment).filter(
+            query = query.join(UserProgramAssignment, User.id == UserProgramAssignment.user_id).filter(
                 UserProgramAssignment.program_id == program_context
             )
         

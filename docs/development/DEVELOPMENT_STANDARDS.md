@@ -685,3 +685,110 @@ By following these standards, every new feature will:
 5. **Enable maintainable code** through consistent patterns and hooks
 
 **⚠️ REMEMBER: Both program context filtering and layout architecture standards are mandatory requirements for every feature in Academy Admin.**
+
+---
+
+## 🗄️ Database Query Patterns
+
+### **PostgreSQL ARRAY Queries**
+
+When working with PostgreSQL ARRAY fields (like `User.roles`), use the correct SQLAlchemy syntax:
+
+#### ✅ **Correct ARRAY Query Patterns**
+
+```python
+from sqlalchemy import func
+from app.features.authentication.models.user import User
+
+# ✅ CORRECT: Check if array contains a specific value
+query = db.query(User).filter(User.roles.any('parent'))
+
+# ✅ CORRECT: Check if array contains any of multiple values
+role_conditions = [User.roles.any(role) for role in role_list]
+query = db.query(User).filter(or_(*role_conditions))
+
+# ✅ CORRECT: Complex array operations
+query = db.query(User).filter(
+    and_(
+        User.roles.any('tutor'),
+        User.is_active == True
+    )
+)
+```
+
+#### ❌ **Incorrect ARRAY Patterns (Will Cause Errors)**
+
+```python
+# ❌ WRONG: This causes PostgreSQL errors
+query = db.query(User).filter(User.roles.contains(['parent']))
+
+# ❌ WRONG: Using Python 'in' operator with arrays
+query = db.query(User).filter('parent' in User.roles)
+```
+
+### **JOIN Query Patterns**
+
+When joining tables with multiple foreign key relationships, be explicit:
+
+#### ✅ **Correct JOIN Patterns**
+
+```python
+# ✅ CORRECT: Explicit join condition
+query = query.join(
+    UserProgramAssignment, 
+    User.id == UserProgramAssignment.user_id
+).filter(
+    UserProgramAssignment.program_id == program_context
+)
+
+# ✅ CORRECT: Multiple joins with explicit conditions
+query = db.query(Student).join(
+    User, Student.user_id == User.id
+).join(
+    UserProgramAssignment, User.id == UserProgramAssignment.user_id
+).filter(
+    UserProgramAssignment.program_id == program_context
+)
+```
+
+#### ❌ **Incorrect JOIN Patterns**
+
+```python
+# ❌ WRONG: Ambiguous join (causes "more than one foreign key" error)
+query = query.join(UserProgramAssignment).filter(
+    UserProgramAssignment.program_id == program_context
+)
+```
+
+### **Self-Referencing Relationships**
+
+For self-referencing models (like recurring sessions):
+
+#### ✅ **Correct Self-Reference Pattern**
+
+```python
+# ✅ CORRECT: String reference for remote_side
+recurring_parent = relationship(
+    "ScheduledSession", 
+    remote_side="ScheduledSession.id",
+    back_populates="recurring_children"
+)
+```
+
+#### ❌ **Incorrect Self-Reference Pattern**
+
+```python
+# ❌ WRONG: Lambda function causes runtime errors
+recurring_parent = relationship(
+    "ScheduledSession", 
+    remote_side=[lambda: ScheduledSession.id],  # This breaks!
+    back_populates="recurring_children"
+)
+```
+
+### **Query Performance Tips**
+
+1. **Use `any()` for array containment** - More efficient than `contains()`
+2. **Explicit join conditions** - Prevents ambiguous join errors
+3. **Program context filtering** - Always filter by program_id early in queries
+4. **Index on program_id** - Ensure all program_id columns are indexed

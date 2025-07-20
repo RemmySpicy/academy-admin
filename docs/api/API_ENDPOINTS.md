@@ -31,6 +31,36 @@
 - `PUT /api/v1/facilities/{id}` - Update facility (program scoped)
 - `DELETE /api/v1/facilities/{id}` - Delete facility (program scoped)
 
+## Scheduling System ✅ (Program Context Filtered)
+### Session Management
+- `POST /api/v1/scheduling/sessions/` - Create new session
+- `GET /api/v1/scheduling/sessions/facility/{facility_id}` - Get facility sessions
+- `GET /api/v1/scheduling/sessions/{session_id}` - Get specific session
+- `PUT /api/v1/scheduling/sessions/{session_id}/time` - Update session time
+- `PUT /api/v1/scheduling/sessions/{session_id}/cancel` - Cancel session
+- `PUT /api/v1/scheduling/sessions/facility/{facility_id}/cancel-day` - Cancel all sessions for day
+
+### Session Participants & Instructors
+- `POST /api/v1/scheduling/sessions/{session_id}/participants` - Add participants
+- `DELETE /api/v1/scheduling/sessions/{session_id}/participants` - Remove participants
+- `POST /api/v1/scheduling/sessions/{session_id}/instructors` - Add instructors
+- `DELETE /api/v1/scheduling/sessions/{session_id}/instructors` - Remove instructors
+- `GET /api/v1/scheduling/sessions/{session_id}/participants` - List session participants
+
+### Integration & Utilities
+- `POST /api/v1/scheduling/sessions/check-conflicts` - Check scheduling conflicts
+- `POST /api/v1/scheduling/integration/courses/create-sessions` - Create sessions from course
+- `GET /api/v1/scheduling/integration/students/{student_id}/schedule` - Student schedule
+- `GET /api/v1/scheduling/integration/facilities/{facility_id}/utilization` - Facility reports
+
+## Parents Management ✅ (Program Context Filtered)
+- `GET /api/v1/parents/` - List parents with family info
+- `GET /api/v1/parents/stats` - Parent statistics
+- `GET /api/v1/parents/{parent_id}` - Get specific parent
+- `GET /api/v1/parents/{parent_id}/family` - Get family structure
+- `PUT /api/v1/parents/{parent_id}` - Update parent
+- `POST /api/v1/parents/` - Create new parent
+
 ## User Program Assignments ✅
 - `GET /api/v1/users/{user_id}/programs` - Get user's program assignments
 - `POST /api/v1/users/{user_id}/programs` - Assign user to program (Super Admin)

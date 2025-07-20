@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.features.authentication.routes.auth import get_current_active_user
 from app.features.common.models.database import get_db
-from app.features.common.dependencies.program_context import get_program_context
+from app.middleware import create_program_filter_dependency
 from app.features.authentication.services.user_service import user_service
 from app.features.authentication.models.user import User
 from app.features.authentication.schemas.user_enhanced import (
@@ -26,12 +26,15 @@ from app.features.common.models.enums import UserRole
 
 router = APIRouter()
 
+# Create program filter dependency with authentication integration
+get_program_filter = create_program_filter_dependency(get_current_active_user)
+
 
 @router.get("/", response_model=UserListResponse)
 async def list_parents(
     current_user: Annotated[dict, Depends(get_current_active_user)],
     db: Session = Depends(get_db),
-    program_context: Optional[str] = Depends(get_program_context),
+    program_context: str = Depends(get_program_filter),
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(20, ge=1, le=100, description="Items per page"),
     search: Optional[str] = Query(None, description="Search query"),
@@ -122,7 +125,7 @@ async def list_parents(
 async def get_parent_stats(
     current_user: Annotated[dict, Depends(get_current_active_user)],
     db: Session = Depends(get_db),
-    program_context: Optional[str] = Depends(get_program_context)
+    program_context: str = Depends(get_program_filter)
 ):
     """
     Get parent statistics.
@@ -233,7 +236,7 @@ async def get_parent_family_structure(
     parent_id: str,
     current_user: Annotated[dict, Depends(get_current_active_user)],
     db: Session = Depends(get_db),
-    program_context: Optional[str] = Depends(get_program_context)
+    program_context: str = Depends(get_program_filter)
 ):
     """
     Get complete family structure for a parent.
