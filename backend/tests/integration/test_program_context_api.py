@@ -27,7 +27,7 @@ class TestProgramContextAPI:
         self.super_admin_token = "super-admin-token"
         self.program_admin_token = "program-admin-token"
         self.coordinator_token = "coordinator-token"
-        self.tutor_token = "tutor-token"
+        self.instructor_token = "instructor-token"
     
     def test_courses_api_program_filtering(self):
         """Test course API respects program context filtering."""
@@ -94,19 +94,19 @@ class TestProgramContextAPI:
     def test_facilities_api_program_filtering(self):
         """Test facility API respects program context filtering."""
         
-        # Mock tutor user
-        tutor = {
-            "id": "tutor-id",
-            "role": UserRole.TUTOR,
+        # Mock instructor user
+        instructor = {
+            "id": "instructor-id",
+            "role": UserRole.INSTRUCTOR,
             "program_assignments": ["program-1"]
         }
         
-        with patch('app.middleware.program_context.get_current_active_user', return_value=tutor):
-            with patch('app.dependencies.auth.get_current_active_user', return_value=tutor):
+        with patch('app.middleware.program_context.get_current_active_user', return_value=instructor):
+            with patch('app.dependencies.auth.get_current_active_user', return_value=instructor):
                 
                 # Test with valid program context
                 headers = {
-                    "Authorization": f"Bearer {self.tutor_token}",
+                    "Authorization": f"Bearer {self.instructor_token}",
                     "X-Program-Context": "program-1"
                 }
                 
@@ -288,20 +288,20 @@ class TestRoleBasedAPIAccess:
                 
                 print("✓ Program admin restrictions work")
     
-    def test_tutor_read_only_access(self):
-        """Test tutor has read-only access to most endpoints."""
+    def test_instructor_read_only_access(self):
+        """Test instructor has read-only access to most endpoints."""
         
-        tutor = {
-            "id": "tutor-id",
-            "role": UserRole.TUTOR,
+        instructor = {
+            "id": "instructor-id",
+            "role": UserRole.INSTRUCTOR,
             "program_assignments": ["program-1"]
         }
         
-        with patch('app.middleware.program_context.get_current_active_user', return_value=tutor):
-            with patch('app.dependencies.auth.get_current_active_user', return_value=tutor):
+        with patch('app.middleware.program_context.get_current_active_user', return_value=instructor):
+            with patch('app.dependencies.auth.get_current_active_user', return_value=instructor):
                 
                 headers = {
-                    "Authorization": "Bearer tutor-token",
+                    "Authorization": "Bearer instructor-token",
                     "X-Program-Context": "program-1"
                 }
                 
@@ -347,7 +347,7 @@ def run_all_tests():
     role_tests.setUp()
     role_tests.test_super_admin_academy_access()
     role_tests.test_program_admin_restrictions()
-    role_tests.test_tutor_read_only_access()
+    role_tests.test_instructor_read_only_access()
     
     print("\n🎉 All program context API tests passed!")
 

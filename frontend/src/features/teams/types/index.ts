@@ -2,33 +2,18 @@
  * Teams Feature Types
  */
 
-// Team member types
-export interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  role: 'program_admin' | 'program_coordinator' | 'tutor';
-  status: 'active' | 'inactive' | 'pending';
-  phone?: string;
-  joinDate: string;
-  programId: string;
-}
-
-export interface TeamMemberCreate {
-  name: string;
-  email: string;
-  role: 'program_admin' | 'program_coordinator' | 'tutor';
-  phone?: string;
-  programId: string;
-}
-
-export interface TeamMemberUpdate {
-  name?: string;
-  email?: string;
-  role?: 'program_admin' | 'program_coordinator' | 'tutor';
-  status?: 'active' | 'inactive' | 'pending';
-  phone?: string;
-}
+// Re-export API types for consistency
+export type {
+  TeamMember,
+  AvailableUser,
+  TeamStats,
+  TeamMemberListResponse,
+  AvailableUserListResponse,
+  AddTeamMemberRequest,
+  UpdateTeamMemberRequest,
+  TeamSearchParams,
+  AvailableUsersParams
+} from '../api/teamApi';
 
 // Team assignment types
 export interface TeamAssignment {

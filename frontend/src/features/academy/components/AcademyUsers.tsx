@@ -32,8 +32,9 @@ import {
   useRemoveUserFromProgram
 } from '../hooks/useAcademyUsers';
 import { User, UserCreate, UserUpdate } from '@/lib/api/types';
+import { UserCreateDialog, UserEditDialog, UserViewDialog, ProgramAssignmentDialog } from './dialogs';
 
-type UserRole = 'super_admin' | 'program_admin' | 'program_coordinator' | 'tutor' | 'student' | 'parent';
+type UserRole = 'super_admin' | 'program_admin' | 'program_coordinator' | 'instructor' | 'student' | 'parent';
 
 interface UserSearchParams {
   search?: string;
@@ -55,6 +56,13 @@ export function AcademyUsers() {
     per_page: 20
   });
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  
+  // Dialog states
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [programAssignmentDialogOpen, setProgramAssignmentDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   // Queries
   const { data: usersData, isLoading, error } = useAcademyUsers(searchParams);
@@ -115,6 +123,31 @@ export function AcademyUsers() {
     }
   };
 
+  // Dialog handlers
+  const handleViewUser = (user: User) => {
+    setSelectedUser(user);
+    setViewDialogOpen(true);
+  };
+
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user);
+    setEditDialogOpen(true);
+  };
+
+  const handleCreateUser = () => {
+    setCreateDialogOpen(true);
+  };
+
+  const handleManageUserPrograms = (user: User) => {
+    setSelectedUser(user);
+    setProgramAssignmentDialogOpen(true);
+  };
+
+  const handleDialogSuccess = () => {
+    // Refresh users data after successful operations
+    // The react-query will automatically refetch
+  };
+
   const handleBulkAction = async (action: 'activate' | 'deactivate' | 'delete') => {
     if (selectedUsers.length === 0) return;
     
@@ -157,7 +190,7 @@ export function AcademyUsers() {
         return <Shield className="h-4 w-4 text-blue-600" />;
       case 'program_coordinator':
         return <Users className="h-4 w-4 text-green-600" />;
-      case 'tutor':
+      case 'instructor':
         return <UserCheck className="h-4 w-4 text-orange-600" />;
       case 'student':
         return <UserIcon className="h-4 w-4 text-purple-600" />;
@@ -179,7 +212,7 @@ export function AcademyUsers() {
       super_admin: 'Super Admin',
       program_admin: 'Program Admin',
       program_coordinator: 'Program Coordinator',
-      tutor: 'Tutor',
+      instructor: 'Instructor',
       student: 'Student',
       parent: 'Parent'
     };
@@ -261,7 +294,7 @@ export function AcademyUsers() {
                 Manage all system users, roles, and program assignments
               </CardDescription>
             </div>
-            <Button>
+            <Button onClick={handleCreateUser}>
               <Plus className="h-4 w-4 mr-2" />
               Create User
             </Button>
@@ -290,7 +323,7 @@ export function AcademyUsers() {
               <option value="super_admin">Super Admin</option>
               <option value="program_admin">Program Admin</option>
               <option value="program_coordinator">Program Coordinator</option>
-              <option value="tutor">Tutor</option>
+              <option value="instructor">Instructor</option>
               <option value="student">Student</option>
               <option value="parent">Parent</option>
             </select>
@@ -453,22 +486,43 @@ export function AcademyUsers() {
                       </td>
                       <td className="p-3">
                         <div className="flex items-center space-x-1">
-                          <Button size="sm" variant="ghost">
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => handleViewUser(user)}
+                            title="View Details"
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="ghost">
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => handleEditUser(user)}
+                            title="Edit User"
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="ghost" title="Manage Relationships">
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => handleManageUserPrograms(user)}
+                            title="Manage Program Assignments"
+                          >
                             <UsersIcon className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="ghost">
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => handleEditUser(user)}
+                            title="User Settings"
+                          >
                             <Settings className="h-4 w-4" />
                           </Button>
                           <Button 
                             size="sm" 
                             variant="ghost"
                             onClick={() => handleDeleteUser(user.id)}
+                            title="Delete User"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -512,6 +566,41 @@ export function AcademyUsers() {
           )}
         </CardContent>
       </Card>
+
+      {/* Dialogs */}
+      <UserCreateDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSuccess={handleDialogSuccess}
+      />
+      
+      <UserEditDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        user={selectedUser}
+        onSuccess={handleDialogSuccess}
+      />
+      
+      <UserViewDialog
+        open={viewDialogOpen}
+        onOpenChange={setViewDialogOpen}
+        user={selectedUser}
+        onEdit={() => {
+          setViewDialogOpen(false);
+          setEditDialogOpen(true);
+        }}
+        onManagePrograms={() => {
+          setViewDialogOpen(false);
+          handleManageUserPrograms(selectedUser!);
+        }}
+      />
+      
+      <ProgramAssignmentDialog
+        open={programAssignmentDialogOpen}
+        onOpenChange={setProgramAssignmentDialogOpen}
+        user={selectedUser}
+        onSuccess={handleDialogSuccess}
+      />
     </div>
   );
 }

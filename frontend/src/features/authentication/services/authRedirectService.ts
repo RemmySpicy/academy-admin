@@ -7,7 +7,7 @@
 
 import { useProgramContext } from '@/store';
 
-export type UserRole = 'super_admin' | 'program_admin' | 'program_coordinator' | 'tutor';
+export type UserRole = 'super_admin' | 'program_admin' | 'program_coordinator' | 'instructor';
 
 export interface AuthUser {
   id: string;
@@ -34,7 +34,7 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   // Dashboard - All authenticated users
   {
     path: '/admin',
-    allowedRoles: ['super_admin', 'program_admin', 'program_coordinator', 'tutor'],
+    allowedRoles: ['super_admin', 'program_admin', 'program_coordinator', 'instructor'],
     requiresProgram: false,
     description: 'Main dashboard'
   },
@@ -42,25 +42,25 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   // Program Management - All roles (but data scoped by program)
   {
     path: '/admin/students',
-    allowedRoles: ['super_admin', 'program_admin', 'program_coordinator', 'tutor'],
+    allowedRoles: ['super_admin', 'program_admin', 'program_coordinator', 'instructor'],
     requiresProgram: true,
     description: 'Student management'
   },
   {
     path: '/admin/courses',
-    allowedRoles: ['super_admin', 'program_admin', 'program_coordinator', 'tutor'],
+    allowedRoles: ['super_admin', 'program_admin', 'program_coordinator', 'instructor'],
     requiresProgram: true,
     description: 'Courses management'
   },
   {
     path: '/admin/scheduling',
-    allowedRoles: ['super_admin', 'program_admin', 'program_coordinator', 'tutor'],
+    allowedRoles: ['super_admin', 'program_admin', 'program_coordinator', 'instructor'],
     requiresProgram: true,
     description: 'Scheduling management'
   },
   {
     path: '/admin/facilities',
-    allowedRoles: ['super_admin', 'program_admin', 'program_coordinator', 'tutor'],
+    allowedRoles: ['super_admin', 'program_admin', 'program_coordinator', 'instructor'],
     requiresProgram: true,
     description: 'Facility management'
   },
@@ -112,7 +112,7 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   // Personal Settings - All authenticated users
   {
     path: '/admin/settings',
-    allowedRoles: ['super_admin', 'program_admin', 'program_coordinator', 'tutor'],
+    allowedRoles: ['super_admin', 'program_admin', 'program_coordinator', 'instructor'],
     requiresProgram: false,
     description: 'Personal settings'
   },

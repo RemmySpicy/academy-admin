@@ -199,7 +199,7 @@ function AccessDeniedPage({ reason, redirectTo }: { reason: string; redirectTo?:
                 {user?.role === 'super_admin' ? 'Super Admin' : 
                  user?.role === 'program_admin' ? 'Program Admin' :
                  user?.role === 'program_coordinator' ? 'Program Coordinator' :
-                 user?.role === 'tutor' ? 'Tutor' : 'Unknown'}
+                 user?.role === 'instructor' ? 'Tutor' : 'Unknown'}
               </span>
             </p>
           </div>

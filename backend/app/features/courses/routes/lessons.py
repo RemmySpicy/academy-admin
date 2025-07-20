@@ -228,7 +228,7 @@ async def delete_lesson(
     Requires admin privileges.
     """
     # Check admin permissions
-    if current_user.get("role") != "admin":
+    if current_user.get("role") != "super_admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only administrators can delete lessons"

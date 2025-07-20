@@ -117,9 +117,9 @@ export function ProgramSwitcher() {
               <span className="text-sm font-medium text-gray-900">
                 {currentProgram?.name || 'Select Program'}
               </span>
-              {currentProgram?.code && (
+              {currentProgram?.program_code && (
                 <Badge variant="secondary" className="text-xs">
-                  {currentProgram.code}
+                  {currentProgram.program_code}
                 </Badge>
               )}
               {!canSwitch && (
@@ -150,7 +150,7 @@ export function ProgramSwitcher() {
                     {program.name}
                   </span>
                   <span className="text-xs text-gray-500">
-                    {program.code}
+                    {program.program_code}
                   </span>
                 </div>
               </div>

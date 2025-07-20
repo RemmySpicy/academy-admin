@@ -178,9 +178,9 @@ class User(BaseModel):
         """Check if user is a program coordinator."""
         return UserRole.PROGRAM_COORDINATOR.value in self.roles
     
-    def is_tutor(self) -> bool:
-        """Check if user is a tutor."""
-        return UserRole.TUTOR.value in self.roles
+    def is_instructor(self) -> bool:
+        """Check if user is an instructor."""
+        return UserRole.INSTRUCTOR.value in self.roles
     
     def is_student(self) -> bool:
         """Check if user is a student."""
@@ -193,12 +193,12 @@ class User(BaseModel):
     def has_admin_dashboard_access(self) -> bool:
         """Check if user has access to admin dashboard."""
         admin_roles = [UserRole.SUPER_ADMIN.value, UserRole.PROGRAM_ADMIN.value, 
-                      UserRole.PROGRAM_COORDINATOR.value, UserRole.TUTOR.value]
+                      UserRole.PROGRAM_COORDINATOR.value, UserRole.INSTRUCTOR.value]
         return any(role in self.roles for role in admin_roles)
     
     def has_mobile_app_access(self) -> bool:
         """Check if user has access to mobile applications."""
-        mobile_roles = [UserRole.TUTOR.value, UserRole.PROGRAM_COORDINATOR.value, 
+        mobile_roles = [UserRole.INSTRUCTOR.value, UserRole.PROGRAM_COORDINATOR.value, 
                        UserRole.STUDENT.value, UserRole.PARENT.value]
         return any(role in self.roles for role in mobile_roles)
     
@@ -229,8 +229,8 @@ class User(BaseModel):
         if self.is_program_admin():
             return resource not in ["system_management", "programs_management"]
             
-        # Program coordinators and tutors have limited dashboard access
-        if self.is_program_coordinator() or self.is_tutor():
+        # Program coordinators and instructors have limited dashboard access
+        if self.is_program_coordinator() or self.is_instructor():
             return resource in ["student_management", "course_management", "communication"]
             
         # Students can only access their own data

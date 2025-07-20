@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Academy Tutor",
-    "slug": "academy-tutor-app",
+    "name": "Academy Instructor",
+    "slug": "academy-instructor-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,10 +16,10 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.academy.tutor"
+      "bundleIdentifier": "com.academy.instructor"
     },
     "android": {
-      "package": "com.academy.tutor",
+      "package": "com.academy.instructor",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

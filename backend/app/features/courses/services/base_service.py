@@ -3,6 +3,7 @@ Base service class for curriculum management operations.
 """
 
 from typing import TypeVar, Generic, List, Optional, Dict, Any, Tuple, Type
+import uuid
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_, desc, asc
 from sqlalchemy.ext.declarative import DeclarativeMeta
@@ -31,6 +32,10 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         # Add audit fields if available
         if hasattr(self.model, 'created_by') and created_by:
             obj_data['created_by'] = created_by
+        
+        # Ensure ID is generated if not provided
+        if hasattr(self.model, 'id') and 'id' not in obj_data:
+            obj_data['id'] = str(uuid.uuid4())
         
         db_obj = self.model(**obj_data)
         db.add(db_obj)

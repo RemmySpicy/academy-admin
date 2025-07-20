@@ -18,6 +18,7 @@ from app.features.courses.routes import (
 )
 from app.features.facilities.routes import facilities
 from app.features.scheduling.routes import sessions_router, integration_router
+from app.features.teams.routes import teams
 
 api_router = APIRouter()
 
@@ -48,3 +49,6 @@ api_router.include_router(facilities.router, prefix="/facilities", tags=["facili
 # Scheduling routes (separate top-level)
 api_router.include_router(sessions_router, prefix="/scheduling/sessions", tags=["scheduling-sessions"])
 api_router.include_router(integration_router, prefix="/scheduling/integration", tags=["scheduling-integration"])
+
+# Teams management routes (separate top-level)
+api_router.include_router(teams.router, prefix="/teams", tags=["teams"])

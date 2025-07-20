@@ -9,14 +9,15 @@ Academy Management System with program-centric architecture, role-based access c
 
 ### ✅ **Fully Implemented Features**
 - **Database Schema**: PostgreSQL with program-centric design
-- **Authentication System**: JWT with 4-role system (Super Admin, Program Admin, Program Coordinator, Tutor)
+- **Authentication System**: JWT with 4-role system (Super Admin, Program Admin, Program Coordinator, Instructor)
 - **Program Context Architecture**: HTTP header-based filtering with automatic security enforcement
 - **Course Management**: Full CRUD with program context integration
 - **Facility Management**: Complete facility management system
 - **User Management**: Role-based program assignments
+- **🆕 Teams Management**: Program-specific team member management with role-based access control
 - **Quality Assurance**: Automated program context compliance checking
 - **🆕 Layout Architecture**: Context-based page header system with clean component separation
-- **🆕 Multi-App Development Infrastructure**: Complete setup for tutor/coordinator and student/parent mobile apps
+- **🆕 Multi-App Development Infrastructure**: Complete setup for instructor/coordinator and student/parent mobile apps
 - **🆕 Shared API Client Library**: Unified TypeScript API client for all applications
 - **🆕 Git Subtree Workflow**: Automated workflow for managing multiple app repositories
 
@@ -282,7 +283,7 @@ docker-compose up
 docker-compose -f docker-compose.yml -f docker-compose.mobile.yml up
 
 # Individual services
-docker-compose up tutor-mobile
+docker-compose up instructor-mobile
 docker-compose up student-mobile
 ```
 
@@ -292,7 +293,7 @@ docker-compose up student-mobile
 academy-admin/                    # Main repository
 ├── apps/                         # 🆕 Multi-app directory
 │   ├── README.md                 # App development guide
-│   ├── academy-tutor-app/        # Tutor/coordinator mobile app
+│   ├── academy-instructors-app/  # Instructor/coordinator mobile app
 │   └── academy-students-app/     # Student/parent mobile app
 ├── shared/                       # 🆕 Shared resources
 │   ├── types/                   # TypeScript type definitions
@@ -315,7 +316,7 @@ academy-admin/                    # Main repository
 - **Real-time**: Docker volumes maintain live sync
 
 #### **Repository Deployment**
-- **Tutor App**: `npm run subtree:push:tutor`
+- **Instructor App**: `npm run subtree:push:instructor`
 - **Student App**: `npm run subtree:push:student`  
 - **Both Apps**: `npm run subtree:push`
 
@@ -358,10 +359,10 @@ academy-admin/                    # Main repository
 - **Consolidated documentation**: Merged `git-subtree-workflow.md` into `PROJECT_STRUCTURE.md`
 - **Removed backup files**: `CLAUDE_BACKUP.md` no longer needed
 - **Updated repository structure**: All repositories now use `main` branch
-- **Corrected app paths**: `apps/academy-tutor-app/` and `apps/academy-students-app/`
+- **Corrected app paths**: `apps/academy-instructors-app/` and `apps/academy-students-app/`
 
 ### 📁 **Current Clean Structure**
 - **Main Repository**: `RemmySpicy/academy-admin` (development)
-- **Mobile Repositories**: `RemmySpicy/academy-tutor-app`, `RemmySpicy/academy-students-app` (deployment)
+- **Mobile Repositories**: `RemmySpicy/academy-instructors-app`, `RemmySpicy/academy-students-app` (deployment)
 - **Shared Resources**: Unified across all applications
 - **Documentation**: Consolidated and up-to-date

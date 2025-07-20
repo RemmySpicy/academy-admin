@@ -445,8 +445,8 @@ class SchedulingNotificationService:
             and_(
                 User.id == instructor_id,
                 or_(
-                    User.primary_role == UserRole.TUTOR,
-                    User.roles.contains([UserRole.TUTOR.value])
+                    User.primary_role == UserRole.INSTRUCTOR,
+                    User.roles.contains([UserRole.INSTRUCTOR.value])
                 )
             )
         ).first()

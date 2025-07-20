@@ -43,7 +43,7 @@ Content-Type: application/json
     "id": "uuid-here",
     "email": "admin@academy.com",
     "full_name": "Administrator",
-    "role": "admin",
+    "role": "super_admin",
     "is_active": true
   }
 }
@@ -90,7 +90,7 @@ admin_user = User(
     email="admin@academy.com",
     password_hash=hash_password("admin123"),
     full_name="Administrator",
-    role="admin",
+    role="super_admin",
     is_active=True
 )
 ```
@@ -146,11 +146,11 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 ### Role-Based Access (Future)
 ```python
 # Example of future role-based decorators
-@require_role("admin")
+@require_role("super_admin")
 def admin_only_endpoint():
     pass
 
-@require_role(["admin", "teacher"])
+@require_role(["super_admin", "program_admin"])
 def teacher_access_endpoint():
     pass
 ```

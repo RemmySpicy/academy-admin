@@ -26,7 +26,7 @@ interface NavItem {
   title: string;
   href?: string;
   icon: React.ComponentType<{ className?: string }>;
-  roles?: ('super_admin' | 'program_admin' | 'program_coordinator' | 'tutor')[];
+  roles?: ('super_admin' | 'program_admin' | 'program_coordinator' | 'instructor')[];
   children?: NavItem[];
   onClick?: () => void;
 }
@@ -34,7 +34,7 @@ interface NavItem {
 interface NavSection {
   title: string;
   items: NavItem[];
-  roles?: ('super_admin' | 'program_admin' | 'program_coordinator' | 'tutor')[];
+  roles?: ('super_admin' | 'program_admin' | 'program_coordinator' | 'instructor')[];
   collapsible?: boolean;
 }
 
@@ -274,7 +274,7 @@ export function Sidebar({ className }: SidebarProps) {
                   {user.role === 'super_admin' ? 'Super Admin' : 
                    user.role === 'program_admin' ? 'Program Admin' :
                    user.role === 'program_coordinator' ? 'Program Coordinator' :
-                   user.role === 'tutor' ? 'Tutor' : 'User'}
+                   user.role === 'instructor' ? 'Tutor' : 'User'}
                 </p>
               </div>
             )}

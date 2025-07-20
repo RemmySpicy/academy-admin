@@ -42,7 +42,7 @@ class LoginResponse(BaseModel):
                     "username": "admin",
                     "email": "admin@academy.com",
                     "full_name": "System Administrator",
-                    "role": "admin",
+                    "role": "super_admin",
                     "is_active": True
                 }
             }
@@ -76,7 +76,7 @@ class UserResponse(BaseModel):
                 "username": "admin",
                 "email": "admin@academy.com",
                 "full_name": "System Administrator",
-                "role": "admin",
+                "role": "super_admin",
                 "is_active": True,
                 "last_login": "2025-01-08T18:00:00Z",
                 "created_at": "2025-01-08T12:00:00Z"
@@ -97,7 +97,7 @@ class UserCreate(BaseModel):
     @validator("role")
     def validate_role(cls, v):
         """Validate user role."""
-        allowed_roles = ["super_admin", "program_admin", "program_coordinator", "tutor", "student", "parent"]
+        allowed_roles = ["super_admin", "program_admin", "program_coordinator", "instructor", "student", "parent"]
         if v not in allowed_roles:
             raise ValueError(f"Role must be one of: {allowed_roles}")
         return v
@@ -128,7 +128,7 @@ class UserUpdate(BaseModel):
     def validate_role(cls, v):
         """Validate user role."""
         if v is not None:
-            allowed_roles = ["super_admin", "program_admin", "program_coordinator", "tutor", "student", "parent"]
+            allowed_roles = ["super_admin", "program_admin", "program_coordinator", "instructor", "student", "parent"]
             if v not in allowed_roles:
                 raise ValueError(f"Role must be one of: {allowed_roles}")
         return v

@@ -51,7 +51,8 @@
       "Bash(npm run quality:academy:*)",
       "Bash(npm run program-context:lint)",
       "Bash(alembic revision:*)",
-      "Bash(npm run frontend:build:*)"
+      "Bash(npm run frontend:build:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }

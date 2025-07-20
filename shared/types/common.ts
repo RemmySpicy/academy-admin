@@ -63,7 +63,7 @@ export type UserRole =
   | 'super_admin'
   | 'program_admin' 
   | 'program_coordinator'
-  | 'tutor'
+  | 'instructor'
   | 'student'
   | 'parent';
 

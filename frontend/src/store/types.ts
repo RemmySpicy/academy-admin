@@ -6,11 +6,11 @@
 export interface Program {
   id: string;
   name: string;
-  code: string;
+  program_code: string;
   description?: string;
   category?: string;
   status: 'ACTIVE' | 'INACTIVE' | 'DRAFT' | 'ARCHIVED';
-  displayOrder?: number;
+  display_order?: number;
   isActive: boolean;
 }
 

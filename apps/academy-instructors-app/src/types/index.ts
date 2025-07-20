@@ -2,19 +2,19 @@
  * Type definitions for Academy Tutor App
  * 
  * This file re-exports shared types from the main repository
- * and defines app-specific types for tutors and coordinators.
+ * and defines app-specific types for instructors and coordinators.
  */
 
 // Re-export all shared types from the main repository
 export * from '../../../shared/types';
 
-// App-specific types for tutor mobile app
+// App-specific types for instructor mobile app
 export interface TutorProfile {
   id: string;
   username: string;
   email: string;
   fullName: string;
-  role: 'tutor' | 'program_coordinator' | 'program_admin';
+  role: 'instructor' | 'program_coordinator' | 'program_admin';
   isActive: boolean;
   lastLogin?: string;
   createdAt: string;

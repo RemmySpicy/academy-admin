@@ -24,17 +24,17 @@ class TestMultiRoleScenarios:
         self.client = TestClient(app)
     
     def test_user_role_promotion_scenario(self):
-        """Test scenario where user role is promoted from tutor to admin."""
+        """Test scenario where user role is promoted from instructor to admin."""
         
-        # Start as tutor
-        tutor_user = {
+        # Start as instructor
+        instructor_user = {
             "id": "user-id",
-            "role": UserRole.TUTOR,
+            "role": UserRole.INSTRUCTOR,
             "program_assignments": ["program-1"]
         }
         
-        # Test tutor permissions
-        with patch('app.middleware.program_context.get_current_active_user', return_value=tutor_user):
+        # Test instructor permissions
+        with patch('app.middleware.program_context.get_current_active_user', return_value=instructor_user):
             headers = {
                 "Authorization": "Bearer user-token",
                 "X-Program-Context": "program-1"
@@ -201,10 +201,10 @@ class TestMultiRoleScenarios:
                 "token": "coordinator-token"
             },
             {
-                "id": "tutor-id",
-                "role": UserRole.TUTOR,
+                "id": "instructor-id",
+                "role": UserRole.INSTRUCTOR,
                 "program_assignments": ["program-1"],
-                "token": "tutor-token"
+                "token": "instructor-token"
             }
         ]
         
@@ -341,7 +341,7 @@ class TestDataIsolationScenarios:
                 "can_bypass": False
             },
             {
-                "role": UserRole.TUTOR,
+                "role": UserRole.INSTRUCTOR,
                 "expected_pattern": "program_scoped_readonly",
                 "can_bypass": False
             }

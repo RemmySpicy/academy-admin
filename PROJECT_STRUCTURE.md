@@ -9,15 +9,15 @@ The Academy Admin project uses a multi-repository architecture with Git subtrees
 ```
 RemmySpicy/academy-admin                    # Main development repository
 ├── apps/                                   # Multi-app development environment
-│   ├── academy-tutor-app/                 # Tutor mobile app (development)
+│   ├── academy-instructors-app/           # Instructor mobile app (development)
 │   └── academy-students-app/              # Student mobile app (development)
 ├── shared/                                 # Shared resources across all apps
 ├── backend/                                # FastAPI backend
 ├── frontend/                               # Next.js admin dashboard
 └── scripts/                                # Git subtree automation scripts
 
-RemmySpicy/academy-tutor-app                # Standalone tutor app repository
-└── [Complete React Native/Expo app]       # Deployed from apps/academy-tutor-app/
+RemmySpicy/academy-instructors-app          # Standalone instructor app repository
+└── [Complete React Native/Expo app]       # Deployed from apps/academy-instructors-app/
 
 RemmySpicy/academy-students-app             # Standalone student app repository
 └── [Complete React Native/Expo app]       # Deployed from apps/academy-students-app/
@@ -27,12 +27,12 @@ RemmySpicy/academy-students-app             # Standalone student app repository
 
 ### **Primary Development Location**
 - **Work in**: `RemmySpicy/academy-admin` repository
-- **Develop mobile apps in**: `apps/academy-tutor-app/` and `apps/academy-students-app/`
+- **Develop mobile apps in**: `apps/academy-instructors-app/` and `apps/academy-students-app/`
 - **Shared resources in**: `shared/` directory
 
 ### **Deployment Flow**
 ```
-apps/academy-tutor-app/     →  (Git Subtree)  →  RemmySpicy/academy-tutor-app
+apps/academy-instructors-app/ →  (Git Subtree)  →  RemmySpicy/academy-instructors-app
 apps/academy-students-app/  →  (Git Subtree)  →  RemmySpicy/academy-students-app
 ```
 
@@ -41,8 +41,8 @@ apps/academy-students-app/  →  (Git Subtree)  →  RemmySpicy/academy-students
 # Sync shared resources to mobile apps
 npm run subtree:sync
 
-# Deploy tutor app updates
-npm run subtree:push:tutor
+# Deploy instructor app updates
+npm run subtree:push:instructor
 
 # Deploy student app updates  
 npm run subtree:push:student
@@ -53,8 +53,8 @@ npm run subtree:push
 
 ## 🏗️ **Apps Directory Structure**
 
-### `apps/academy-tutor-app/`
-**Purpose**: Development version of the tutor mobile app
+### `apps/academy-instructors-app/`
+**Purpose**: Development version of the instructor mobile app
 - React Native/Expo configuration
 - Shared API client integration
 - TypeScript type definitions
@@ -71,8 +71,8 @@ npm run subtree:push
 
 ## 📱 **Mobile App Repositories**
 
-### `RemmySpicy/academy-tutor-app`
-**Purpose**: Standalone deployment repository for tutor app
+### `RemmySpicy/academy-instructors-app`
+**Purpose**: Standalone deployment repository for instructor app
 - Complete React Native/Expo project
 - Includes shared resources
 - Ready for app store deployment
@@ -115,7 +115,7 @@ npm run dev:all
 npm run mobile:dev
 
 # Start individual apps
-npm run dev:tutor          # Tutor app only
+npm run dev:instructor     # Instructor app only
 npm run dev:student        # Student app only
 npm run dev:admin          # Admin dashboard only
 ```
@@ -126,7 +126,7 @@ npm run dev:admin          # Admin dashboard only
 npm run mobile:deploy
 
 # Individual app deployment
-npm run subtree:push:tutor
+npm run subtree:push:instructor
 npm run subtree:push:student
 
 # Sync shared resources before deployment
@@ -150,34 +150,34 @@ npm run subtree:sync
 npm run subtree:sync
 
 # Push changes to mobile repositories
-npm run subtree:push:tutor      # Tutor app only
+npm run subtree:push:instructor # Instructor app only
 npm run subtree:push:student    # Student app only
 npm run subtree:push            # Both apps
 
 # Pull changes from mobile repositories (if edited externally)
-./scripts/subtree-commands.sh pull-tutor
+./scripts/subtree-commands.sh pull-instructor
 ./scripts/subtree-commands.sh pull-student
 ```
 
 ### **Manual Git Subtree Commands**
 ```bash
 # Push specific app
-git subtree push --prefix=apps/academy-tutor-app tutor-mobile-origin main
+git subtree push --prefix=apps/academy-instructors-app instructor-mobile-origin main
 git subtree push --prefix=apps/academy-students-app student-mobile-origin main
 
 # Pull specific app
-git subtree pull --prefix=apps/academy-tutor-app tutor-mobile-origin main --squash
+git subtree pull --prefix=apps/academy-instructors-app instructor-mobile-origin main --squash
 git subtree pull --prefix=apps/academy-students-app student-mobile-origin main --squash
 
 # Force push (use with caution)
-git subtree push --prefix=apps/academy-tutor-app tutor-mobile-origin main --force
+git subtree push --prefix=apps/academy-instructors-app instructor-mobile-origin main --force
 ```
 
 ## 📋 **Best Practices**
 
 ### **Development**
 1. **Always develop in the main repository** (`RemmySpicy/academy-admin`)
-2. **Make changes in** `apps/academy-tutor-app/` and `apps/academy-students-app/`
+2. **Make changes in** `apps/academy-instructors-app/` and `apps/academy-students-app/`
 3. **Update shared resources** in `shared/` directory
 4. **Use Git subtrees for deployment** to standalone repositories
 
@@ -206,7 +206,7 @@ git subtree push --prefix=apps/academy-tutor-app tutor-mobile-origin main --forc
 git status                            # Check for uncommitted changes
 
 # If subtree pull conflicts occur
-git subtree pull --prefix=apps/academy-tutor-app tutor-mobile-origin main --squash --strategy=ours
+git subtree pull --prefix=apps/academy-instructors-app instructor-mobile-origin main --squash --strategy=ours
 
 # For manual resolution
 git mergetool
@@ -216,7 +216,7 @@ git commit -m "resolve: merge conflicts in mobile subtree"
 ## ⚠️ **Important Notes**
 
 ### **Don't Edit Mobile Repositories Directly**
-- Mobile app repositories (`academy-tutor-app`, `academy-students-app`) are deployment targets
+- Mobile app repositories (`academy-instructors-app`, `academy-students-app`) are deployment targets
 - Direct changes will be overwritten by Git subtree pushes
 - Always make changes in the main repository's `apps/` directory
 
@@ -233,7 +233,7 @@ git commit -m "resolve: merge conflicts in mobile subtree"
 ## 🔧 **Repository URLs**
 
 - **Main Repository**: `git@github.com:RemmySpicy/academy-admin.git`
-- **Tutor App**: `git@github.com:RemmySpicy/academy-tutor-app.git`
+- **Instructor App**: `git@github.com:RemmySpicy/academy-instructors-app.git`
 - **Students App**: `git@github.com:RemmySpicy/academy-students-app.git`
 
 This structure provides the flexibility of separate app repositories for deployment while maintaining a unified development environment for shared resources and coordinated development.

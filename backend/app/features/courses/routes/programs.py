@@ -203,10 +203,10 @@ async def delete_program(
     Requires admin privileges and no associated courses.
     """
     # Check admin permissions
-    if current_user.get("role") != "admin":
+    if current_user.get("role") != "super_admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only administrators can delete programs"
+            detail="Only super administrators can delete programs"
         )
     
     try:

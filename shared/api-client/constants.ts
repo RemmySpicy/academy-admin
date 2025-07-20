@@ -144,7 +144,7 @@ export const USER_ROLES = {
   SUPER_ADMIN: 'super_admin',
   PROGRAM_ADMIN: 'program_admin',
   PROGRAM_COORDINATOR: 'program_coordinator',
-  TUTOR: 'tutor',
+  TUTOR: 'instructor',
   STUDENT: 'student',
   PARENT: 'parent',
 } as const;

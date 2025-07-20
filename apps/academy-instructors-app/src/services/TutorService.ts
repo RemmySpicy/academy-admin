@@ -2,7 +2,7 @@
  * Tutor Service for Academy Tutor App
  * 
  * This service demonstrates how to use the shared API client
- * for tutor-specific operations in the mobile app.
+ * for instructor-specific operations in the mobile app.
  */
 
 import { apiClient } from '@shared/api-client';
@@ -20,14 +20,14 @@ import type {
 
 export class TutorService {
   /**
-   * Get current tutor's profile
+   * Get current instructor's profile
    */
   static async getMyProfile(): Promise<TutorProfile> {
     try {
       const response = await apiClient.auth.getCurrentUser();
       return response.data;
     } catch (error) {
-      console.error('Error fetching tutor profile:', error);
+      console.error('Error fetching instructor profile:', error);
       throw error;
     }
   }

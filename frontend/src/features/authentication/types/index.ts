@@ -4,7 +4,7 @@ export interface User {
   firstName: string;
   lastName: string;
   full_name: string;
-  role: 'super_admin' | 'program_admin' | 'program_coordinator' | 'tutor';
+  role: 'super_admin' | 'program_admin' | 'program_coordinator' | 'instructor' | 'student' | 'parent';
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -14,7 +14,7 @@ export interface User {
 export interface Program {
   id: string;
   name: string;
-  code: string;
+  program_code: string;
 }
 
 export interface LoginCredentials {
@@ -42,13 +42,13 @@ export interface CreateUserData {
   password: string;
   firstName: string;
   lastName: string;
-  role: 'super_admin' | 'program_admin' | 'program_coordinator' | 'tutor';
+  role: 'super_admin' | 'program_admin' | 'program_coordinator' | 'instructor' | 'student' | 'parent';
   programIds?: string[];
 }
 
 export interface UpdateUserData {
   firstName?: string;
   lastName?: string;
-  role?: 'super_admin' | 'program_admin' | 'program_coordinator' | 'tutor';
+  role?: 'super_admin' | 'program_admin' | 'program_coordinator' | 'instructor' | 'student' | 'parent';
   isActive?: boolean;
 }

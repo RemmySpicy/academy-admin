@@ -39,10 +39,6 @@ export function AcademyProgramCard({
   onDelete,
   onView,
 }: AcademyProgramCardProps) {
-  const formatDuration = (weeks: number | undefined) => {
-    if (!weeks) return 'N/A';
-    return `${weeks} weeks`;
-  };
 
   const getStatusColor = (status: string) => {
     return statusColors[status as keyof typeof statusColors] || 'bg-gray-100 text-gray-800';
@@ -54,7 +50,7 @@ export function AcademyProgramCard({
         <div className="space-y-1 flex-1">
           <CardTitle className="text-lg font-semibold">{program.name}</CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
-            {program.code || 'No code assigned'}
+            {program.program_code || 'No code assigned'}
           </CardDescription>
         </div>
         <DropdownMenu>
@@ -89,7 +85,7 @@ export function AcademyProgramCard({
         </DropdownMenu>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Status and Duration */}
+        {/* Status */}
         <div className="flex items-center justify-between">
           <Badge
             variant="secondary"
@@ -97,9 +93,6 @@ export function AcademyProgramCard({
           >
             {program.status ? program.status.charAt(0).toUpperCase() + program.status.slice(1) : 'Unknown'}
           </Badge>
-          <span className="text-sm text-muted-foreground">
-            {formatDuration(program.duration_weeks)}
-          </span>
         </div>
 
         {/* Description */}

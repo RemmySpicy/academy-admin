@@ -119,25 +119,25 @@ class TestRoleBasedAccess:
             
         print("✓ Program coordinator access works")
     
-    def test_tutor_access(self):
-        """Test tutor role has access to assigned programs only."""
+    def test_instructor_access(self):
+        """Test instructor role has access to assigned programs only."""
         
-        # Mock tutor user
-        tutor = {
-            "id": "tutor-id",
-            "username": "tutor.user",
-            "email": "tutor@academy.com",
-            "role": UserRole.TUTOR,
+        # Mock instructor user
+        instructor = {
+            "id": "instructor-id",
+            "username": "instructor.user",
+            "email": "instructor@academy.com",
+            "role": UserRole.INSTRUCTOR,
             "program_assignments": ["program-1"]
         }
         
-        # Test tutor with valid program context
-        with patch('app.middleware.program_context.get_current_active_user', return_value=tutor):
+        # Test instructor with valid program context
+        with patch('app.middleware.program_context.get_current_active_user', return_value=instructor):
             mock_request = Mock()
             mock_request.headers = {"X-Program-Context": "program-1"}
             
             # Should return program-1 (user has access)
-            result = get_program_filter(mock_request, tutor)
+            result = get_program_filter(mock_request, instructor)
             assert result == "program-1"
             
         print("✓ Tutor access works")
@@ -291,7 +291,7 @@ def run_all_tests():
     access_tests.test_program_admin_access()
     access_tests.test_program_admin_denied_access()
     access_tests.test_program_coordinator_access()
-    access_tests.test_tutor_access()
+    access_tests.test_instructor_access()
     access_tests.test_require_super_admin_decorator()
     access_tests.test_require_program_admin_decorator()
     access_tests.test_no_program_context_handling()

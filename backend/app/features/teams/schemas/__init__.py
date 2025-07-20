@@ -1,0 +1,3 @@
+"""
+Team management schemas.
+"""

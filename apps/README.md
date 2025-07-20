@@ -4,10 +4,10 @@ This directory contains mobile applications that use the shared backend API.
 
 ## Applications
 
-### 📱 Tutor App (`tutor-app/`)
-**Target Users**: Tutors and Program Coordinators
+### 📱 Instructor App (`academy-instructors-app/`)
+**Target Users**: Instructors and Program Coordinators
 **Technology**: React Native / Expo
-**Repository**: Will be managed as git subtree → `academy-tutor-app` repo
+**Repository**: Will be managed as git subtree → `academy-instructors-app` repo
 
 **Features**:
 - Student progress management
@@ -17,16 +17,16 @@ This directory contains mobile applications that use the shared backend API.
 - Course material access
 - Assessment and grading tools
 
-### 📱 Student App (`student-app/`)
+### 📱 Student App (`academy-students-app/`)
 **Target Users**: Students and Parents/Guardians  
 **Technology**: React Native / Expo
-**Repository**: Will be managed as git subtree → `academy-student-app` repo
+**Repository**: Will be managed as git subtree → `academy-students-app` repo
 
 **Features**:
 - Course progress viewing
 - Assignment submissions and tracking
 - Schedule and calendar management
-- Communication with tutors
+- Communication with instructors
 - Resource downloads
 - Progress reports and achievements
 
@@ -47,16 +47,16 @@ npm run dev:apps
 ### Git Subtree Management
 ```bash
 # Add existing repos as subtrees
-git subtree add --prefix=apps/tutor-app tutor-app-remote main --squash
-git subtree add --prefix=apps/student-app student-app-remote main --squash
+git subtree add --prefix=apps/academy-instructors-app instructors-app-remote main --squash
+git subtree add --prefix=apps/academy-students-app student-app-remote main --squash
 
 # Push changes to separate repos
-git subtree push --prefix=apps/tutor-app tutor-app-remote main
-git subtree push --prefix=apps/student-app student-app-remote main
+git subtree push --prefix=apps/academy-instructors-app instructors-app-remote main
+git subtree push --prefix=apps/academy-students-app student-app-remote main
 
 # Pull changes from separate repos
-git subtree pull --prefix=apps/tutor-app tutor-app-remote main --squash
-git subtree pull --prefix=apps/student-app student-app-remote main --squash
+git subtree pull --prefix=apps/academy-instructors-app instructors-app-remote main --squash
+git subtree pull --prefix=apps/academy-students-app student-app-remote main --squash
 ```
 
 ## Shared Resources
@@ -76,13 +76,13 @@ All mobile apps connect to the same FastAPI backend:
 
 ## Role-Based Access
 
-### Tutor App Roles
-- **Tutor**: Basic student interaction and progress viewing
+### Instructor App Roles
+- **Instructor**: Basic student interaction and progress viewing
 - **Program Coordinator**: Enhanced student management and reporting
 
 ### Student App Roles  
 - **Student**: Course access, assignment submission, progress tracking
-- **Parent/Guardian**: Child's progress monitoring, communication with tutors
+- **Parent/Guardian**: Child's progress monitoring, communication with instructors
 
 ## Development Guidelines
 

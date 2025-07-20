@@ -8,8 +8,12 @@ import { useAcademyPrograms, useCreateAcademyProgram, useDeleteAcademyProgram, u
 import { AcademyProgramCard } from './AcademyProgramCard';
 import { AcademySearchAndFilter } from './AcademySearchAndFilter';
 import { AcademyPagination } from './AcademyPagination';
+import { CreateProgramDialog } from './CreateProgramDialog';
+import { EditProgramDialog } from './EditProgramDialog';
+import { ProgramDetailsDialog } from './ProgramDetailsDialog';
 import { SearchParams } from '@/lib/api/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { Program } from '@/lib/api/types';
 
 /**
  * Academy Programs Management Component
@@ -22,8 +26,14 @@ export function AcademyPrograms() {
     per_page: 12,
   });
 
-  const { data: programsData, isLoading: programsLoading } = useAcademyPrograms(searchParams);
-  const { data: programStats, isLoading: statsLoading } = useAcademyProgramStats();
+  // Dialog states
+  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
+
+  const { data: programsData, isLoading: programsLoading, refetch: refetchPrograms } = useAcademyPrograms(searchParams);
+  const { data: programStats, isLoading: statsLoading, refetch: refetchStats } = useAcademyProgramStats();
   const createProgram = useCreateAcademyProgram();
   const deleteProgram = useDeleteAcademyProgram();
 
@@ -42,25 +52,32 @@ export function AcademyPrograms() {
     });
   };
 
-  const handleCreateProgram = () => {
-    // TODO: Implement inline program creation modal
-    console.log('Create program - to be implemented');
+  const handleProgramCreated = () => {
+    refetchPrograms();
+    refetchStats();
   };
 
-  const handleViewProgram = (program: any) => {
-    // TODO: Implement program details view/modal
-    console.log('View program:', program);
+  const handleViewProgram = (program: Program) => {
+    setSelectedProgramId(program.id);
+    setDetailsDialogOpen(true);
   };
 
-  const handleEditProgram = (program: any) => {
-    // TODO: Implement inline program editing modal
-    console.log('Edit program:', program);
+  const handleEditProgram = (program: Program) => {
+    setSelectedProgram(program);
+    setEditDialogOpen(true);
   };
 
-  const handleDeleteProgram = async (program: any) => {
+  const handleProgramUpdated = () => {
+    refetchPrograms();
+    refetchStats();
+  };
+
+  const handleDeleteProgram = async (program: Program) => {
     if (window.confirm(`Are you sure you want to delete "${program.name}"? This action cannot be undone.`)) {
       try {
         await deleteProgram.mutateAsync(program.id);
+        refetchPrograms();
+        refetchStats();
       } catch (error) {
         console.error('Failed to delete program:', error);
       }
@@ -77,10 +94,7 @@ export function AcademyPrograms() {
             Manage all academy programs, create new programs, and configure program settings
           </p>
         </div>
-        <Button onClick={handleCreateProgram}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Program
-        </Button>
+        <CreateProgramDialog onProgramCreated={handleProgramCreated} />
       </div>
 
       {/* Stats Cards */}
@@ -223,14 +237,26 @@ export function AcademyPrograms() {
               <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No programs found</h3>
               <p className="text-gray-600 mb-4">Get started by creating your first program.</p>
-              <Button onClick={handleCreateProgram}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Program
-              </Button>
+              <CreateProgramDialog onProgramCreated={handleProgramCreated} />
             </div>
           )}
         </>
       )}
+
+      {/* Dialog Components */}
+      <EditProgramDialog
+        program={selectedProgram}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onProgramUpdated={handleProgramUpdated}
+      />
+
+      <ProgramDetailsDialog
+        programId={selectedProgramId}
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        onEdit={handleEditProgram}
+      />
     </div>
   );
 }

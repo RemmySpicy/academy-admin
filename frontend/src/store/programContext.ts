@@ -268,6 +268,6 @@ export const useProgramContextHooks = () => {
     hasPrograms: availablePrograms.length > 0,
     canSwitchPrograms: availablePrograms.length > 1,
     currentProgramName: currentProgram?.name || 'No Program Selected',
-    currentProgramCode: currentProgram?.code || null,
+    currentProgramCode: currentProgram?.program_code || null,
   };
 };

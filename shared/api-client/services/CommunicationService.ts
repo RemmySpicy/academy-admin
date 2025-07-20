@@ -49,7 +49,7 @@ export class CommunicationService {
   async sendMessage(messageData: {
     student_id?: string;
     contact_id?: string; // Parent/guardian ID
-    recipient_type: 'student' | 'parent' | 'tutor' | 'coordinator';
+    recipient_type: 'student' | 'parent' | 'instructor' | 'coordinator';
     recipient_ids: string[];
     communication_type: 'email' | 'sms' | 'app_notification' | 'phone_call' | 'in_person';
     subject: string;

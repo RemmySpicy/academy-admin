@@ -61,6 +61,17 @@
 - `PUT /api/v1/parents/{parent_id}` - Update parent
 - `POST /api/v1/parents/` - Create new parent
 
+## Teams Management ✅ (Program Context Filtered)
+### Team Members
+- `GET /api/v1/teams/members` - List program team members (program-filtered)
+- `POST /api/v1/teams/members` - Add user to program team
+- `PUT /api/v1/teams/members/{user_id}` - Update team member role/settings
+- `DELETE /api/v1/teams/members/{user_id}` - Remove team member from program
+
+### Team Utilities
+- `GET /api/v1/teams/available-users` - List users available to add to team
+- `GET /api/v1/teams/stats` - Team statistics and member counts by role
+
 ## User Program Assignments ✅
 - `GET /api/v1/users/{user_id}/programs` - Get user's program assignments
 - `POST /api/v1/users/{user_id}/programs` - Assign user to program (Super Admin)

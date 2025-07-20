@@ -5,25 +5,25 @@
 export interface Program {
   id: string;
   name: string;
-  code: string;
+  program_code: string;
   description?: string;
   category?: string;
   status: 'ACTIVE' | 'INACTIVE' | 'DRAFT' | 'ARCHIVED';
-  displayOrder?: number;
+  display_order?: number;
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  createdBy?: string;
-  updatedBy?: string;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+  updated_by?: string;
 }
 
 export interface ProgramFormData {
   name: string;
-  code: string;
+  program_code: string;
   description?: string;
   category?: string;
   status: 'ACTIVE' | 'INACTIVE' | 'DRAFT' | 'ARCHIVED';
-  displayOrder?: number;
+  display_order?: number;
 }
 
 export interface ProgramsListResponse {

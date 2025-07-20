@@ -183,7 +183,7 @@ async def get_users(
     current_user: Annotated[dict, Depends(get_current_active_user)]
 ):
     """Get all users (admin only)."""
-    if current_user["role"] != "admin":
+    if current_user["role"] != "super_admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
@@ -217,7 +217,7 @@ async def get_user(
     current_user: Annotated[dict, Depends(get_current_active_user)]
 ):
     """Get a specific user by ID (admin only)."""
-    if current_user["role"] != "admin":
+    if current_user["role"] != "super_admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
@@ -254,7 +254,7 @@ async def create_user(
     current_user: Annotated[dict, Depends(get_current_active_user)]
 ):
     """Create a new user (admin only)."""
-    if current_user["role"] != "admin":
+    if current_user["role"] != "super_admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
@@ -302,14 +302,14 @@ async def update_user(
 ):
     """Update user information (admin only, or own profile)."""
     # Check permissions
-    if current_user["role"] != "admin" and current_user["id"] != user_id:
+    if current_user["role"] != "super_admin" and current_user["id"] != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
     
     # Non-admin users cannot change their own role
-    if current_user["role"] != "admin" and "role" in user_data.dict(exclude_unset=True):
+    if current_user["role"] != "super_admin" and "role" in user_data.dict(exclude_unset=True):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Cannot change your own role"
@@ -346,7 +346,7 @@ async def delete_user(
     current_user: Annotated[dict, Depends(get_current_active_user)]
 ):
     """Delete a user (admin only)."""
-    if current_user["role"] != "admin":
+    if current_user["role"] != "super_admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"

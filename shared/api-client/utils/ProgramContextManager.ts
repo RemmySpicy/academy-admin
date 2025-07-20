@@ -21,7 +21,7 @@ export class ProgramContextManager {
     this.currentContext = {
       programId,
       programName: programName || '',
-      userRole: userRole || 'tutor',
+      userRole: userRole || 'instructor',
       permissions: permissions || [],
     };
     

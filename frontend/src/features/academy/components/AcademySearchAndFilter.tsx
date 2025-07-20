@@ -30,17 +30,17 @@ interface AcademySearchAndFilterProps {
 }
 
 const programStatuses = [
-  { value: 'ACTIVE', label: 'Active' },
-  { value: 'INACTIVE', label: 'Inactive' },
-  { value: 'DRAFT', label: 'Draft' },
-  { value: 'ARCHIVED', label: 'Archived' },
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+  { value: 'draft', label: 'Draft' },
+  { value: 'archived', label: 'Archived' },
 ];
 
 const userRoles = [
   { value: 'super_admin', label: 'Super Admin' },
   { value: 'program_admin', label: 'Program Admin' },
   { value: 'program_coordinator', label: 'Program Coordinator' },
-  { value: 'tutor', label: 'Tutor' },
+  { value: 'instructor', label: 'Tutor' },
 ];
 
 const sortOptions = [
