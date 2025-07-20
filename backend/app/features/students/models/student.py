@@ -183,11 +183,8 @@ class Student(BaseModel):
     )
     
     # Relationships
-    # Note: These will be defined when the related models are created
-    # parent_relationships = relationship("StudentParentRelationship", back_populates="student")
-    # enrollments = relationship("StudentEnrollment", back_populates="student")
-    # progress_records = relationship("StudentProgress", back_populates="student")
-    # attendance_records = relationship("StudentAttendance", back_populates="student")
+    user = relationship("User", back_populates="student_profile")
+    course_enrollments = relationship("CourseEnrollment", back_populates="student")
     
     # Indexes for performance
     __table_args__ = (

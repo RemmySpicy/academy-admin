@@ -34,6 +34,15 @@ export interface Student {
   updated_by?: string;
   created_at: string;
   updated_at: string;
+  
+  // Computed/derived fields
+  age?: number;
+  program_name?: string;
+  program_id: string;
+  user_id?: string;
+  
+  // For compatibility with existing code
+  program?: string; // alias for program_name
 }
 
 export interface StudentCreate {
@@ -44,6 +53,7 @@ export interface StudentCreate {
   date_of_birth: string;
   gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
   salutation?: 'Mr' | 'Mrs' | 'Ms' | 'Dr' | 'Prof';
+  program_id: string;
   referral_source?: string;
   enrollment_date: string;
   status?: 'active' | 'inactive' | 'pending' | 'suspended';
@@ -76,6 +86,7 @@ export interface StudentUpdate {
   date_of_birth?: string;
   gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
   salutation?: 'Mr' | 'Mrs' | 'Ms' | 'Dr' | 'Prof';
+  program_id?: string;
   referral_source?: string;
   enrollment_date?: string;
   status?: 'active' | 'inactive' | 'pending' | 'suspended';
@@ -185,10 +196,98 @@ export const SALUTATION_OPTIONS = [
 ] as const;
 
 export const RELATIONSHIP_OPTIONS = [
-  { value: 'Mother', label: 'Mother' },
-  { value: 'Father', label: 'Father' },
-  { value: 'Guardian', label: 'Guardian' },
-  { value: 'Sibling', label: 'Sibling' },
-  { value: 'Grandparent', label: 'Grandparent' },
-  { value: 'Other', label: 'Other' }
+  { value: 'mother', label: 'Mother' },
+  { value: 'father', label: 'Father' },
+  { value: 'guardian', label: 'Guardian' },
+  { value: 'sibling', label: 'Sibling' },
+  { value: 'grandparent', label: 'Grandparent' },
+  { value: 'spouse', label: 'Spouse' },
+  { value: 'other', label: 'Other' }
 ] as const;
+
+// Enhanced types for new functionality
+export interface UserRelationship {
+  id: string;
+  parent_user_id: string;
+  child_user_id: string;
+  relationship_type: string;
+  is_active: boolean;
+  is_primary: boolean;
+  emergency_contact: boolean;
+  can_pick_up: boolean;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CourseEnrollment {
+  id: string;
+  user_id: string;
+  student_id?: string;
+  course_id: string;
+  program_id: string;
+  enrollment_date: string;
+  start_date?: string;
+  completion_date?: string;
+  status: 'active' | 'paused' | 'completed' | 'withdrawn' | 'waitlisted';
+  progress_percentage?: number;
+  enrollment_fee?: number;
+  amount_paid?: number;
+  outstanding_balance?: number;
+  referral_source?: string;
+  special_requirements?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EnhancedUser {
+  id: string;
+  username: string;
+  email: string;
+  full_name: string;
+  phone?: string;
+  date_of_birth?: string;
+  profile_photo_url?: string;
+  roles: string[];
+  primary_role: string;
+  is_active: boolean;
+  last_login?: string;
+  created_at: string;
+  updated_at: string;
+  
+  // Family relationships
+  children?: UserRelationship[];
+  parents?: UserRelationship[];
+  
+  // Course enrollments
+  active_enrollments?: CourseEnrollment[];
+  
+  // Student profile (if exists)
+  student_profile?: Student;
+}
+
+export interface StudentParentCreate {
+  // Parent information
+  parent_username: string;
+  parent_email: string;
+  parent_password: string;
+  parent_full_name: string;
+  parent_phone?: string;
+  parent_date_of_birth?: string;
+  
+  // Child information
+  child_username: string;
+  child_email: string;
+  child_password: string;
+  child_full_name: string;
+  child_phone?: string;
+  child_date_of_birth?: string;
+  
+  // Relationship
+  relationship_type: string;
+  
+  // Course enrollment (optional)
+  course_id?: string;
+  program_id: string;
+}

@@ -76,13 +76,13 @@ services:
   # Mobile Apps Development Services
   tutor-mobile:
     build:
-      context: ./apps/tutor-mobile
+      context: ./apps/academy-tutor-app
       dockerfile: Dockerfile.dev
     ports:
       - "19006:19006"  # Expo Metro bundler
       - "8081:8081"    # Expo dev tools
     volumes:
-      - ./apps/tutor-mobile:/app
+      - ./apps/academy-tutor-app:/app
       - ./shared:/app/shared
       - tutor_node_modules:/app/node_modules
     environment:
@@ -107,13 +107,13 @@ services:
 
   student-mobile:
     build:
-      context: ./apps/student-mobile
+      context: ./apps/academy-students-app
       dockerfile: Dockerfile.dev
     ports:
       - "19007:19006"  # Expo Metro bundler (different port)
       - "8082:8081"    # Expo dev tools (different port)
     volumes:
-      - ./apps/student-mobile:/app
+      - ./apps/academy-students-app:/app
       - ./shared:/app/shared
       - student_node_modules:/app/node_modules
     environment:

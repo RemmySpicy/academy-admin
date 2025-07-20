@@ -65,12 +65,25 @@ class PaymentStatus(str, enum.Enum):
     REFUNDED = "refunded"
 
 
+class UserRole(str, enum.Enum):
+    """User role enumeration."""
+    SUPER_ADMIN = "super_admin"
+    PROGRAM_ADMIN = "program_admin"
+    PROGRAM_COORDINATOR = "program_coordinator"
+    TUTOR = "tutor"
+    STUDENT = "student"
+    PARENT = "parent"
+
+
 class RelationshipType(str, enum.Enum):
     """Parent-child relationship type enumeration."""
-    PRIMARY = "primary"
-    SECONDARY = "secondary"
-    EMERGENCY = "emergency"
+    FATHER = "father"
+    MOTHER = "mother"
     GUARDIAN = "guardian"
+    GRANDPARENT = "grandparent"
+    SIBLING = "sibling"
+    SPOUSE = "spouse"
+    OTHER = "other"
 
 
 class Gender(str, enum.Enum):

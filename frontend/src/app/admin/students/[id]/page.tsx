@@ -22,6 +22,15 @@ import {
   Award,
   FileText
 } from 'lucide-react';
+import { ParentChildManager } from '@/features/students/components';
+import { 
+  useUserRelationships, 
+  useCreateRelationship, 
+  useUpdateRelationship, 
+  useDeleteRelationship 
+} from '@/features/students/hooks/useUserRelationships';
+import { StudentScheduleManager } from '@/features/scheduling/components/StudentScheduleManager';
+import { StudentFinancialManager } from '@/features/payments/components/StudentFinancialManager';
 
 // Mock data - this will be replaced with real API calls
 const mockStudent = {
@@ -156,6 +165,24 @@ export default function StudentDetailPage() {
 
   const age = calculateAge(student.date_of_birth);
 
+  // User relationships hooks
+  const { data: relationships = [], isLoading: relationshipsLoading } = useUserRelationships(student.id);
+  const createRelationshipMutation = useCreateRelationship();
+  const updateRelationshipMutation = useUpdateRelationship();
+  const deleteRelationshipMutation = useDeleteRelationship();
+
+  const handleCreateRelationship = async (data: any) => {
+    await createRelationshipMutation.mutateAsync(data);
+  };
+
+  const handleUpdateRelationship = async (id: string, data: any) => {
+    await updateRelationshipMutation.mutateAsync({ id, data });
+  };
+
+  const handleDeleteRelationship = async (id: string) => {
+    await deleteRelationshipMutation.mutateAsync(id);
+  };
+
   const handleDelete = () => {
     if (confirm('Are you sure you want to delete this student? This action cannot be undone.')) {
       // Handle delete logic here
@@ -225,17 +252,18 @@ export default function StudentDetailPage() {
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs defaultValue="profile" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="enrollments">Enrollments</TabsTrigger>
-          <TabsTrigger value="attendance">Attendance</TabsTrigger>
+          <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="children">Children</TabsTrigger>
           <TabsTrigger value="progress">Progress</TabsTrigger>
-          <TabsTrigger value="notes">Notes</TabsTrigger>
+          <TabsTrigger value="attendance">Attendance</TabsTrigger>
+          <TabsTrigger value="transactions">Transactions</TabsTrigger>
+          <TabsTrigger value="schedule">Schedule</TabsTrigger>
         </TabsList>
 
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
+        {/* Profile Tab */}
+        <TabsContent value="profile" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Personal Information */}
             <Card>
@@ -350,38 +378,33 @@ export default function StudentDetailPage() {
           </div>
         </TabsContent>
 
-        {/* Enrollments Tab */}
-        <TabsContent value="enrollments">
-          <Card>
-            <CardHeader>
-              <CardTitle>Program Enrollments</CardTitle>
-              <CardDescription>Current and past program enrollments</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {enrollments.map((enrollment) => (
-                  <div key={enrollment.id} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold">{enrollment.program}</h3>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(enrollment.status)}`}>
-                        {enrollment.status}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p><strong>Level:</strong> {enrollment.level}</p>
-                        <p><strong>Instructor:</strong> {enrollment.instructor}</p>
-                      </div>
-                      <div>
-                        <p><strong>Period:</strong> {new Date(enrollment.start_date).toLocaleDateString()} - {new Date(enrollment.end_date).toLocaleDateString()}</p>
-                        <p><strong>Attendance:</strong> {enrollment.sessions_attended}/{enrollment.total_sessions} sessions</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Children Tab (for parents) */}
+        <TabsContent value="children">
+          <ParentChildManager
+            userId={student.id}
+            userRole="student"
+            relationships={relationships}
+            onRelationshipCreate={handleCreateRelationship}
+            onRelationshipUpdate={handleUpdateRelationship}
+            onRelationshipDelete={handleDeleteRelationship}
+            isLoading={relationshipsLoading}
+          />
+        </TabsContent>
+
+        {/* Transactions Tab */}
+        <TabsContent value="transactions">
+          <StudentFinancialManager
+            studentId={student.id}
+            enrollments={enrollments}
+          />
+        </TabsContent>
+
+        {/* Schedule Tab */}
+        <TabsContent value="schedule">
+          <StudentScheduleManager
+            studentId={student.id}
+            enrollments={enrollments}
+          />
         </TabsContent>
 
         {/* Attendance Tab */}
@@ -457,33 +480,89 @@ export default function StudentDetailPage() {
           </Card>
         </TabsContent>
 
-        {/* Notes Tab */}
-        <TabsContent value="notes">
-          <Card>
-            <CardHeader>
-              <CardTitle>Student Notes</CardTitle>
-              <CardDescription>Additional information and observations</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-2">General Notes</h3>
-                  <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded">
-                    {student.notes}
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2">Record Information</h3>
-                  <div className="text-sm text-gray-600 space-y-1">
-                    <p><strong>Created:</strong> {new Date(student.created_at).toLocaleString()}</p>
-                    <p><strong>Last Updated:</strong> {new Date(student.updated_at).toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
+
+      {/* Quick Navigation Panel for Parents */}
+      {relationships && relationships.length > 0 && (
+        <Card className="bg-purple-50 border-purple-200">
+          <CardHeader>
+            <CardTitle className="flex items-center text-purple-800">
+              <Heart className="h-5 w-5 mr-2" />
+              Quick Access to Parents
+            </CardTitle>
+            <CardDescription className="text-purple-600">
+              Navigate directly to parent profiles and emergency contacts
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {relationships
+                .filter(rel => rel.parent_user) // Only show relationships where we have parent data
+                .map((relationship) => (
+                <Card key={relationship.id} className="bg-white border-purple-100 hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                        {relationship.relationship_type.toLowerCase() === 'mother' ? (
+                          <Heart className="h-5 w-5 text-pink-600" />
+                        ) : relationship.relationship_type.toLowerCase() === 'father' ? (
+                          <User className="h-5 w-5 text-blue-600" />
+                        ) : (
+                          <Users className="h-5 w-5 text-purple-600" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">
+                          {relationship.parent_user?.full_name || relationship.parent_user?.username}
+                        </h4>
+                        <p className="text-sm text-gray-600 capitalize">{relationship.relationship_type}</p>
+                        {relationship.is_primary && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mt-1">
+                            Primary Contact
+                          </span>
+                        )}
+                        {relationship.emergency_contact && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 mt-1 ml-1">
+                            Emergency
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex space-x-2 mt-3">
+                      <Button size="sm" variant="outline" asChild className="flex-1">
+                        <Link href={`/admin/parents/${relationship.parent_user?.id}`}>
+                          <Eye className="h-3 w-3 mr-1" />
+                          View Profile
+                        </Link>
+                      </Button>
+                      {relationship.parent_user?.email && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => window.open(`mailto:${relationship.parent_user.email}`, '_blank')}
+                          title="Send email"
+                        >
+                          <Mail className="h-3 w-3" />
+                        </Button>
+                      )}
+                      {relationship.parent_user?.phone && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => window.open(`tel:${relationship.parent_user.phone}`, '_blank')}
+                          title="Call phone"
+                        >
+                          <Phone className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

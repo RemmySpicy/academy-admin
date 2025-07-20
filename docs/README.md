@@ -21,7 +21,7 @@
 ### ⚙️ **Features**
 - [`features/courses/README.md`](features/courses/README.md) - Course management system
 - [`features/facilities/README.md`](features/facilities/README.md) - Facility management system
-- [`features/students/README.md`](features/students/README.md) - Student management system *(to be updated)*
+- [`features/students/README.md`](features/students/README.md) - ✅ **Unified Students & Parents Management System** (Fully Implemented)
 - [`features/scheduling/README.md`](features/scheduling/README.md) - Scheduling system *(to be updated)*
 - [`features/authentication/README.md`](features/authentication/README.md) - Authentication & authorization system
 

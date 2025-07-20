@@ -3,12 +3,13 @@ User model for authentication and authorization.
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
-from sqlalchemy import Boolean, Column, DateTime, String, text
+from sqlalchemy import Boolean, Column, DateTime, String, text, ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.features.common.models.base import BaseModel
+from app.features.common.models.enums import UserRole
 
 
 class User(BaseModel):
@@ -52,12 +53,20 @@ class User(BaseModel):
         comment="User's full name",
     )
     
-    # Authorization
-    role: Mapped[str] = mapped_column(
+    # Authorization - Support multiple roles
+    roles: Mapped[List[str]] = mapped_column(
+        ARRAY(String),
+        nullable=False,
+        default=["program_admin"],
+        comment="User roles array (can have multiple: super_admin, program_admin, program_coordinator, tutor, student, parent)",
+    )
+    
+    # Keep legacy role field for backward compatibility
+    primary_role: Mapped[str] = mapped_column(
         String(20),
         nullable=False,
         default="program_admin",
-        comment="User role (super_admin, program_admin, program_coordinator, tutor, student, parent)",
+        comment="Primary user role for backward compatibility",
     )
     
     # Status
@@ -75,10 +84,59 @@ class User(BaseModel):
         comment="Last login timestamp",
     )
     
+    # Additional profile fields for students/parents
+    phone: Mapped[Optional[str]] = mapped_column(
+        String(20),
+        nullable=True,
+        comment="User's phone number",
+    )
+    
+    date_of_birth: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="User's date of birth",
+    )
+    
+    profile_photo_url: Mapped[Optional[str]] = mapped_column(
+        String(500),
+        nullable=True,
+        comment="URL to user's profile photo",
+    )
+    
     # Relationships
     program_assignments = relationship(
         "UserProgramAssignment",
         foreign_keys="UserProgramAssignment.user_id",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    
+    # Parent-child relationships
+    parent_relationships = relationship(
+        "UserRelationship",
+        foreign_keys="UserRelationship.parent_user_id",
+        back_populates="parent_user",
+        cascade="all, delete-orphan"
+    )
+    
+    child_relationships = relationship(
+        "UserRelationship",
+        foreign_keys="UserRelationship.child_user_id",
+        back_populates="child_user",
+        cascade="all, delete-orphan"
+    )
+    
+    # Course enrollments
+    course_enrollments = relationship(
+        "CourseEnrollment",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    
+    # Student profile (if user is a student)
+    student_profile = relationship(
+        "Student",
+        uselist=False,
         back_populates="user",
         cascade="all, delete-orphan"
     )
@@ -90,39 +148,73 @@ class User(BaseModel):
     
     def has_role(self, role: str) -> bool:
         """Check if user has a specific role."""
-        return self.role == role
+        return role in self.roles
+    
+    def add_role(self, role: str) -> None:
+        """Add a role to the user."""
+        if role not in self.roles:
+            self.roles = self.roles + [role]
+            # Update primary role if this is the first role
+            if len(self.roles) == 1:
+                self.primary_role = role
+    
+    def remove_role(self, role: str) -> None:
+        """Remove a role from the user."""
+        if role in self.roles:
+            self.roles = [r for r in self.roles if r != role]
+            # Update primary role if we removed it
+            if self.primary_role == role and self.roles:
+                self.primary_role = self.roles[0]
     
     def is_super_admin(self) -> bool:
         """Check if user is a super admin."""
-        return self.role == "super_admin"
+        return UserRole.SUPER_ADMIN.value in self.roles
     
     def is_program_admin(self) -> bool:
         """Check if user is a program admin."""
-        return self.role == "program_admin"
+        return UserRole.PROGRAM_ADMIN.value in self.roles
     
     def is_program_coordinator(self) -> bool:
         """Check if user is a program coordinator."""
-        return self.role == "program_coordinator"
+        return UserRole.PROGRAM_COORDINATOR.value in self.roles
     
     def is_tutor(self) -> bool:
         """Check if user is a tutor."""
-        return self.role == "tutor"
+        return UserRole.TUTOR.value in self.roles
     
     def is_student(self) -> bool:
         """Check if user is a student."""
-        return self.role == "student"
+        return UserRole.STUDENT.value in self.roles
     
     def is_parent(self) -> bool:
         """Check if user is a parent/guardian."""
-        return self.role == "parent"
+        return UserRole.PARENT.value in self.roles
     
     def has_admin_dashboard_access(self) -> bool:
         """Check if user has access to admin dashboard."""
-        return self.role in ["super_admin", "program_admin", "program_coordinator", "tutor"]
+        admin_roles = [UserRole.SUPER_ADMIN.value, UserRole.PROGRAM_ADMIN.value, 
+                      UserRole.PROGRAM_COORDINATOR.value, UserRole.TUTOR.value]
+        return any(role in self.roles for role in admin_roles)
     
     def has_mobile_app_access(self) -> bool:
         """Check if user has access to mobile applications."""
-        return self.role in ["tutor", "program_coordinator", "student", "parent"]
+        mobile_roles = [UserRole.TUTOR.value, UserRole.PROGRAM_COORDINATOR.value, 
+                       UserRole.STUDENT.value, UserRole.PARENT.value]
+        return any(role in self.roles for role in mobile_roles)
+    
+    def get_children(self) -> List['User']:
+        """Get all children for this user (if they are a parent)."""
+        return [rel.child_user for rel in self.parent_relationships if rel.is_active]
+    
+    def get_parents(self) -> List['User']:
+        """Get all parents for this user (if they are a child)."""
+        return [rel.parent_user for rel in self.child_relationships if rel.is_active]
+    
+    def get_active_enrollments(self) -> List['CourseEnrollment']:
+        """Get all active course enrollments for this user."""
+        from app.features.common.models.enums import EnrollmentStatus
+        return [enrollment for enrollment in self.course_enrollments 
+                if enrollment.status == EnrollmentStatus.ACTIVE]
     
     def can_access(self, resource: str) -> bool:
         """Check if user can access a resource based on role."""
@@ -153,4 +245,5 @@ class User(BaseModel):
     
     def __repr__(self) -> str:
         """String representation of the user."""
-        return f"<User(id={self.id}, username='{self.username}', role='{self.role}')>"
+        roles_str = ', '.join(self.roles)
+        return f"<User(id={self.id}, username='{self.username}', roles=[{roles_str}])>"

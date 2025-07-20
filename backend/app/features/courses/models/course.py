@@ -93,6 +93,7 @@ class Course(BaseModel):
     # Note: Relationships will be defined when related models are created
     # program = relationship("Program", back_populates="courses")
     # curricula = relationship("Curriculum", back_populates="course", cascade="all, delete-orphan")
+    enrollments = relationship("CourseEnrollment", back_populates="course", cascade="all, delete-orphan")
     
     # Indexes for performance
     __table_args__ = (

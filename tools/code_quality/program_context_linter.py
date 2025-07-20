@@ -50,6 +50,21 @@ class ProgramContextLinter:
     def __init__(self):
         self.violations: List[Violation] = []
         
+        # Define exemptions for authentication and utility components
+        self.exempt_file_patterns = [
+            'authentication/schemas/auth.py',
+            'authentication/services/auth_service.py',
+        ]
+        
+        self.exempt_schema_patterns = [
+            'Login', 'Token', 'Password', 'Refresh', 'Auth'
+        ]
+        
+        self.exempt_method_patterns = [
+            'verify_password', 'get_password_hash', 'create_access_token',
+            'verify_token', 'authenticate_user'
+        ]
+        
     def lint_file(self, file_path: str) -> List[Violation]:
         """Lint a single file for program context violations."""
         if not file_path.endswith('.py'):
@@ -96,6 +111,18 @@ class ProgramContextLinter:
         """Check if file is a route file."""
         return 'routes/' in file_path and file_path.endswith('.py')
     
+    def _is_file_exempt(self, file_path: str) -> bool:
+        """Check if file should be exempt from program context requirements."""
+        return any(pattern in file_path for pattern in self.exempt_file_patterns)
+    
+    def _is_schema_exempt(self, schema_name: str) -> bool:
+        """Check if schema should be exempt from program context requirements."""
+        return any(pattern in schema_name for pattern in self.exempt_schema_patterns)
+    
+    def _is_method_exempt(self, method_name: str) -> bool:
+        """Check if method should be exempt from program context requirements."""
+        return any(pattern in method_name for pattern in self.exempt_method_patterns)
+    
     def _check_model_file(self, tree: ast.AST, file_path: str) -> List[Violation]:
         """Check model file for program context violations."""
         violations = []
@@ -138,6 +165,10 @@ class ProgramContextLinter:
         """Check service file for program context violations."""
         violations = []
         
+        # Skip exempt files
+        if self._is_file_exempt(file_path):
+            return violations
+        
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
                 # Check if it's a service class
@@ -161,6 +192,10 @@ class ProgramContextLinter:
                 
                 # Skip private methods and __init__
                 if method_name.startswith('_') or method_name == '__init__':
+                    continue
+                
+                # Skip exempt methods
+                if self._is_method_exempt(method_name):
                     continue
                 
                 # Check if method needs program_context parameter
@@ -199,9 +234,17 @@ class ProgramContextLinter:
         """Check schema file for program context violations."""
         violations = []
         
+        # Skip exempt files
+        if self._is_file_exempt(file_path):
+            return violations
+        
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
                 class_name = node.name
+                
+                # Skip exempt schemas
+                if self._is_schema_exempt(class_name):
+                    continue
                 
                 # Check Create schemas
                 if class_name.endswith('Create'):
@@ -218,6 +261,10 @@ class ProgramContextLinter:
                 
                 # Check Response schemas
                 elif class_name.endswith('Response'):
+                    # Skip exempt schemas
+                    if self._is_schema_exempt(class_name):
+                        continue
+                        
                     if not self._has_program_id_field_in_schema(node):
                         violations.append(Violation(
                             type=ViolationType.MISSING_SCHEMA_PROGRAM_ID,

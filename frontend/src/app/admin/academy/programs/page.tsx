@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Building, Users, Settings } from 'lucide-react';
-import { AcademyPrograms } from '@/features/academy';
+import { AcademyPrograms, AcademyUsers } from '@/features/academy';
 
 /**
  * Academy Administration - Programs Management Page
@@ -47,29 +47,7 @@ export default function AcademyProgramsPage() {
 
         {/* Users Tab */}
         <TabsContent value="users">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Users Management</CardTitle>
-                  <CardDescription>
-                    Manage system users, roles, permissions, and program assignments
-                  </CardDescription>
-                </div>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create User
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>Users management interface will be implemented here</p>
-                <p className="text-sm mt-2">This will include user CRUD operations, role management, and program assignments</p>
-              </div>
-            </CardContent>
-          </Card>
+          <AcademyUsers />
         </TabsContent>
 
         {/* System Settings Tab */}

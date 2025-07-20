@@ -3,9 +3,13 @@ Student API routes for CRUD operations.
 """
 
 from typing import Annotated, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import status
+from sqlalchemy.orm import Session
 
 from app.features.authentication.routes.auth import get_current_active_user
+from app.features.common.models.database import get_db
+from app.features.common.dependencies.program_context import get_program_context
 from app.features.students.schemas.student import (
     StudentCreate,
     StudentUpdate,
@@ -57,6 +61,8 @@ async def create_student(
 @router.get("/", response_model=StudentListResponse)
 async def list_students(
     current_user: Annotated[dict, Depends(get_current_active_user)],
+    db: Session = Depends(get_db),
+    program_context: Optional[str] = Depends(get_program_context),
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(20, ge=1, le=100, description="Items per page"),
     search: Optional[str] = Query(None, description="Search query"),
@@ -89,9 +95,11 @@ async def list_students(
             )
         
         students, total_count = student_service.list_students(
+            db=db,
             search_params=search_params,
             page=page,
-            per_page=per_page
+            per_page=per_page,
+            program_context=program_context
         )
         
         # Calculate pagination info
@@ -121,7 +129,9 @@ async def list_students(
 
 @router.get("/stats", response_model=StudentStatsResponse)
 async def get_student_stats(
-    current_user: Annotated[dict, Depends(get_current_active_user)]
+    current_user: Annotated[dict, Depends(get_current_active_user)],
+    db: Session = Depends(get_db),
+    program_context: Optional[str] = Depends(get_program_context)
 ):
     """
     Get student statistics.
@@ -129,7 +139,7 @@ async def get_student_stats(
     Returns counts, demographics, and other statistical information.
     """
     try:
-        stats = student_service.get_student_stats()
+        stats = student_service.get_student_stats(db, program_context)
         return stats
     except Exception as e:
         raise HTTPException(
@@ -406,10 +416,10 @@ async def get_my_progress(
 
 @router.get("/me/attendance")
 async def get_my_attendance(
+    current_user: Annotated[dict, Depends(get_current_active_user)],
     date_from: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
     date_to: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
-    course_id: Optional[str] = Query(None, description="Filter by course"),
-    current_user: Annotated[dict, Depends(get_current_active_user)]
+    course_id: Optional[str] = Query(None, description="Filter by course")
 ):
     """
     Get current student's attendance records (for student mobile app).
@@ -443,9 +453,9 @@ async def get_my_attendance(
 
 @router.get("/me/assessments")
 async def get_my_assessments(
+    current_user: Annotated[dict, Depends(get_current_active_user)],
     course_id: Optional[str] = Query(None, description="Filter by course"),
-    assessment_type: Optional[str] = Query(None, description="Filter by assessment type"),
-    current_user: Annotated[dict, Depends(get_current_active_user)]
+    assessment_type: Optional[str] = Query(None, description="Filter by assessment type")
 ):
     """
     Get current student's assessment results (for student mobile app).
@@ -479,11 +489,11 @@ async def get_my_assessments(
 
 @router.get("/me/communications")
 async def get_my_communications(
+    current_user: Annotated[dict, Depends(get_current_active_user)],
     communication_type: Optional[str] = Query(None, description="Filter by type"),
     status_filter: Optional[str] = Query(None, alias="status", description="Filter by status"),
     date_from: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
-    date_to: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
-    current_user: Annotated[dict, Depends(get_current_active_user)]
+    date_to: Optional[str] = Query(None, description="End date (YYYY-MM-DD)")
 ):
     """
     Get current student's communications (for student mobile app).

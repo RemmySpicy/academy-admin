@@ -47,7 +47,11 @@
       "Bash(./setup-local-db.sh:*)",
       "Bash(diff:*)",
       "Bash(tree:*)",
-      "Bash(./scripts/subtree-commands.sh:*)"
+      "Bash(./scripts/subtree-commands.sh:*)",
+      "Bash(npm run quality:academy:*)",
+      "Bash(npm run program-context:lint)",
+      "Bash(alembic revision:*)",
+      "Bash(npm run frontend:build:*)"
     ],
     "deny": []
   }

@@ -1,4 +1,5 @@
 /**
  * Students components
  */
-// Add student components here when they are created
+
+export { ParentChildManager } from './ParentChildManager';
