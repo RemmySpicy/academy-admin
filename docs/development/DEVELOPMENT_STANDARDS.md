@@ -526,3 +526,162 @@ By following these standards, every new feature will:
 5. **Integrate seamlessly** with existing Academy Admin features
 
 **⚠️ REMEMBER: Program context filtering is not optional - it's a critical security requirement for every feature in Academy Admin.**
+
+---
+
+## 🎨 Frontend Layout Standards
+
+**⚠️ CRITICAL: All new feature pages MUST follow the layout architecture for consistency and user experience.**
+
+### 📋 Mandatory Frontend Implementation Checklist
+
+### ✅ **1. Page Header Requirements**
+
+**REQUIRED**: Every feature page MUST use the global header system:
+
+```typescript
+// MANDATORY: Set page title and description in global header
+export default function FeaturePage() {
+  usePageTitle('Feature Name', 'Feature description for global header');
+  
+  return (
+    <div className="space-y-6">
+      {/* Page content */}
+    </div>
+  );
+}
+```
+
+**❌ DO NOT**: Wrap pages in `DashboardLayout` or create duplicate headers:
+
+```typescript
+// ❌ WRONG - Do not wrap in DashboardLayout
+export default function FeaturePage() {
+  return (
+    <DashboardLayout title="Feature Name">  {/* ❌ Don't do this */}
+      <div>
+        <h1>Feature Name</h1>  {/* ❌ Don't create duplicate headers */}
+        <p>Description</p>
+      </div>
+    </DashboardLayout>
+  );
+}
+```
+
+### ✅ **2. Action Button Placement Requirements**
+
+**REQUIRED**: Action buttons MUST be placed contextually, never in global header:
+
+#### **For Pages with Tabs:**
+```typescript
+<TabsContent value="tab">
+  <Card>
+    <CardHeader>
+      <div className="flex justify-between items-center">
+        <div>
+          <CardTitle>Section Title</CardTitle>
+          <CardDescription>Section description</CardDescription>
+        </div>
+        <Button>  {/* ✅ Beside section header */}
+          <Plus className="h-4 w-4 mr-2" />
+          Add Item
+        </Button>
+      </div>
+    </CardHeader>
+  </Card>
+</TabsContent>
+```
+
+#### **For Pages without Tabs:**
+```typescript
+<div className="space-y-6">
+  <div className="flex justify-end">
+    <Button>  {/* ✅ Top-right of content area */}
+      <Plus className="h-4 w-4 mr-2" />
+      Add Item
+    </Button>
+  </div>
+  {/* Page content */}
+</div>
+```
+
+### ✅ **3. Component Structure Requirements**
+
+**REQUIRED**: Feature pages MUST follow this structure:
+
+```typescript
+// ✅ CORRECT: Simple container with proper spacing
+export default function FeaturePage() {
+  usePageTitle('Feature Name', 'Feature description');
+  
+  return (
+    <div className="space-y-6">
+      {/* Action buttons (if needed) */}
+      {/* Page content (Cards, Tables, etc.) */}
+    </div>
+  );
+}
+```
+
+### ✅ **4. Import Requirements**
+
+**REQUIRED**: Feature pages MUST import the page title hook:
+
+```typescript
+import { usePageTitle } from '@/hooks/usePageTitle';
+```
+
+**❌ DO NOT**: Import or use `DashboardLayout` in feature pages:
+
+```typescript
+// ❌ WRONG - Don't import DashboardLayout in feature pages
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+```
+
+### 🎯 **Layout Validation Checklist**
+
+Before committing any new feature page, verify:
+
+- [ ] Uses `usePageTitle()` hook for global header
+- [ ] No `DashboardLayout` wrapper in the page component
+- [ ] No duplicate local headers (h1, page titles)
+- [ ] Action buttons positioned contextually (beside sections or top-right)
+- [ ] Returns simple `<div className="space-y-6">` container
+- [ ] Proper JSX structure with matching opening/closing tags
+
+### 🚨 **Common Layout Mistakes to Avoid**
+
+1. **Nested Layouts**: Never wrap feature pages in `DashboardLayout`
+2. **Duplicate Headers**: Don't create local page titles when using `usePageTitle`
+3. **Global Header Actions**: Don't put page-specific actions in the global header
+4. **Inconsistent Spacing**: Always use `space-y-6` for main container
+5. **Missing Page Context**: Always call `usePageTitle()` at component start
+
+### 📖 **Additional Resources**
+
+- **Complete Architecture Guide**: [`docs/architecture/FRONTEND_LAYOUT_ARCHITECTURE.md`](../architecture/FRONTEND_LAYOUT_ARCHITECTURE.md)
+- **Context Implementation**: `src/contexts/PageHeaderContext.tsx`
+- **Hook Documentation**: `src/hooks/usePageTitle.tsx`
+- **Example Pages**: All files in `src/app/admin/*/page.tsx`
+
+---
+
+## 🎯 Summary
+
+By following these standards, every new feature will:
+
+### **Backend (Program Context)**
+1. **Automatically inherit security** through consistent program context filtering
+2. **Maintain data isolation** between different programs
+3. **Follow architectural patterns** that are maintainable and scalable
+4. **Pass security audits** with comprehensive program context validation
+5. **Integrate seamlessly** with existing Academy Admin features
+
+### **Frontend (Layout Architecture)**
+1. **Provide consistent user experience** with unified header and navigation
+2. **Maintain clean component separation** without duplicate layouts
+3. **Position actions contextually** for intuitive user interactions
+4. **Follow responsive design principles** across all viewport sizes
+5. **Enable maintainable code** through consistent patterns and hooks
+
+**⚠️ REMEMBER: Both program context filtering and layout architecture standards are mandatory requirements for every feature in Academy Admin.**

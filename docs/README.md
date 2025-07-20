@@ -10,6 +10,7 @@
 - [`architecture/SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md) - High-level system architecture
 - [`architecture/PROGRAM_CONTEXT_ARCHITECTURE.md`](architecture/PROGRAM_CONTEXT_ARCHITECTURE.md) - Program-centric design principles
 - [`architecture/DATABASE_SCHEMA.md`](architecture/DATABASE_SCHEMA.md) - Database design and relationships
+- [`architecture/FRONTEND_LAYOUT_ARCHITECTURE.md`](architecture/FRONTEND_LAYOUT_ARCHITECTURE.md) - 🆕 Frontend layout and UI architecture
 
 ### 💻 **Development**
 - [`development/DEVELOPMENT_WORKFLOW.md`](development/DEVELOPMENT_WORKFLOW.md) - Daily development process

@@ -5,7 +5,7 @@ Academy Management System with program-centric architecture, role-based access c
 
 **📖 For detailed setup instructions, see: [`docs/setup/PROJECT_SETUP.md`](docs/setup/PROJECT_SETUP.md)**
 
-## Current Status (2025-07-19)
+## Current Status (2025-07-20)
 
 ### ✅ **Fully Implemented Features**
 - **Database Schema**: PostgreSQL with program-centric design
@@ -15,6 +15,7 @@ Academy Management System with program-centric architecture, role-based access c
 - **Facility Management**: Complete facility management system
 - **User Management**: Role-based program assignments
 - **Quality Assurance**: Automated program context compliance checking
+- **🆕 Layout Architecture**: Context-based page header system with clean component separation
 - **🆕 Multi-App Development Infrastructure**: Complete setup for tutor/coordinator and student/parent mobile apps
 - **🆕 Shared API Client Library**: Unified TypeScript API client for all applications
 - **🆕 Git Subtree Workflow**: Automated workflow for managing multiple app repositories
@@ -76,6 +77,13 @@ Program Management (/admin/) → Operate within program context (All roles)
 - `X-Program-Context: program-id` - Auto-injected program context
 - `X-Bypass-Program-Filter: true` - Super admin bypass
 
+### 🎨 **Layout Architecture (2025-07-20)**
+- **PageHeaderContext**: Global state management for page titles/descriptions
+- **usePageTitle Hook**: Easy page header management from feature pages  
+- **Global Header**: Left-aligned page titles, right-aligned program context
+- **Action Button Positioning**: Contextual placement beside relevant section headers
+- **Clean Component Separation**: No duplicate layouts or nested components
+
 ## Feature Development Rules
 
 ### 🚨 **CRITICAL: Program Context Requirements**
@@ -89,6 +97,14 @@ Every new feature MUST include:
 
 ### 🎯 **Before Creating Features**
 Ask: "Is this Academy Administration (managing programs) or Program Management (within program)?"
+
+### 🎨 **Layout Development Standards**
+Every new feature page MUST follow:
+1. **Page Headers**: Use `usePageTitle(title, description)` hook for global header
+2. **No Duplicate Layouts**: Never wrap pages in `DashboardLayout` - admin layout provides this
+3. **Action Button Placement**: Position beside relevant section headers, not in global header
+4. **Component Structure**: Return simple `<div className="space-y-6">` containers
+5. **Tabs with Actions**: Place action buttons beside secondary section titles within tabs
 
 ### 📋 **Task Management**
 - Use TodoWrite tool for complex tasks
@@ -153,6 +169,41 @@ src/features/[feature]/
 ├── hooks/              # Custom hooks  
 ├── api/                # API services
 └── types/              # TypeScript types
+```
+
+### Layout Architecture (Updated 2025-07-20)
+```typescript
+// Feature page pattern
+export default function FeaturePage() {
+  usePageTitle('Page Title', 'Page description for global header');
+  
+  return (
+    <div className="space-y-6">
+      {/* For pages with tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>...</TabsList>
+        <TabsContent>
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Section Title</CardTitle>
+                  <CardDescription>Section description</CardDescription>
+                </div>
+                <Button>Action</Button> {/* Action beside section header */}
+              </div>
+            </CardHeader>
+          </Card>
+        </TabsContent>
+      </Tabs>
+      
+      {/* For pages without tabs */}
+      <div className="flex justify-end">
+        <Button>Main Action</Button> {/* Action at top-right */}
+      </div>
+    </div>
+  );
+}
 ```
 
 ## 📱 Multi-App Development Infrastructure (CURRENT)
