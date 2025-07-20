@@ -29,6 +29,7 @@ import { useParents, useParentStats } from '@/features/parents/hooks/useParents'
 import { Student, StudentStats } from '@/features/students/types';
 import { isApiSuccess, getApiErrorMessage } from '@/lib/api';
 import { useAuth } from '@/features/authentication/hooks';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 // Helper function to calculate age from date of birth
 const calculateAge = (dateOfBirth: string): number => {
@@ -75,6 +76,8 @@ const getStatusIcon = (status: string) => {
 };
 
 export default function StudentsParentsPage() {
+  usePageTitle('Students & Parents Management', 'Manage student and parent profiles, relationships, and enrollment');
+  
   const { user } = useAuth();
   
   // Tab state
@@ -265,26 +268,10 @@ export default function StudentsParentsPage() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Students & Parents Management</h1>
-          <p className="text-gray-600 mt-1">
-            Manage student and parent profiles, relationships, and enrollment
-          </p>
-        </div>
-        <Button asChild>
-          <Link href={activeTab === 'students' ? '/admin/students/new' : '/admin/parents/new'}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add {activeTab === 'students' ? 'Student' : 'Parent'}
-          </Link>
-        </Button>
-      </div>
-
-      {/* Tabs for Students and Parents */}
+    <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
+        {/* Tabs */}
+        <TabsList className="grid w-auto grid-cols-2">
           <TabsTrigger value="students" className="flex items-center space-x-2">
             <Baby className="h-4 w-4" />
             <span>Students</span>
@@ -357,10 +344,20 @@ export default function StudentsParentsPage() {
           {/* Students Search and Filters */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Students</CardTitle>
-              <CardDescription>
-                Search and filter students by name, email, status, or program
-              </CardDescription>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="text-lg">Students</CardTitle>
+                  <CardDescription>
+                    Search and filter students by name, email, status, or program
+                  </CardDescription>
+                </div>
+                <Button asChild>
+                  <Link href="/admin/students/new">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Student
+                  </Link>
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -642,10 +639,20 @@ export default function StudentsParentsPage() {
           {/* Parents Search and Filters */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Parents</CardTitle>
-              <CardDescription>
-                Search and filter parents by name, email, status, or children connections
-              </CardDescription>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="text-lg">Parents</CardTitle>
+                  <CardDescription>
+                    Search and filter parents by name, email, status, or children connections
+                  </CardDescription>
+                </div>
+                <Button asChild>
+                  <Link href="/admin/parents/new">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Parent
+                  </Link>
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col sm:flex-row gap-4 mb-6">

@@ -1,5 +1,6 @@
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { RouteGuard } from '@/features/authentication/components/RouteGuard';
+import { PageHeaderProvider } from '@/contexts/PageHeaderContext';
 
 export default function AdminLayout({
   children,
@@ -8,9 +9,11 @@ export default function AdminLayout({
 }) {
   return (
     <RouteGuard>
-      <DashboardLayout>
-        {children}
-      </DashboardLayout>
+      <PageHeaderProvider>
+        <DashboardLayout>
+          {children}
+        </DashboardLayout>
+      </PageHeaderProvider>
     </RouteGuard>
   );
 }

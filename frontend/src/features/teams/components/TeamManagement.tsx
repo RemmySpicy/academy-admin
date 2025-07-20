@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Users, UserCheck, UserX, Mail, Phone } from 'lucide-react';
+import { Users, UserCheck, UserX, Mail, Phone } from 'lucide-react';
 
 /**
  * Team Management Component
@@ -27,18 +27,6 @@ export function TeamManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Team Management</h1>
-          <p className="text-gray-600">Manage your program team members and their roles</p>
-        </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Team Member
-        </Button>
-      </div>
-
       {/* Team Management Tabs */}
       <Tabs defaultValue="members" className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">

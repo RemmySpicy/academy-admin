@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, CreditCard, DollarSign, Receipt, TrendingUp, Calendar } from 'lucide-react';
+import { CreditCard, DollarSign, Receipt, TrendingUp, Calendar } from 'lucide-react';
 
 /**
  * Payment Management Component
@@ -14,24 +14,6 @@ import { Plus, CreditCard, DollarSign, Receipt, TrendingUp, Calendar } from 'luc
 export function PaymentManagement() {
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Payments Management</h1>
-          <p className="text-gray-600">Track payments, invoices, and financial reporting</p>
-        </div>
-        <div className="flex space-x-2">
-          <Button variant="outline">
-            <Receipt className="h-4 w-4 mr-2" />
-            Generate Invoice
-          </Button>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Record Payment
-          </Button>
-        </div>
-      </div>
-
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>

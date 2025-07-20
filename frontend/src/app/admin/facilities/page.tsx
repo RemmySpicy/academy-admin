@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, MapPin, Edit, Trash2, Search, Filter } from 'lucide-react';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -57,6 +58,8 @@ const mockFacilities = [
 ];
 
 export default function FacilitiesPage() {
+  usePageTitle('Facilities', 'Manage academy facilities and equipment');
+  
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -138,13 +141,9 @@ export default function FacilitiesPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Facilities</h1>
-          <p className="text-gray-600">Manage academy facilities and equipment</p>
-        </div>
+    <div className="space-y-6">
+      {/* Main Action Button */}
+      <div className="flex justify-end">
         <Button onClick={() => window.location.href = '/admin/facilities/new'}>
           <Plus className="h-4 w-4 mr-2" />
           Add Facility

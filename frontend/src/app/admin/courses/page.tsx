@@ -24,8 +24,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Curriculum } from '@/features/courses/api/curriculaApiService';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function CoursesPage() {
+  usePageTitle('Courses Management', 'Manage courses, curricula, and contents within your program');
+  
   const [activeTab, setActiveTab] = useState('courses');
   const [searchParams, setSearchParams] = useState<SearchParams>({
     page: 1,
@@ -203,18 +206,8 @@ export default function CoursesPage() {
   };
 
   return (
-    <div className="flex-1 space-y-4 p-4 pt-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Courses Management</h1>
-          <p className="text-muted-foreground">
-            Manage courses, curricula, and contents within your program
-          </p>
-        </div>
-      </div>
-
-
-      {/* Main Content with Tabs */}
+    <div className="space-y-6">
+      {/* Tabs - No action button needed for courses */}
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="courses">Courses</TabsTrigger>
