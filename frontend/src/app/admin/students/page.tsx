@@ -23,11 +23,10 @@ import {
   Phone,
   Mail
 } from 'lucide-react';
-import { studentApi } from '@/features/students/api/studentApi';
+import { useStudents, useStudentStats, useDeleteStudent, useStudentBulkAction } from '@/features/students/hooks';
 import { parentApi, type EnhancedParent, type ParentStats } from '@/features/parents';
 import { useParents, useParentStats } from '@/features/parents/hooks/useParents';
 import { Student, StudentStats } from '@/features/students/types';
-import { isApiSuccess, getApiErrorMessage } from '@/lib/api';
 import { useAuth } from '@/features/authentication/hooks';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
@@ -84,16 +83,42 @@ export default function StudentsParentsPage() {
   const [activeTab, setActiveTab] = useState('students');
   
   // Students state
-  const [students, setStudents] = useState<Student[]>([]);
-  const [studentStats, setStudentStats] = useState<StudentStats | null>(null);
   const [studentSearchTerm, setStudentSearchTerm] = useState('');
   const [studentStatusFilter, setStudentStatusFilter] = useState('all');
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
-  const [studentLoading, setStudentLoading] = useState(true);
-  const [studentError, setStudentError] = useState<string | null>(null);
   const [studentCurrentPage, setStudentCurrentPage] = useState(1);
-  const [studentTotalPages, setStudentTotalPages] = useState(1);
-  const [totalStudents, setTotalStudents] = useState(0);
+  
+  const perPage = 20;
+  
+  // Build search parameters for students
+  const studentSearchParams = {
+    search: studentSearchTerm || undefined,
+    status: studentStatusFilter === 'all' ? undefined : studentStatusFilter,
+  };
+  
+  // React Query hooks for students
+  const {
+    data: studentsResponse,
+    isLoading: studentLoading,
+    error: studentQueryError,
+    refetch: refetchStudents
+  } = useStudents(studentCurrentPage, perPage, studentSearchParams);
+  
+  const {
+    data: studentStatsResponse,
+    isLoading: studentStatsLoading,
+    error: studentStatsError
+  } = useStudentStats();
+  
+  const deleteStudentMutation = useDeleteStudent();
+  const studentBulkActionMutation = useStudentBulkAction();
+  
+  // Extract data from responses
+  const students = studentsResponse?.items || [];
+  const studentStats = studentStatsResponse || null;
+  const studentTotalPages = studentsResponse?.total_pages || 1;
+  const totalStudents = studentsResponse?.total || 0;
+  const studentError = studentQueryError?.message || null;
   
   // Parents state
   const [parentSearchTerm, setParentSearchTerm] = useState('');
@@ -101,8 +126,6 @@ export default function StudentsParentsPage() {
   const [parentHasChildrenFilter, setParentHasChildrenFilter] = useState('all');
   const [selectedParents, setSelectedParents] = useState<string[]>([]);
   const [parentCurrentPage, setParentCurrentPage] = useState(1);
-  
-  const perPage = 20;
   
   // React Query hooks for parents
   const {
@@ -131,50 +154,7 @@ export default function StudentsParentsPage() {
   const parentTotalPages = parentsResponse?.data?.total_pages || 1;
   const parentError = parentQueryError ? 'Failed to load parents' : null;
 
-  // Load students and stats
-  useEffect(() => {
-    if (activeTab === 'students') {
-      loadStudents();
-      loadStudentStats();
-    }
-  }, [activeTab, studentCurrentPage, studentSearchTerm, studentStatusFilter]);
-
-  const loadStudents = async () => {
-    try {
-      setStudentLoading(true);
-      setStudentError(null);
-
-      const searchParams = {
-        search: studentSearchTerm || undefined,
-        status: studentStatusFilter === 'all' ? undefined : studentStatusFilter,
-      };
-
-      const response = await studentApi.getAll(searchParams, studentCurrentPage, perPage);
-      
-      if (isApiSuccess(response)) {
-        setStudents(response.data.items);
-        setStudentTotalPages(response.data.total_pages);
-        setTotalStudents(response.data.total);
-      } else {
-        setStudentError(getApiErrorMessage(response));
-      }
-    } catch (error) {
-      setStudentError('Failed to load students. Please try again.');
-    } finally {
-      setStudentLoading(false);
-    }
-  };
-
-  const loadStudentStats = async () => {
-    try {
-      const response = await studentApi.getStats();
-      if (isApiSuccess(response)) {
-        setStudentStats(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to load student stats:', error);
-    }
-  };
+  // No more manual loading - hooks handle everything automatically!
 
   // Student handlers
   const handleSelectStudent = (studentId: string) => {
@@ -213,15 +193,10 @@ export default function StudentsParentsPage() {
   const handleDelete = async (studentId: string) => {
     if (confirm('Are you sure you want to delete this student? This action cannot be undone.')) {
       try {
-        const response = await studentApi.delete(studentId);
-        if (isApiSuccess(response)) {
-          // Refresh the list
-          loadStudents();
-        } else {
-          alert(getApiErrorMessage(response));
-        }
-      } catch (error) {
-        alert('Failed to delete student. Please try again.');
+        await deleteStudentMutation.mutateAsync(studentId);
+        // No need to manually refresh - hooks handle it automatically!
+      } catch (error: any) {
+        alert(`Failed to delete student: ${error.message || 'Please try again.'}`);
       }
     }
   };
@@ -230,16 +205,16 @@ export default function StudentsParentsPage() {
     if (selectedStudents.length === 0) return;
     
     try {
-      const response = await studentApi.bulkUpdateStatus(selectedStudents, status);
-      if (isApiSuccess(response)) {
-        // Refresh the list and clear selection
-        loadStudents();
-        setSelectedStudents([]);
-      } else {
-        alert(getApiErrorMessage(response));
-      }
-    } catch (error) {
-      alert('Failed to update student status. Please try again.');
+      await studentBulkActionMutation.mutateAsync({
+        student_ids: selectedStudents,
+        action: 'update_status',
+        data: { status }
+      });
+      // Clear selection after successful bulk action
+      setSelectedStudents([]);
+      // No need to manually refresh - hooks handle it automatically!
+    } catch (error: any) {
+      alert(`Failed to update students: ${error.message || 'Please try again.'}`);
     }
   };
 
@@ -249,7 +224,7 @@ export default function StudentsParentsPage() {
         <div className="text-center">
           <div className="text-red-600 mb-2">Error loading students</div>
           <div className="text-gray-600 mb-4">{studentError}</div>
-          <Button onClick={loadStudents}>Try Again</Button>
+          <Button onClick={() => refetchStudents()}>Try Again</Button>
         </div>
       </div>
     );

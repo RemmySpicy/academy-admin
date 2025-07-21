@@ -4,6 +4,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { facilitiesApi } from '../api';
+import { useProgramContext } from '@/store/programContext';
 import {
   FacilityCreate,
   FacilityUpdate,
@@ -24,9 +25,12 @@ export const FACILITY_QUERY_KEYS = {
  * Hook to fetch facilities with optional filtering and pagination
  */
 export function useFacilities(params?: FacilitySearchParams) {
+  const { currentProgram } = useProgramContext();
+  
   return useQuery({
-    queryKey: FACILITY_QUERY_KEYS.list(params || {}),
+    queryKey: [...FACILITY_QUERY_KEYS.list(params || {}), currentProgram?.id],
     queryFn: () => facilitiesApi.getFacilities(params),
+    enabled: !!currentProgram, // Only fetch when we have a program context
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
@@ -35,10 +39,12 @@ export function useFacilities(params?: FacilitySearchParams) {
  * Hook to fetch a specific facility by ID
  */
 export function useFacility(id: string) {
+  const { currentProgram } = useProgramContext();
+  
   return useQuery({
-    queryKey: FACILITY_QUERY_KEYS.detail(id),
+    queryKey: [...FACILITY_QUERY_KEYS.detail(id), currentProgram?.id],
     queryFn: () => facilitiesApi.getFacility(id),
-    enabled: !!id,
+    enabled: !!id && !!currentProgram,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
@@ -47,9 +53,12 @@ export function useFacility(id: string) {
  * Hook to fetch facility statistics
  */
 export function useFacilityStats() {
+  const { currentProgram } = useProgramContext();
+  
   return useQuery({
-    queryKey: FACILITY_QUERY_KEYS.stats(),
+    queryKey: [...FACILITY_QUERY_KEYS.stats(), currentProgram?.id],
     queryFn: () => facilitiesApi.getFacilityStats(),
+    enabled: !!currentProgram,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,8 +24,8 @@ import {
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
-import { schedulingApi } from '../api';
-import { facilitiesApi } from '@/features/facilities/api';
+import { useFacilities } from '@/features/facilities/hooks';
+import { useFacilitySessions, useCancelSession } from '../hooks';
 import type { 
   Session, 
   SessionStatus, 
@@ -45,45 +44,21 @@ export function FacilityScheduleManager({
   selectedFacilityId, 
   onSelectFacility 
 }: FacilityScheduleManagerProps) {
-  const queryClient = useQueryClient();
   const [activeView, setActiveView] = useState('list');
   const [searchParams, setSearchParams] = useState<SessionSearchParams>({});
   const [pagination, setPagination] = useState({ skip: 0, limit: 20 });
 
-  // Get list of facilities for selection
-  const { data: facilitiesData } = useQuery({
-    queryKey: ['facilities'],
-    queryFn: () => facilitiesApi.getFacilities({ skip: 0, limit: 100 }),
-  });
+  // Use program context hooks for facilities and sessions
+  const { data: facilitiesResponse, isLoading: facilitiesLoading, error: facilitiesError } = useFacilities(1, 100);
+  const { data: sessionsData, isLoading: sessionsLoading, error: sessionsError } = useFacilitySessions(
+    selectedFacilityId, 
+    { ...searchParams, ...pagination }
+  );
+  const cancelSession = useCancelSession();
 
-  // Get sessions for selected facility
-  const { data: sessionsData, isLoading: sessionsLoading } = useQuery({
-    queryKey: ['facility-sessions', selectedFacilityId, searchParams, pagination],
-    queryFn: () => {
-      if (!selectedFacilityId) return null;
-      return schedulingApi.getFacilitySessions(selectedFacilityId, {
-        ...searchParams,
-        ...pagination,
-      });
-    },
-    enabled: !!selectedFacilityId,
-  });
-
-  const facilities = facilitiesData?.items || [];
+  const facilities = facilitiesResponse?.items || [];
   const sessions = sessionsData?.items || [];
   const selectedFacility = facilities.find(f => f.id === selectedFacilityId);
-
-  // Mutations for session operations
-  const cancelSessionMutation = useMutation({
-    mutationFn: ({ sessionId, reason, cancelAll }: { 
-      sessionId: string; 
-      reason: string; 
-      cancelAll: boolean; 
-    }) => schedulingApi.cancelSession(sessionId, reason, cancelAll),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['facility-sessions'] });
-    },
-  });
 
   const handleFacilitySelect = (facilityId: string) => {
     onSelectFacility?.(facilityId);
@@ -443,10 +418,10 @@ export function FacilityScheduleManager({
                             onClick={() => {
                               const reason = prompt('Reason for cancellation:');
                               if (reason) {
-                                cancelSessionMutation.mutate({
+                                cancelSession.mutate({
                                   sessionId: session.id,
                                   reason,
-                                  cancelAll: false
+                                  cancelAllRecurring: false
                                 });
                               }
                             }}

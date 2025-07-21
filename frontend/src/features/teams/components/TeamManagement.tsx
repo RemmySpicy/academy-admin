@@ -26,8 +26,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { teamApi, TeamMember, TeamStats } from '@/features/teams/api';
-import { isApiSuccess, getApiErrorMessage } from '@/lib/api';
+import { useTeamMembers, useTeamStats, useRemoveTeamMember, useUpdateTeamMember } from '@/features/teams/hooks';
+import type { TeamMember, TeamStats } from '@/features/teams/api';
 import { AddTeamMemberDialog } from './AddTeamMemberDialog';
 
 /**
@@ -36,54 +36,22 @@ import { AddTeamMemberDialog } from './AddTeamMemberDialog';
  * Manage program team members, roles, and assignments
  */
 export function TeamManagement() {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [teamStats, setTeamStats] = useState<TeamStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  // Load team data
-  useEffect(() => {
-    loadTeamData();
-  }, [searchTerm, roleFilter, statusFilter]);
+  // Use team hooks with program context
+  const { data: teamMembersResponse, isLoading: loading, error: queryError, refetch: refetchTeamMembers } = useTeamMembers();
+  const { data: teamStatsResponse, isLoading: statsLoading, error: statsError } = useTeamStats();
+  const removeTeamMember = useRemoveTeamMember();
+  const updateTeamMember = useUpdateTeamMember();
 
-  const loadTeamData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  // Extract data from responses
+  const teamMembers = teamMembersResponse?.items || [];
+  const teamStats = teamStatsResponse || null;
+  const error = queryError?.message || null;
 
-      // Build search parameters
-      const searchParams: any = {};
-      if (searchTerm) searchParams.search = searchTerm;
-      if (roleFilter !== 'all') searchParams.role = roleFilter;
-      if (statusFilter !== 'all') searchParams.is_active = statusFilter === 'active';
-
-      // Load team members and stats in parallel
-      const [membersResponse, statsResponse] = await Promise.all([
-        teamApi.getTeamMembers(searchParams),
-        teamApi.getTeamStats()
-      ]);
-
-      if (isApiSuccess(membersResponse)) {
-        setTeamMembers(membersResponse.data.items);
-      } else {
-        setError(getApiErrorMessage(membersResponse));
-        return;
-      }
-
-      if (isApiSuccess(statsResponse)) {
-        setTeamStats(statsResponse.data);
-      }
-
-    } catch (err) {
-      console.error('Error loading team data:', err);
-      setError('Failed to load team data');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // No more manual loading - hooks handle everything automatically with program context!
 
   const handleRemoveTeamMember = async (userId: string) => {
     if (!confirm('Are you sure you want to remove this team member?')) {
@@ -91,15 +59,11 @@ export function TeamManagement() {
     }
 
     try {
-      const response = await teamApi.removeTeamMember(userId);
-      if (isApiSuccess(response)) {
-        await loadTeamData(); // Reload data
-      } else {
-        alert(getApiErrorMessage(response));
-      }
-    } catch (err) {
+      await removeTeamMember.mutateAsync(userId);
+      // No need to manually reload - hooks handle it automatically!
+    } catch (err: any) {
       console.error('Error removing team member:', err);
-      alert('Failed to remove team member');
+      alert(`Failed to remove team member: ${err.message || 'Please try again.'}`);
     }
   };
 
@@ -207,7 +171,7 @@ export function TeamManagement() {
                     View and manage all team members in your program
                   </CardDescription>
                 </div>
-                <AddTeamMemberDialog onTeamMemberAdded={loadTeamData} />
+                <AddTeamMemberDialog onTeamMemberAdded={() => refetchTeamMembers()} />
               </div>
             </CardHeader>
             <CardContent>
@@ -258,7 +222,7 @@ export function TeamManagement() {
               {error && (
                 <div className="text-center py-8">
                   <div className="text-red-500">{error}</div>
-                  <Button onClick={loadTeamData} className="mt-4">
+                  <Button onClick={() => refetchTeamMembers()} className="mt-4">
                     Try Again
                   </Button>
                 </div>

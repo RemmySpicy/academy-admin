@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, MapPin, Edit, Trash2, Search, Filter } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Button } from '@/components/ui/button';
@@ -8,65 +8,31 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { facilitiesApi } from '@/features/facilities/api';
+import { useFacilities, useDeleteFacility } from '@/features/facilities/hooks';
 import { Facility } from '@/features/facilities/types';
-
-// Mock data for now
-const mockFacilities = [
-  {
-    id: '1',
-    name: 'Olympic Swimming Pool',
-    address: '123 Aquatic Center, Pool City, PC 12345',
-    type: 'POOL',
-    capacity: 200,
-    equipment: ['Starting Blocks', 'Timing System', 'Pool Deck', 'Underwater Cameras'],
-    amenities: ['Locker Rooms', 'Viewing Gallery', 'Equipment Storage'],
-    status: 'ACTIVE',
-    contact: {
-      phone: '+1 (555) 123-4567',
-      email: 'aquatics@academy.edu'
-    }
-  },
-  {
-    id: '2',
-    name: 'Tennis Court Complex',
-    address: '456 Sports Ave, Athletic City, AC 67890',
-    type: 'COURTS',
-    capacity: 100,
-    equipment: ['Clay Courts', 'Hard Courts', 'Net Systems', 'Court Lighting'],
-    amenities: ['Pro Shop', 'Changing Rooms', 'Seating Areas'],
-    status: 'ACTIVE',
-    contact: {
-      phone: '+1 (555) 234-5678',
-      email: 'tennis@academy.edu'
-    }
-  },
-  {
-    id: '3',
-    name: 'Multi-Purpose Gymnasium',
-    address: '789 Fitness Rd, Training Center, TC 54321',
-    type: 'GYM',
-    capacity: 300,
-    equipment: ['Basketball Hoops', 'Volleyball Nets', 'Gymnastics Equipment', 'Sound System'],
-    amenities: ['Storage Rooms', 'Score Board', 'Spectator Seating'],
-    status: 'ACTIVE',
-    contact: {
-      phone: '+1 (555) 345-6789',
-      email: 'gym@academy.edu'
-    }
-  }
-];
 
 export default function FacilitiesPage() {
   usePageTitle('Facilities', 'Manage academy facilities and equipment');
   
-  const [facilities, setFacilities] = useState<Facility[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+
+  // Build search parameters
+  const searchParams = {
+    search: searchTerm || undefined,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
+    facility_type: typeFilter !== 'all' ? typeFilter : undefined,
+    page: 1,
+    per_page: 50,
+  };
+
+  // Use facilities hook with program context
+  const { data: facilitiesResponse, isLoading, error } = useFacilities(searchParams);
+  const deleteSuccessMutation = useDeleteFacility();
+  
+  const facilities = facilitiesResponse?.items || [];
 
   const getStatusBadge = (status: string) => {
     const variant = status === 'ACTIVE' ? 'default' : status === 'INACTIVE' ? 'secondary' : 'outline';
@@ -89,37 +55,8 @@ export default function FacilitiesPage() {
     );
   };
 
-  useEffect(() => {
-    const loadFacilities = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const response = await facilitiesApi.getFacilities();
-        setFacilities(response.items);
-      } catch (error: any) {
-        console.error('Error loading facilities:', error);
-        setError(error.message || 'Failed to load facilities');
-        // Fallback to mock data if API fails
-        setFacilities(mockFacilities as any);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadFacilities();
-  }, []);
-
-  // Filter facilities based on search and filters
-  const filteredFacilities = facilities.filter(facility => {
-    const matchesSearch = facility.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         facility.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (facility.facility_code && facility.facility_code.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesStatus = statusFilter === 'all' || facility.status === statusFilter;
-    const matchesType = typeFilter === 'all' || facility.facility_type === typeFilter;
-    
-    return matchesSearch && matchesStatus && matchesType;
-  });
+  // All filtering is now handled by the API through search parameters
+  const filteredFacilities = facilities;
 
   const handleDelete = async (facilityId: string, facilityName: string) => {
     // Find the facility to backup
@@ -182,14 +119,10 @@ Type "DELETE" to confirm:`;
 
     try {
       setDeletingId(facilityId);
-      await facilitiesApi.deleteFacility(facilityId);
-      
-      // Remove from local state
-      setFacilities(prev => prev.filter(f => f.id !== facilityId));
+      await deleteSuccessMutation.mutateAsync(facilityId);
       alert(`✅ Facility "${facilityName}" has been successfully deleted.`);
     } catch (error: any) {
       console.error('Error deleting facility:', error);
-      setError(error.message || 'Failed to delete facility');
       alert(`❌ Error: Failed to delete facility. ${error.message || 'Please try again.'}`);
     } finally {
       setDeletingId(null);
@@ -296,7 +229,7 @@ Type "DELETE" to confirm:`;
         <Card className="border-red-200 bg-red-50">
           <CardContent className="pt-6">
             <div className="text-red-600 text-center">
-              <p>{error}</p>
+              <p>{error.message || 'An error occurred while loading facilities'}</p>
               <Button variant="outline" className="mt-2" onClick={() => window.location.reload()}>
                 Try Again
               </Button>
