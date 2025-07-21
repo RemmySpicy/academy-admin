@@ -71,14 +71,45 @@ export class AuthApiService {
    */
   static async login(credentials: LoginRequest): Promise<ApiResponse<LoginResponse>> {
     // Set up the API client without token for login
-    const response = await httpClient.post<LoginResponse>(
-      API_ENDPOINTS.auth.login,
-      credentials
-    );
+    // Note: Backend expects form data, not JSON
+    const formData = new URLSearchParams();
+    formData.append('username', credentials.username);
+    formData.append('password', credentials.password);
+    
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.auth.login}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString(),
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.detail || errorMessage;
+      } catch {
+        // If error parsing fails, use status message
+      }
+      
+      return {
+        success: false,
+        data: {} as LoginResponse,
+        error: errorMessage,
+      };
+    }
+
+    const data = await response.json() as LoginResponse;
+    const apiResponse: ApiResponse<LoginResponse> = {
+      success: true,
+      data,
+    };
 
     // If login successful, store token and user data
-    if (response.success) {
-      const { access_token, user } = response.data;
+    if (apiResponse.success) {
+      const { access_token, user } = apiResponse.data;
       
       // Store in localStorage
       localStorage.setItem(TOKEN_KEY, access_token);
@@ -91,7 +122,7 @@ export class AuthApiService {
       httpClient.setToken(access_token);
     }
 
-    return response;
+    return apiResponse;
   }
 
   /**

@@ -5,6 +5,11 @@
 - **Backend API**: http://localhost:8000
 - **API Documentation**: http://localhost:8000/docs
 
+## Currency Standard
+**All monetary values in the API are denominated in Nigerian Naira (NGN)**
+- Facility access fees, course prices, and all financial data use NGN
+- Frontend should display amounts with proper NGN formatting
+
 ## Authentication Endpoints ✅
 - `POST /api/v1/auth/login/json` - **PRIMARY**: JSON-based login
 - `POST /api/v1/auth/logout` - User logout

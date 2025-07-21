@@ -26,6 +26,7 @@
 - **Database**: PostgreSQL with SQLAlchemy 2.0.36
 - **Authentication**: JWT + Role-based access control
 - **Testing**: Pytest 8.3.4
+- **Currency**: Nigerian Naira (NGN) for all pricing
 
 ## Environment Files
 - **`.env.docker`** - Full Docker development (RECOMMENDED)

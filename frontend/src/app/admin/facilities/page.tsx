@@ -122,7 +122,61 @@ export default function FacilitiesPage() {
   });
 
   const handleDelete = async (facilityId: string, facilityName: string) => {
-    if (!confirm(`Are you sure you want to delete "${facilityName}"? This action cannot be undone.`)) {
+    // Find the facility to backup
+    const facility = facilities.find(f => f.id === facilityId);
+    if (!facility) {
+      alert("Error: Facility not found.");
+      return;
+    }
+
+    // Offer to backup facility data first
+    const shouldBackup = confirm(`📄 BACKUP FACILITY DATA
+    
+Before deleting "${facilityName}", would you like to download a backup of the facility data?
+
+Click OK to download backup first, or Cancel to skip backup.`);
+
+    if (shouldBackup) {
+      // Create and download backup
+      const backupData = {
+        facility: facility,
+        backup_date: new Date().toISOString(),
+        backup_note: "Facility data backup created before deletion"
+      };
+      
+      const dataStr = JSON.stringify(backupData, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      const exportFileDefaultName = `facility-backup-${facility.facility_code || facility.id}-${new Date().toISOString().split('T')[0]}.json`;
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+      
+      alert("✅ Facility backup downloaded successfully.");
+    }
+
+    // Enhanced protection against accidental deletion
+    const confirmMessage = `⚠️ WARNING: DELETE FACILITY
+    
+You are about to permanently delete "${facilityName}".
+
+This action will:
+• Remove all facility data
+• Cannot be undone
+• May affect associated programs and schedules
+
+Type "DELETE" to confirm:`;
+    
+    const userInput = prompt(confirmMessage);
+    if (userInput !== "DELETE") {
+      alert("Deletion cancelled. Facility was not deleted.");
+      return;
+    }
+
+    // Double confirmation
+    if (!confirm(`Final confirmation: Delete "${facilityName}"? Click Cancel to keep the facility.`)) {
+      alert("Deletion cancelled. Facility was not deleted.");
       return;
     }
 
@@ -132,9 +186,11 @@ export default function FacilitiesPage() {
       
       // Remove from local state
       setFacilities(prev => prev.filter(f => f.id !== facilityId));
+      alert(`✅ Facility "${facilityName}" has been successfully deleted.`);
     } catch (error: any) {
       console.error('Error deleting facility:', error);
       setError(error.message || 'Failed to delete facility');
+      alert(`❌ Error: Failed to delete facility. ${error.message || 'Please try again.'}`);
     } finally {
       setDeletingId(null);
     }

@@ -141,6 +141,7 @@ Every new feature page MUST follow:
 ### Frontend: Next.js 15 + TypeScript + Tailwind + shadcn/ui
 ### Backend: FastAPI + PostgreSQL + SQLAlchemy + JWT
 ### Development: Docker Compose + pytest + comprehensive quality tools
+### Currency: Nigerian Naira (NGN) - All pricing throughout the academy system
 
 ## File Organization
 

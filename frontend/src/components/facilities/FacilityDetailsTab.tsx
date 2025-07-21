@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CURRENCY } from '@/lib/constants';
 
 interface FacilityDetailsTabProps {
   data: any;
@@ -145,32 +146,34 @@ export function FacilityDetailsTab({ data, updateData }: FacilityDetailsTabProps
 
       {/* Access Fees */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Access Fees</h3>
+        <h3 className="text-lg font-semibold">Access Fees (Nigerian Naira)</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <Label htmlFor="access_fee_kids">Kids Access Fee ($)</Label>
+            <Label htmlFor="access_fee_kids">Kids Access Fee ({CURRENCY.SYMBOL})</Label>
             <Input
               id="access_fee_kids"
-              value={data.access_fee_kids / 100} // Convert from cents to dollars for display
-              onChange={(e) => handleInputChange('access_fee_kids', Math.round(parseFloat(e.target.value || '0') * 100))}
-              placeholder="0.00"
+              value={data.access_fee_kids || ''} // Store as whole number in NGN
+              onChange={(e) => handleInputChange('access_fee_kids', parseFloat(e.target.value || '0'))}
+              placeholder="0"
               type="number"
-              step="0.01"
+              step="1"
               min="0"
             />
+            <p className="text-xs text-muted-foreground">Enter amount in Nigerian Naira</p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="access_fee_adults">Adults Access Fee ($)</Label>
+            <Label htmlFor="access_fee_adults">Adults Access Fee ({CURRENCY.SYMBOL})</Label>
             <Input
               id="access_fee_adults"
-              value={data.access_fee_adults / 100} // Convert from cents to dollars for display
-              onChange={(e) => handleInputChange('access_fee_adults', Math.round(parseFloat(e.target.value || '0') * 100))}
-              placeholder="0.00"
+              value={data.access_fee_adults || ''} // Store as whole number in NGN
+              onChange={(e) => handleInputChange('access_fee_adults', parseFloat(e.target.value || '0'))}
+              placeholder="0"
               type="number"
-              step="0.01"
+              step="1"
               min="0"
             />
+            <p className="text-xs text-muted-foreground">Enter amount in Nigerian Naira</p>
           </div>
         </div>
       </div>

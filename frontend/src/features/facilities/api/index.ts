@@ -18,7 +18,7 @@ export const facilitiesApi = {
    * Get all facilities with optional filtering and pagination
    */
   async getFacilities(params?: FacilitySearchParams): Promise<FacilityListResponse> {
-    const response = await httpClient.get<FacilityListResponse>(API_ENDPOINTS.facilities.list);
+    const response = await httpClient.get<FacilityListResponse>(API_ENDPOINTS.facilities.list, params);
     if (!response.success) {
       throw new Error(response.error || 'Failed to fetch facilities');
     }
