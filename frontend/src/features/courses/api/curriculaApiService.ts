@@ -4,7 +4,7 @@
  * Handles API calls for curricula management
  */
 
-import { apiClient } from '@/lib/api';
+import { httpClient } from '@/lib/api/httpClient';
 import { API_ENDPOINTS } from '@/lib/constants';
 import type { CurriculumStatus, DifficultyLevel } from '@/lib/api/types';
 
@@ -158,8 +158,8 @@ export const curriculaApiService = {
    * Get all curricula with optional search and pagination
    */
   getCurricula: async (params: CurriculumSearchParams = {}): Promise<PaginatedCurriculumResponse> => {
-    const response = await apiClient.get<PaginatedCurriculumResponse>(
-      API_ENDPOINTS.curriculum.curricula.list,
+    const response = await httpClient.get<PaginatedCurriculumResponse>(
+      API_ENDPOINTS.courses.curricula.list,
       params
     );
     
@@ -174,8 +174,8 @@ export const curriculaApiService = {
    * Get curricula statistics
    */
   getCurriculaStats: async (): Promise<CurriculumStatsResponse> => {
-    const response = await apiClient.get<CurriculumStatsResponse>(
-      `${API_ENDPOINTS.curriculum.curricula.list}/stats`
+    const response = await httpClient.get<CurriculumStatsResponse>(
+      `${API_ENDPOINTS.courses.curricula.list}/stats`
     );
     
     if (response.error) {
@@ -189,8 +189,8 @@ export const curriculaApiService = {
    * Get a specific curriculum by ID
    */
   getCurriculum: async (id: string): Promise<Curriculum> => {
-    const response = await apiClient.get<Curriculum>(
-      API_ENDPOINTS.curriculum.curricula.get(id)
+    const response = await httpClient.get<Curriculum>(
+      API_ENDPOINTS.courses.curricula.get(id)
     );
     
     if (response.error) {
@@ -204,8 +204,8 @@ export const curriculaApiService = {
    * Create a new curriculum
    */
   createCurriculum: async (data: CurriculumCreate): Promise<Curriculum> => {
-    const response = await apiClient.post<Curriculum>(
-      API_ENDPOINTS.curriculum.curricula.create,
+    const response = await httpClient.post<Curriculum>(
+      API_ENDPOINTS.courses.curricula.create,
       data
     );
     
@@ -220,8 +220,8 @@ export const curriculaApiService = {
    * Update curriculum information
    */
   updateCurriculum: async (id: string, data: CurriculumUpdate): Promise<Curriculum> => {
-    const response = await apiClient.put<Curriculum>(
-      API_ENDPOINTS.curriculum.curricula.update(id),
+    const response = await httpClient.put<Curriculum>(
+      API_ENDPOINTS.courses.curricula.update(id),
       data
     );
     
@@ -236,8 +236,8 @@ export const curriculaApiService = {
    * Delete a curriculum
    */
   deleteCurriculum: async (id: string): Promise<void> => {
-    const response = await apiClient.delete(
-      API_ENDPOINTS.curriculum.curricula.delete(id)
+    const response = await httpClient.delete(
+      API_ENDPOINTS.courses.curricula.delete(id)
     );
     
     if (response.error) {
@@ -249,8 +249,8 @@ export const curriculaApiService = {
    * Get curricula by course ID
    */
   getCurriculaByCourse: async (courseId: string, params: CurriculumSearchParams = {}): Promise<PaginatedCurriculumResponse> => {
-    const response = await apiClient.get<PaginatedCurriculumResponse>(
-      `${API_ENDPOINTS.curriculum.curricula.list}/by-course/${courseId}`,
+    const response = await httpClient.get<PaginatedCurriculumResponse>(
+      `${API_ENDPOINTS.courses.curricula.list}/by-course/${courseId}`,
       params
     );
     
@@ -265,8 +265,8 @@ export const curriculaApiService = {
    * Get curriculum with full tree structure
    */
   getCurriculumTree: async (id: string): Promise<CurriculumTreeResponse> => {
-    const response = await apiClient.get<CurriculumTreeResponse>(
-      `${API_ENDPOINTS.curriculum.curricula.get(id)}/tree`
+    const response = await httpClient.get<CurriculumTreeResponse>(
+      `${API_ENDPOINTS.courses.curricula.get(id)}/tree`
     );
     
     if (response.error) {
@@ -280,8 +280,8 @@ export const curriculaApiService = {
    * Duplicate a curriculum with all its content
    */
   duplicateCurriculum: async (id: string, data: { name: string; course_id?: string }): Promise<Curriculum> => {
-    const response = await apiClient.post<Curriculum>(
-      `${API_ENDPOINTS.curriculum.curricula.get(id)}/duplicate`,
+    const response = await httpClient.post<Curriculum>(
+      `${API_ENDPOINTS.courses.curricula.get(id)}/duplicate`,
       data
     );
     
@@ -296,8 +296,8 @@ export const curriculaApiService = {
    * Bulk move curricula to a different course
    */
   bulkMoveCurricula: async (data: BulkCurriculumMoveRequest): Promise<BulkActionResponse> => {
-    const response = await apiClient.post<BulkActionResponse>(
-      `${API_ENDPOINTS.curriculum.curricula.list}/bulk-move`,
+    const response = await httpClient.post<BulkActionResponse>(
+      `${API_ENDPOINTS.courses.curricula.list}/bulk-move`,
       data
     );
     
@@ -312,8 +312,8 @@ export const curriculaApiService = {
    * Bulk update curriculum status
    */
   bulkUpdateCurriculumStatus: async (data: BulkCurriculumStatusUpdateRequest): Promise<BulkActionResponse> => {
-    const response = await apiClient.post<BulkActionResponse>(
-      `${API_ENDPOINTS.curriculum.curricula.list}/bulk-status`,
+    const response = await httpClient.post<BulkActionResponse>(
+      `${API_ENDPOINTS.courses.curricula.list}/bulk-status`,
       data
     );
     
@@ -328,8 +328,8 @@ export const curriculaApiService = {
    * Reorder curricula within their course
    */
   reorderCurricula: async (reorderData: Array<{ id: string; sequence: number }>): Promise<BulkActionResponse> => {
-    const response = await apiClient.post<BulkActionResponse>(
-      `${API_ENDPOINTS.curriculum.curricula.list}/reorder`,
+    const response = await httpClient.post<BulkActionResponse>(
+      `${API_ENDPOINTS.courses.curricula.list}/reorder`,
       reorderData
     );
     

@@ -30,6 +30,11 @@ class ViolationType(Enum):
     MISSING_ROUTE_DEPENDENCY = "missing_route_dependency"
     INSECURE_QUERY = "insecure_query"
     MISSING_PROGRAM_VALIDATION = "missing_program_validation"
+    # API Client Migration Violations (Added 2025-07-21)
+    LEGACY_API_CLIENT_USAGE = "legacy_api_client_usage"
+    HARDCODED_API_ENDPOINT = "hardcoded_api_endpoint"
+    LEGACY_RESPONSE_HANDLING = "legacy_response_handling"
+    MISSING_API_ENDPOINTS_IMPORT = "missing_api_endpoints_import"
 
 
 @dataclass
@@ -88,6 +93,8 @@ class ProgramContextLinter:
                 file_violations.extend(self._check_schema_file(tree, file_path))
             elif self._is_route_file(file_path):
                 file_violations.extend(self._check_route_file(tree, file_path))
+            elif self._is_frontend_api_file(file_path):
+                file_violations.extend(self._check_frontend_api_file(file_path))
                 
             return file_violations
             
@@ -110,6 +117,14 @@ class ProgramContextLinter:
     def _is_route_file(self, file_path: str) -> bool:
         """Check if file is a route file."""
         return 'routes/' in file_path and file_path.endswith('.py')
+    
+    def _is_frontend_api_file(self, file_path: str) -> bool:
+        """Check if file is a frontend API file."""
+        return (
+            ('frontend/' in file_path or '/src/' in file_path) and 
+            ('api/' in file_path or 'Api.ts' in file_path or 'api.ts' in file_path) and 
+            (file_path.endswith('.ts') or file_path.endswith('.tsx'))
+        )
     
     def _is_file_exempt(self, file_path: str) -> bool:
         """Check if file should be exempt from program context requirements."""
@@ -377,16 +392,95 @@ class ProgramContextLinter:
                 return True
         return False
     
+    def _check_frontend_api_file(self, file_path: str) -> List[Violation]:
+        """Check frontend API file for API client migration violations."""
+        violations = []
+        
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            lines = content.split('\n')
+            
+            for line_num, line in enumerate(lines, 1):
+                line_stripped = line.strip()
+                
+                # Check for legacy apiClient imports
+                if re.search(r'import.*\{.*apiClient.*\}.*from', line_stripped):
+                    violations.append(Violation(
+                        type=ViolationType.LEGACY_API_CLIENT_USAGE,
+                        file_path=file_path,
+                        line_number=line_num,
+                        column=0,
+                        message="Legacy apiClient import detected",
+                        suggestion="Replace with: import { httpClient } from '@/lib/api/httpClient';",
+                        severity="error"
+                    ))
+                
+                # Check for legacy apiClient method calls
+                if re.search(r'apiClient\.(get|post|put|delete|patch)', line_stripped):
+                    violations.append(Violation(
+                        type=ViolationType.LEGACY_API_CLIENT_USAGE,
+                        file_path=file_path,
+                        line_number=line_num,
+                        column=0,
+                        message="Legacy apiClient method call detected",
+                        suggestion="Replace with httpClient.{method}() and handle {success, data, error} response format",
+                        severity="error"
+                    ))
+                
+                # Check for hardcoded API endpoints
+                if re.search(r'[\'"`]/api/v1/[^\'"`]*[\'"`]', line_stripped) and 'API_ENDPOINTS' not in line_stripped:
+                    violations.append(Violation(
+                        type=ViolationType.HARDCODED_API_ENDPOINT,
+                        file_path=file_path,
+                        line_number=line_num,
+                        column=0,
+                        message="Hardcoded API endpoint detected",
+                        suggestion="Replace with API_ENDPOINTS constant from '@/lib/constants'",
+                        severity="warning"
+                    ))
+                
+                # Check for legacy response handling patterns
+                if re.search(r'isApiSuccess\(.*\)', line_stripped):
+                    violations.append(Violation(
+                        type=ViolationType.LEGACY_RESPONSE_HANDLING,
+                        file_path=file_path,
+                        line_number=line_num,
+                        column=0,
+                        message="Legacy isApiSuccess() pattern detected",
+                        suggestion="Replace with: if (response.success && response.data)",
+                        severity="warning"
+                    ))
+                
+                # Check for missing API_ENDPOINTS import when hardcoded paths are found
+                if re.search(r'[\'"`]/api/v1/', line_stripped) and 'API_ENDPOINTS' not in content:
+                    violations.append(Violation(
+                        type=ViolationType.MISSING_API_ENDPOINTS_IMPORT,
+                        file_path=file_path,
+                        line_number=line_num,
+                        column=0,
+                        message="Missing API_ENDPOINTS import",
+                        suggestion="Add: import { API_ENDPOINTS } from '@/lib/constants';",
+                        severity="warning"
+                    ))
+            
+            return violations
+            
+        except Exception as e:
+            print(f"Error checking frontend API file {file_path}: {e}")
+            return []
+    
     def lint_directory(self, directory: str) -> List[Violation]:
-        """Lint all Python files in directory."""
+        """Lint all Python and TypeScript files in directory."""
         violations = []
         
         for root, dirs, files in os.walk(directory):
             # Skip certain directories
-            dirs[:] = [d for d in dirs if d not in ['__pycache__', 'migrations', 'node_modules']]
+            dirs[:] = [d for d in dirs if d not in ['__pycache__', 'migrations', 'node_modules', '.next', 'dist', 'build']]
             
             for file in files:
-                if file.endswith('.py'):
+                if file.endswith('.py') or file.endswith('.ts') or file.endswith('.tsx'):
                     file_path = os.path.join(root, file)
                     violations.extend(self.lint_file(file_path))
         

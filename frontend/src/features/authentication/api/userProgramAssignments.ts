@@ -4,7 +4,8 @@
  * Handles API calls related to user-program assignments
  */
 
-import { apiClient } from '@/lib/api';
+import { httpClient } from '@/lib/api/httpClient';
+import { API_ENDPOINTS } from '@/lib/constants';
 import { UserProgramAssignment } from '@/store/types';
 
 // Temporary mock data until backend APIs are implemented
@@ -86,10 +87,10 @@ export const userProgramAssignmentsApi = {
     // For now, use the programs API and create assignments for super admin
     // TODO: Replace with real user program assignments API when backend is ready
     try {
-      const response = await apiClient.get('/programs/');
-      if (response && response.items) {
+      const response = await httpClient.get(API_ENDPOINTS.programs.list);
+      if (response.success && response.data && response.data.items) {
         // Convert programs to user program assignments
-        const assignments: UserProgramAssignment[] = response.items.map((program: any, index: number) => ({
+        const assignments: UserProgramAssignment[] = response.data.items.map((program: any, index: number) => ({
           id: `assignment-${program.id}`,
           userId: userId,
           programId: program.id,
@@ -127,16 +128,22 @@ export const userProgramAssignmentsApi = {
    * Get current user's program assignments
    */
   getCurrentUserProgramAssignments: async (): Promise<UserProgramAssignment[]> => {
-    const response = await apiClient.get('/auth/me/program-assignments');
-    return response.data.assignments;
+    const response = await httpClient.get(API_ENDPOINTS.auth.programAssignments);
+    if (response.success && response.data) {
+      return response.data.assignments;
+    }
+    throw new Error(response.error || 'Failed to get program assignments');
   },
 
   /**
    * Create a new program assignment for a user
    */
   createUserProgramAssignment: async (data: CreateUserProgramAssignmentData): Promise<UserProgramAssignment> => {
-    const response = await apiClient.post('/auth/user-program-assignments', data);
-    return response.data;
+    const response = await httpClient.post(API_ENDPOINTS.auth.userProgramAssignments, data);
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.error || 'Failed to create program assignment');
   },
 
   /**
@@ -146,24 +153,33 @@ export const userProgramAssignmentsApi = {
     assignmentId: string, 
     data: UpdateUserProgramAssignmentData
   ): Promise<UserProgramAssignment> => {
-    const response = await apiClient.put(`/auth/user-program-assignments/${assignmentId}`, data);
-    return response.data;
+    const response = await httpClient.put(`${API_ENDPOINTS.auth.userProgramAssignments}/${assignmentId}`, data);
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.error || 'Failed to update program assignment');
   },
 
   /**
    * Delete a program assignment
    */
   deleteUserProgramAssignment: async (assignmentId: string): Promise<void> => {
-    await apiClient.delete(`/auth/user-program-assignments/${assignmentId}`);
+    const response = await httpClient.delete(`${API_ENDPOINTS.auth.userProgramAssignments}/${assignmentId}`);
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to delete program assignment');
+    }
   },
 
   /**
    * Set default program for a user
    */
   setDefaultProgram: async (userId: string, programId: string): Promise<void> => {
-    await apiClient.post(`/auth/users/${userId}/default-program`, {
+    const response = await httpClient.post(API_ENDPOINTS.auth.userDefaultProgram(userId), {
       program_id: programId
     });
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to set default program');
+    }
   },
 
   /**
@@ -171,8 +187,11 @@ export const userProgramAssignmentsApi = {
    */
   getUserDefaultProgram: async (userId: string): Promise<UserProgramAssignment | null> => {
     try {
-      const response = await apiClient.get(`/auth/users/${userId}/default-program`);
-      return response.data;
+      const response = await httpClient.get(API_ENDPOINTS.auth.userDefaultProgram(userId));
+      if (response.success && response.data) {
+        return response.data;
+      }
+      return null;
     } catch (error) {
       // Return null if no default program is set
       return null;
@@ -184,8 +203,11 @@ export const userProgramAssignmentsApi = {
    */
   checkProgramAccess: async (userId: string, programId: string): Promise<boolean> => {
     try {
-      const response = await apiClient.get(`/auth/users/${userId}/program-access/${programId}`);
-      return response.data.has_access;
+      const response = await httpClient.get(API_ENDPOINTS.auth.userProgramAccess(userId, programId));
+      if (response.success && response.data) {
+        return response.data.has_access;
+      }
+      return false;
     } catch (error) {
       return false;
     }

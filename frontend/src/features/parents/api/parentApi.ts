@@ -2,7 +2,8 @@
  * Parent API service for managing parent users and family relationships
  */
 
-import { apiClient } from '@/lib/api';
+import { httpClient } from '@/lib/api/httpClient';
+import { API_ENDPOINTS } from '@/lib/constants';
 import type { 
   User, 
   UserCreate, 
@@ -43,7 +44,6 @@ export interface ParentListResponse extends Omit<UserListResponse, 'items'> {
 }
 
 class ParentApiService {
-  private readonly baseUrl = '/parents';
 
   /**
    * Get paginated list of parents with search and filtering
@@ -57,53 +57,55 @@ class ParentApiService {
       page: page.toString(),
       per_page: per_page.toString(),
       ...Object.fromEntries(
-        Object.entries(searchParams).map(([key, value]) => [key, String(value)])
+        Object.entries(searchParams)
+          .filter(([_, value]) => value !== undefined && value !== null)
+          .map(([key, value]) => [key, String(value)])
       ),
     });
 
-    return apiClient.get<ParentListResponse>(`${this.baseUrl}?${params}`);
+    return httpClient.get<ParentListResponse>(`${API_ENDPOINTS.parents.list}?${params}`);
   }
 
   /**
    * Get parent statistics
    */
   async getStats(): Promise<ApiResponse<ParentStats>> {
-    return apiClient.get<ParentStats>(`${this.baseUrl}/stats`);
+    return httpClient.get<ParentStats>(API_ENDPOINTS.parents.stats);
   }
 
   /**
    * Get parent by ID
    */
   async getById(parentId: string): Promise<ApiResponse<User>> {
-    return apiClient.get<User>(`${this.baseUrl}/${parentId}`);
+    return httpClient.get<User>(API_ENDPOINTS.parents.get(parentId));
   }
 
   /**
    * Get parent's family structure (children and relationships)
    */
   async getFamilyStructure(parentId: string): Promise<ApiResponse<FamilyStructure>> {
-    return apiClient.get<FamilyStructure>(`${this.baseUrl}/${parentId}/family`);
+    return httpClient.get<FamilyStructure>(API_ENDPOINTS.parents.family(parentId));
   }
 
   /**
    * Create a new parent
    */
   async create(parentData: UserCreate): Promise<ApiResponse<User>> {
-    return apiClient.post<User>(this.baseUrl, parentData);
+    return httpClient.post<User>(API_ENDPOINTS.parents.create, parentData);
   }
 
   /**
    * Update parent information
    */
   async update(parentId: string, updateData: UserUpdate): Promise<ApiResponse<User>> {
-    return apiClient.put<User>(`${this.baseUrl}/${parentId}`, updateData);
+    return httpClient.put<User>(API_ENDPOINTS.parents.update(parentId), updateData);
   }
 
   /**
    * Delete a parent (admin only)
    */
   async delete(parentId: string): Promise<ApiResponse<void>> {
-    return apiClient.delete<void>(`${this.baseUrl}/${parentId}`);
+    return httpClient.delete<void>(API_ENDPOINTS.parents.delete(parentId));
   }
 
   /**
@@ -118,14 +120,14 @@ class ParentApiService {
       )
     );
 
-    return apiClient.get<ParentListResponse>(`${this.baseUrl}?${params}`);
+    return httpClient.get<ParentListResponse>(`${API_ENDPOINTS.parents.list}?${params}`);
   }
 
   /**
    * Get parents for a specific child/student
    */
   async getParentsForChild(childId: string): Promise<ApiResponse<EnhancedParent[]>> {
-    const familyResponse = await apiClient.get<FamilyStructure>(`/students/${childId}/family`);
+    const familyResponse = await httpClient.get<FamilyStructure>(API_ENDPOINTS.students.family(childId));
     
     if (familyResponse.success && familyResponse.data) {
       // Extract parent information from family structure
@@ -188,7 +190,7 @@ class ParentApiService {
     action: 'activate' | 'deactivate' | 'delete',
     data?: Record<string, any>
   ): Promise<ApiResponse<{ successful: string[], failed: string[] }>> {
-    return apiClient.post<{ successful: string[], failed: string[] }>(`${this.baseUrl}/bulk-action`, {
+    return httpClient.post<{ successful: string[], failed: string[] }>(API_ENDPOINTS.parents.bulkAction, {
       parent_ids: parentIds,
       action,
       parameters: data
@@ -208,7 +210,7 @@ class ParentApiService {
       )
     });
 
-    return apiClient.get<Blob>(`${this.baseUrl}/export?${params}`, {
+    return httpClient.get<Blob>(`${API_ENDPOINTS.parents.export}?${params}`, {
       responseType: 'blob'
     });
   }

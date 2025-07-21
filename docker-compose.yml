@@ -20,7 +20,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8001"
+      - "8000:8000"
     volumes:
       - ./backend/app:/app/app
       - ./backend/alembic:/app/alembic
@@ -31,7 +31,7 @@ services:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/api/v1/health/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -43,7 +43,7 @@ services:
         echo 'Running migrations...' &&
         alembic upgrade head &&
         echo 'Starting server...' &&
-        uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
       "
 
   frontend:
@@ -74,22 +74,22 @@ services:
       start_period: 60s
 
   # Mobile Apps Development Services
-  tutor-mobile:
+  instructor-mobile:
     build:
-      context: ./apps/academy-tutor-app
+      context: ./apps/academy-instructors-app
       dockerfile: Dockerfile.dev
     ports:
       - "19006:19006"  # Expo Metro bundler
       - "8081:8081"    # Expo dev tools
     volumes:
-      - ./apps/academy-tutor-app:/app
+      - ./apps/academy-instructors-app:/app
       - ./shared:/app/shared
-      - tutor_node_modules:/app/node_modules
+      - instructor_node_modules:/app/node_modules
     environment:
       - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
       - REACT_NATIVE_PACKAGER_HOSTNAME=0.0.0.0
-      - API_BASE_URL=http://backend:8001/api/v1
-      - WS_BASE_URL=ws://backend:8001/ws
+      - API_BASE_URL=http://backend:8000/api/v1
+      - WS_BASE_URL=ws://backend:8000/ws
     env_file:
       - .env.docker
     depends_on:
@@ -119,8 +119,8 @@ services:
     environment:
       - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
       - REACT_NATIVE_PACKAGER_HOSTNAME=0.0.0.0
-      - API_BASE_URL=http://backend:8001/api/v1
-      - WS_BASE_URL=ws://backend:8001/ws
+      - API_BASE_URL=http://backend:8000/api/v1
+      - WS_BASE_URL=ws://backend:8000/ws
     env_file:
       - .env.docker
     depends_on:
@@ -162,5 +162,5 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  tutor_node_modules:
+  instructor_node_modules:
   student_node_modules:

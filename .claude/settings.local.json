@@ -52,7 +52,10 @@
       "Bash(npm run program-context:lint)",
       "Bash(alembic revision:*)",
       "Bash(npm run frontend:build:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(export TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTc1MzA2Njg2N30.ozwGgOzJiz9zkJjBgvhrUOuQkgFE7KNpPwKYjZD_kAg\")",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run:*)"
     ],
     "deny": []
   }

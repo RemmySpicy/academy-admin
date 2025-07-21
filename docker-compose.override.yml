@@ -24,7 +24,7 @@ services:
         echo 'Setting up development data...' &&
         python setup_db.py || true &&
         echo 'Starting development server with hot reload...' &&
-        uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload --log-level debug
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
       "
 
   frontend:
@@ -47,21 +47,21 @@ services:
         npm run dev
       "
 
-  tutor-mobile:
+  instructor-mobile:
     environment:
       - NODE_ENV=development
       - EXPO_DEBUG=true
       - EXPO_CLI_TELEMETRY_DISABLED=1
     command: >
       sh -c "
-        echo 'Installing tutor app dependencies...' &&
+        echo 'Installing instructor app dependencies...' &&
         npm install &&
         echo 'Installing Expo CLI...' &&
         npm install -g @expo/cli &&
         echo 'Syncing shared resources...' &&
         mkdir -p /app/src/shared &&
         cp -r /app/shared/* /app/src/shared/ 2>/dev/null || true &&
-        echo 'Starting Expo development server for tutor app...' &&
+        echo 'Starting Expo development server for instructor app...' &&
         npx expo start --dev-client --clear
       "
 

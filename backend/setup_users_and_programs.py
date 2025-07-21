@@ -19,10 +19,13 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from passlib.context import CryptContext
 from app.core.config import settings
+
+# Import all models to ensure proper SQLAlchemy relationships  
 from app.features.authentication.models.user import User
 from app.features.authentication.models.user_program_assignment import UserProgramAssignment
-from app.features.courses.models.program import Program
+from app.features.students.models.course_enrollment import CourseEnrollment
 from app.features.students.models.student import Student
+from app.features.courses.models.program import Program
 
 
 # Password hashing

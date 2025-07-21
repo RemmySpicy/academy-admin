@@ -2,7 +2,8 @@
  * Student API service functions
  */
 
-import { apiClient, ApiResponse, isApiSuccess } from '@/lib/api';
+import { httpClient, ApiResponse } from '@/lib/api/httpClient';
+import { API_ENDPOINTS } from '@/lib/constants';
 import {
   Student,
   StudentCreate,
@@ -15,7 +16,6 @@ import {
 } from '../types';
 
 export class StudentApi {
-  private static readonly BASE_PATH = '/api/v1/students';
 
   /**
    * Get paginated list of students
@@ -31,56 +31,56 @@ export class StudentApi {
       ...searchParams,
     };
 
-    return apiClient.get<StudentListResponse>(this.BASE_PATH, params);
+    return httpClient.get<StudentListResponse>(API_ENDPOINTS.students.list, params);
   }
 
   /**
    * Get student by ID
    */
   static async getStudent(id: string): Promise<ApiResponse<Student>> {
-    return apiClient.get<Student>(`${this.BASE_PATH}/${id}`);
+    return httpClient.get<Student>(API_ENDPOINTS.students.get(id));
   }
 
   /**
    * Get student by student ID (STU-YYYY-NNNN)
    */
   static async getStudentByStudentId(studentId: string): Promise<ApiResponse<Student>> {
-    return apiClient.get<Student>(`${this.BASE_PATH}/by-student-id/${studentId}`);
+    return httpClient.get<Student>(`${API_ENDPOINTS.students.list}/by-student-id/${studentId}`);
   }
 
   /**
    * Create new student
    */
   static async createStudent(studentData: StudentCreate): Promise<ApiResponse<Student>> {
-    return apiClient.post<Student>(this.BASE_PATH, studentData);
+    return httpClient.post<Student>(API_ENDPOINTS.students.create, studentData);
   }
 
   /**
    * Update student
    */
   static async updateStudent(id: string, studentData: StudentUpdate): Promise<ApiResponse<Student>> {
-    return apiClient.put<Student>(`${this.BASE_PATH}/${id}`, studentData);
+    return httpClient.put<Student>(API_ENDPOINTS.students.update(id), studentData);
   }
 
   /**
    * Delete student
    */
   static async deleteStudent(id: string): Promise<ApiResponse<void>> {
-    return apiClient.delete<void>(`${this.BASE_PATH}/${id}`);
+    return httpClient.delete<void>(API_ENDPOINTS.students.delete(id));
   }
 
   /**
    * Get student statistics
    */
   static async getStudentStats(): Promise<ApiResponse<StudentStats>> {
-    return apiClient.get<StudentStats>(`${this.BASE_PATH}/stats`);
+    return httpClient.get<StudentStats>(API_ENDPOINTS.students.stats);
   }
 
   /**
    * Perform bulk action on students
    */
   static async bulkAction(actionData: StudentBulkAction): Promise<ApiResponse<StudentBulkActionResponse>> {
-    return apiClient.post<StudentBulkActionResponse>(`${this.BASE_PATH}/bulk-action`, actionData);
+    return httpClient.post<StudentBulkActionResponse>(`${API_ENDPOINTS.students.list}/bulk-action`, actionData);
   }
 
   /**
@@ -97,7 +97,7 @@ export class StudentApi {
       search: query,
     };
 
-    return apiClient.get<StudentListResponse>(this.BASE_PATH, params);
+    return httpClient.get<StudentListResponse>(API_ENDPOINTS.students.list, params);
   }
 
   /**
@@ -114,14 +114,14 @@ export class StudentApi {
       status,
     };
 
-    return apiClient.get<StudentListResponse>(this.BASE_PATH, params);
+    return httpClient.get<StudentListResponse>(API_ENDPOINTS.students.list, params);
   }
 
   /**
    * Update student status
    */
   static async updateStudentStatus(id: string, status: string): Promise<ApiResponse<Student>> {
-    return apiClient.put<Student>(`${this.BASE_PATH}/${id}`, { status });
+    return httpClient.put<Student>(API_ENDPOINTS.students.update(id), { status });
   }
 
   /**

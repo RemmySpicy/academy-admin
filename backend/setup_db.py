@@ -9,7 +9,12 @@ from passlib.context import CryptContext
 
 from app.core.config import settings
 from app.features.common.models.base import Base
+
+# Import all models to ensure proper SQLAlchemy relationships
 from app.features.authentication.models.user import User
+from app.features.students.models.course_enrollment import CourseEnrollment
+from app.features.students.models.student import Student
+from app.features.courses.models.program import Program
 
 # Create database engine
 engine = create_engine(settings.DATABASE_URL)

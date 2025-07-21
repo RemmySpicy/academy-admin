@@ -66,6 +66,7 @@ class FrontendTemplateGenerator:
  */
 
 import {{ httpClient }} from '@/lib/api/httpClient';
+import {{ API_ENDPOINTS }} from '@/lib/constants';
 import {{ PaginatedResponse }} from '@/lib/api/types';
 import {{
   {self.feature_pascal},
@@ -75,18 +76,16 @@ import {{
   {self.feature_pascal}Stats,
 }} from '../types';
 
-// API endpoints
-const API_ENDPOINTS = {{
-  {self.feature_snake}: {{
-    list: '/api/v1/{self.feature_kebab}',
-    create: '/api/v1/{self.feature_kebab}',
-    get: (id: string) => `/api/v1/{self.feature_kebab}/${{id}}`,
-    update: (id: string) => `/api/v1/{self.feature_kebab}/${{id}}`,
-    delete: (id: string) => `/api/v1/{self.feature_kebab}/${{id}}`,
-    stats: '/api/v1/{self.feature_kebab}/stats',
-    bulkUpdate: '/api/v1/{self.feature_kebab}/bulk-update',
-  }},
-}};
+// TODO: Add these endpoints to @/lib/constants.ts API_ENDPOINTS:
+// {self.feature_snake}: {{
+//   list: '/api/v1/{self.feature_kebab}',
+//   create: '/api/v1/{self.feature_kebab}',
+//   get: (id: string) => `/api/v1/{self.feature_kebab}/${{id}}`,
+//   update: (id: string) => `/api/v1/{self.feature_kebab}/${{id}}`,
+//   delete: (id: string) => `/api/v1/{self.feature_kebab}/${{id}}`,
+//   stats: '/api/v1/{self.feature_kebab}/stats',
+//   bulkUpdate: '/api/v1/{self.feature_kebab}/bulk-update',
+// }}
 
 export const {self.feature_camel}ApiService = {{
   /**

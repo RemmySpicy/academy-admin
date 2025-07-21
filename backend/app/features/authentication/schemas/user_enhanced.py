@@ -242,3 +242,17 @@ class ParentStatsResponse(BaseModel):
     total_children_connections: int = Field(..., description="Total number of parent-child relationships")
     parents_with_multiple_children: int = Field(..., description="Number of parents with multiple children")
     average_children_per_parent: float = Field(..., description="Average number of children per parent")
+
+
+class UserStatsResponse(BaseModel):
+    """Schema for user statistics response."""
+    
+    total_users: int = Field(..., description="Total number of users")
+    active_users: int = Field(..., description="Number of active users")
+    inactive_users: int = Field(..., description="Number of inactive users")
+    users_by_role: Dict[str, int] = Field(..., description="Users grouped by role")
+    recent_registrations: int = Field(..., description="Users registered in last 30 days")
+    users_with_program_assignments: int = Field(..., description="Users assigned to programs")
+    users_without_program_assignments: int = Field(..., description="Users not assigned to any program")
+    total_program_assignments: int = Field(..., description="Total number of user-program assignments")
+    average_programs_per_user: float = Field(..., description="Average number of programs per user")

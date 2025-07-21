@@ -8,9 +8,9 @@ These tools ensure that every feature in Academy Admin follows consistent progra
 
 ## 🛠️ Tools Included
 
-### 1. Program Context Linter (`program_context_linter.py`)
+### 1. Program Context Linter (`program_context_linter.py`) ✅ **ENHANCED (2025-07-21)**
 
-**Purpose**: Enforces program context filtering standards across all features.
+**Purpose**: Enforces program context filtering standards across all features, including frontend API client patterns.
 
 **Checks**:
 - Model files have `program_id` foreign key fields
@@ -18,6 +18,11 @@ These tools ensure that every feature in Academy Admin follows consistent progra
 - Database queries filter by program context
 - Schemas include program context fields
 - Route handlers use program context dependency injection
+- **🆕 Frontend API client migration patterns**:
+  - Detects legacy `apiClient` usage and suggests `httpClient` migration
+  - Validates use of centralized `API_ENDPOINTS` constants vs hardcoded paths
+  - Checks for proper httpClient response handling (`response.success` vs `isApiSuccess`)
+  - Ensures TypeScript API files follow modern patterns
 
 **Usage**:
 ```bash
@@ -115,7 +120,31 @@ npm run quality:academy:fix
 npm run quality:academy:reports
 ```
 
-### 5. Git Hooks
+### 5. API Endpoint Validator (`api_endpoint_validator.py`) 🆕 **NEW (2025-07-21)**
+
+**Purpose**: Validates API endpoints are properly documented, tested, and follow Academy Admin standards.
+
+**Checks**:
+- API endpoint documentation and response schemas
+- Authentication and program context dependencies
+- Consistent endpoint naming and HTTP methods
+- Frontend hardcoded endpoints vs centralized constants
+- Missing API_ENDPOINTS constant definitions
+- Endpoint test coverage
+
+**Usage**:
+```bash
+# Validate all API endpoints
+npm run api:validate
+
+# Generate JSON report
+npm run api:validate:json
+
+# Save validation report
+npm run api:validate:report
+```
+
+### 6. Git Hooks
 
 **Purpose**: Automatic quality checks during development workflow.
 

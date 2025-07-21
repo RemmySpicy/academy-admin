@@ -4,7 +4,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { apiClient, isApiSuccess } from '@/lib/api';
+import { httpClient } from '@/lib/api/httpClient';
 import type { SearchParams } from '@/lib/api/types';
 
 // Content versioning types
@@ -141,27 +141,27 @@ const mockVersioningApiService = {
   },
 
   getVersion: async (id: string): Promise<ContentVersion> => {
-    const response = await apiClient.get<ContentVersion>(`/api/v1/content/versions/${id}`);
+    const response = await httpClient.get<ContentVersion>(`/api/v1/content/versions/${id}`);
     
-    if (isApiSuccess(response)) {
+    if (response.success && response.data) {
       return response.data;
     }
     throw new Error(response.error || 'Failed to fetch version');
   },
 
   createVersion: async (data: VersionCreate): Promise<ContentVersion> => {
-    const response = await apiClient.post<ContentVersion>('/api/v1/content/versions/', data);
+    const response = await httpClient.post<ContentVersion>('/api/v1/content/versions/', data);
     
-    if (isApiSuccess(response)) {
+    if (response.success && response.data) {
       return response.data;
     }
     throw new Error(response.error || 'Failed to create version');
   },
 
   restoreVersion: async (versionId: string): Promise<ContentVersion> => {
-    const response = await apiClient.post<ContentVersion>(`/api/v1/content/versions/${versionId}/restore`);
+    const response = await httpClient.post<ContentVersion>(`/api/v1/content/versions/${versionId}/restore`);
     
-    if (isApiSuccess(response)) {
+    if (response.success && response.data) {
       return response.data;
     }
     throw new Error(response.error || 'Failed to restore version');
@@ -228,9 +228,9 @@ const mockVersioningApiService = {
   },
 
   deleteVersion: async (id: string): Promise<void> => {
-    const response = await apiClient.delete(`/api/v1/content/versions/${id}`);
+    const response = await httpClient.delete(`/api/v1/content/versions/${id}`);
     
-    if (!isApiSuccess(response)) {
+    if (!response.success) {
       throw new Error(response.error || 'Failed to delete version');
     }
   },

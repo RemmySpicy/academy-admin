@@ -3,6 +3,7 @@
  */
 
 import { httpClient } from '@/lib/api/httpClient';
+import { API_ENDPOINTS } from '@/lib/constants';
 import {
   Facility,
   FacilityCreate,
@@ -12,14 +13,12 @@ import {
   FacilityStatsResponse
 } from '../types';
 
-const BASE_PATH = '/api/v1/facilities';
-
 export const facilitiesApi = {
   /**
    * Get all facilities with optional filtering and pagination
    */
   async getFacilities(params?: FacilitySearchParams): Promise<FacilityListResponse> {
-    const response = await httpClient.get<FacilityListResponse>(BASE_PATH);
+    const response = await httpClient.get<FacilityListResponse>(API_ENDPOINTS.facilities.list);
     if (!response.success) {
       throw new Error(response.error || 'Failed to fetch facilities');
     }
@@ -30,7 +29,7 @@ export const facilitiesApi = {
    * Get facility by ID
    */
   async getFacility(id: string): Promise<Facility> {
-    const response = await httpClient.get<Facility>(`${BASE_PATH}/${id}`);
+    const response = await httpClient.get<Facility>(API_ENDPOINTS.facilities.get(id));
     if (!response.success) {
       throw new Error(response.error || 'Failed to fetch facility');
     }
@@ -41,7 +40,7 @@ export const facilitiesApi = {
    * Create new facility
    */
   async createFacility(facilityData: FacilityCreate): Promise<Facility> {
-    const response = await httpClient.post<Facility>(BASE_PATH, facilityData);
+    const response = await httpClient.post<Facility>(API_ENDPOINTS.facilities.create, facilityData);
     if (!response.success) {
       throw new Error(response.error || 'Failed to create facility');
     }
@@ -52,7 +51,7 @@ export const facilitiesApi = {
    * Update facility
    */
   async updateFacility(id: string, facilityData: FacilityUpdate): Promise<Facility> {
-    const response = await httpClient.put<Facility>(`${BASE_PATH}/${id}`, facilityData);
+    const response = await httpClient.put<Facility>(API_ENDPOINTS.facilities.update(id), facilityData);
     if (!response.success) {
       throw new Error(response.error || 'Failed to update facility');
     }
@@ -63,7 +62,7 @@ export const facilitiesApi = {
    * Delete facility
    */
   async deleteFacility(id: string): Promise<void> {
-    const response = await httpClient.delete<void>(`${BASE_PATH}/${id}`);
+    const response = await httpClient.delete<void>(API_ENDPOINTS.facilities.delete(id));
     if (!response.success) {
       throw new Error(response.error || 'Failed to delete facility');
     }
@@ -73,7 +72,7 @@ export const facilitiesApi = {
    * Get facility statistics
    */
   async getFacilityStats(): Promise<FacilityStatsResponse> {
-    const response = await httpClient.get<FacilityStatsResponse>(`${BASE_PATH}/stats`);
+    const response = await httpClient.get<FacilityStatsResponse>(API_ENDPOINTS.facilities.stats);
     if (!response.success) {
       throw new Error(response.error || 'Failed to fetch facility statistics');
     }

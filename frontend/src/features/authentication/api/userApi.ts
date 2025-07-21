@@ -2,7 +2,8 @@
  * User management API service
  */
 
-import { apiClient, ApiResponse, isApiSuccess } from '@/lib/api';
+import { httpClient, ApiResponse } from '@/lib/api/httpClient';
+import { API_ENDPOINTS } from '@/lib/constants';
 
 // Types for user management
 export interface RealUser {
@@ -44,48 +45,47 @@ export interface PasswordChangeRequest {
 }
 
 export class UserApi {
-  private static readonly BASE_PATH = '/api/v1/auth';
 
   /**
    * Get all users (admin only)
    */
   static async getUsers(): Promise<ApiResponse<RealUser[]>> {
-    return apiClient.get<RealUser[]>(`${this.BASE_PATH}/users`);
+    return httpClient.get<RealUser[]>(API_ENDPOINTS.auth.users);
   }
 
   /**
    * Get user by ID
    */
   static async getUser(userId: string): Promise<ApiResponse<RealUser>> {
-    return apiClient.get<RealUser>(`${this.BASE_PATH}/users/${userId}`);
+    return httpClient.get<RealUser>(API_ENDPOINTS.auth.getUser(userId));
   }
 
   /**
    * Create new user (admin only)
    */
   static async createUser(userData: UserCreate): Promise<ApiResponse<RealUser>> {
-    return apiClient.post<RealUser>(`${this.BASE_PATH}/users`, userData);
+    return httpClient.post<RealUser>(API_ENDPOINTS.auth.createUser, userData);
   }
 
   /**
    * Update user
    */
   static async updateUser(userId: string, userData: UserUpdate): Promise<ApiResponse<RealUser>> {
-    return apiClient.put<RealUser>(`${this.BASE_PATH}/users/${userId}`, userData);
+    return httpClient.put<RealUser>(API_ENDPOINTS.auth.updateUser(userId), userData);
   }
 
   /**
    * Delete user (admin only)
    */
   static async deleteUser(userId: string): Promise<ApiResponse<void>> {
-    return apiClient.delete<void>(`${this.BASE_PATH}/users/${userId}`);
+    return httpClient.delete<void>(API_ENDPOINTS.auth.deleteUser(userId));
   }
 
   /**
    * Change password
    */
   static async changePassword(passwordData: PasswordChangeRequest): Promise<ApiResponse<{ detail: string }>> {
-    return apiClient.post<{ detail: string }>(`${this.BASE_PATH}/change-password`, passwordData);
+    return httpClient.post<{ detail: string }>(API_ENDPOINTS.auth.changePassword, passwordData);
   }
 
   /**

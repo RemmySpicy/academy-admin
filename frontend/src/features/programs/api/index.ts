@@ -4,7 +4,8 @@
  * Handles API calls related to program management
  */
 
-import { apiClient } from '@/lib/api';
+import { httpClient } from '@/lib/api/httpClient';
+import { API_ENDPOINTS } from '@/lib/constants';
 import { Program } from '@/store/types';
 
 export interface ProgramsApiResponse {
@@ -41,8 +42,11 @@ export const programsApi = {
     category?: string;
     search?: string;
   }): Promise<ProgramsApiResponse> => {
-    const response = await apiClient.get('/programs/', { params });
-    return response.data;
+    const response = await httpClient.get(API_ENDPOINTS.programs.list);
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.error || 'Failed to get programs');
   },
 
   /**
@@ -66,31 +70,43 @@ export const programsApi = {
    * Get a single program by ID
    */
   getProgram: async (id: string): Promise<Program> => {
-    const response = await apiClient.get(`/programs/${id}`);
-    return response.data;
+    const response = await httpClient.get(API_ENDPOINTS.programs.get(id));
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.error || 'Failed to get program');
   },
 
   /**
    * Create a new program
    */
   createProgram: async (data: CreateProgramData): Promise<Program> => {
-    const response = await apiClient.post('/programs/', data);
-    return response.data;
+    const response = await httpClient.post(API_ENDPOINTS.programs.create, data);
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.error || 'Failed to create program');
   },
 
   /**
    * Update an existing program
    */
   updateProgram: async (id: string, data: Partial<CreateProgramData>): Promise<Program> => {
-    const response = await apiClient.put(`/programs/${id}`, data);
-    return response.data;
+    const response = await httpClient.put(API_ENDPOINTS.programs.update(id), data);
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.error || 'Failed to update program');
   },
 
   /**
    * Delete a program
    */
   deleteProgram: async (id: string): Promise<void> => {
-    await apiClient.delete(`/programs/${id}`);
+    const response = await httpClient.delete(API_ENDPOINTS.programs.delete(id));
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to delete program');
+    }
   },
 
   /**
@@ -98,7 +114,7 @@ export const programsApi = {
    */
   trackProgramSwitch: async (programId: string): Promise<void> => {
     try {
-      await apiClient.post('/analytics/program-switch', {
+      await httpClient.post(API_ENDPOINTS.analytics.programSwitch, {
         program_id: programId,
         timestamp: new Date().toISOString()
       });

@@ -3,8 +3,7 @@
  */
 
 import { httpClient, ApiResponse } from '@/lib/api/httpClient';
-import { apiClient } from '@/lib/api';
-import { AUTH_STORAGE_KEY } from '@/lib/constants';
+import { AUTH_STORAGE_KEY, API_ENDPOINTS } from '@/lib/constants';
 
 // Types for authentication
 interface LoginRequest {
@@ -66,7 +65,6 @@ const TOKEN_KEY = AUTH_STORAGE_KEY;
 const USER_KEY = 'academy_user';
 
 export class AuthApiService {
-  private static readonly BASE_PATH = '/api/v1/auth';
 
   /**
    * Login with username and password
@@ -74,7 +72,7 @@ export class AuthApiService {
   static async login(credentials: LoginRequest): Promise<ApiResponse<LoginResponse>> {
     // Set up the API client without token for login
     const response = await httpClient.post<LoginResponse>(
-      `${this.BASE_PATH}/login/json`,
+      API_ENDPOINTS.auth.login,
       credentials
     );
 
@@ -91,7 +89,6 @@ export class AuthApiService {
       
       // Set token for future requests
       httpClient.setToken(access_token);
-      apiClient.setToken(access_token);
     }
 
     return response;
@@ -101,7 +98,7 @@ export class AuthApiService {
    * Logout user
    */
   static async logout(): Promise<ApiResponse<{ detail: string }>> {
-    const response = await httpClient.post<{ detail: string }>(`${this.BASE_PATH}/logout`);
+    const response = await httpClient.post<{ detail: string }>(API_ENDPOINTS.auth.logout);
     
     // Clear local storage and cookies regardless of API response
     localStorage.removeItem(TOKEN_KEY);
@@ -111,7 +108,6 @@ export class AuthApiService {
     document.cookie = `${TOKEN_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
     
     httpClient.setToken(null);
-    apiClient.setToken(null);
 
     return response;
   }
@@ -120,28 +116,28 @@ export class AuthApiService {
    * Get current user info
    */
   static async getCurrentUser(): Promise<ApiResponse<User>> {
-    return httpClient.get<User>(`${this.BASE_PATH}/me`);
+    return httpClient.get<User>(API_ENDPOINTS.auth.me);
   }
 
   /**
    * Create new user (admin only)
    */
   static async createUser(userData: UserCreate): Promise<ApiResponse<User>> {
-    return httpClient.post<User>(`${this.BASE_PATH}/users`, userData);
+    return httpClient.post<User>(API_ENDPOINTS.auth.createUser, userData);
   }
 
   /**
    * Update user information
    */
   static async updateUser(userId: string, userData: UserUpdate): Promise<ApiResponse<User>> {
-    return httpClient.put<User>(`${this.BASE_PATH}/users/${userId}`, userData);
+    return httpClient.put<User>(API_ENDPOINTS.auth.updateUser(userId), userData);
   }
 
   /**
    * Change password
    */
   static async changePassword(passwordData: PasswordChangeRequest): Promise<ApiResponse<{ detail: string }>> {
-    return httpClient.post<{ detail: string }>(`${this.BASE_PATH}/change-password`, passwordData);
+    return httpClient.post<{ detail: string }>(API_ENDPOINTS.auth.changePassword, passwordData);
   }
 
   /**
@@ -175,7 +171,6 @@ export class AuthApiService {
 
       // Set token for API client
       httpClient.setToken(token);
-      apiClient.setToken(token);
       
       // Ensure cookie is set (in case it was cleared)
       document.cookie = `${TOKEN_KEY}=${token}; path=/; max-age=${60 * 60 * 24 * 7}; secure; samesite=strict`;
@@ -198,7 +193,6 @@ export class AuthApiService {
     document.cookie = `${TOKEN_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
     
     httpClient.setToken(null);
-    apiClient.setToken(null);
   }
 
   /**

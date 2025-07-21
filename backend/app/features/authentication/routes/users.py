@@ -19,6 +19,7 @@ from app.features.authentication.schemas.user_enhanced import (
     CourseEnrollmentResponse,
     StudentParentCreate,
     FamilyStructureResponse,
+    UserStatsResponse,
 )
 from app.features.authentication.services.user_service import user_service
 from app.features.common.models.database import get_db
@@ -156,7 +157,8 @@ async def list_users(
     roles: Optional[List[str]] = Query(None, description="Filter by roles"),
     is_active: Optional[bool] = Query(None, description="Filter by active status"),
     sort_by: Optional[str] = Query(None, description="Sort field"),
-    sort_order: Optional[str] = Query("asc", regex="^(asc|desc)$", description="Sort order")
+    sort_order: Optional[str] = Query("asc", regex="^(asc|desc)$", description="Sort order"),
+    bypass_program_filter: Optional[bool] = Query(None, description="Bypass program filtering (super admin only)")
 ):
     """
     List users with optional search and pagination.
@@ -179,7 +181,10 @@ async def list_users(
         
         # Apply program context filtering for non-super-admin users
         context_filter = None
-        if not current_user.get("is_super_admin") and program_context:
+        # Super admin can bypass program filtering when bypass_program_filter=true
+        if bypass_program_filter and current_user.get("role") == "super_admin":
+            context_filter = None  # No filtering for super admin bypass
+        elif not current_user.get("is_super_admin") and program_context:
             context_filter = program_context
         
         users, total_count = user_service.search_users(
@@ -423,4 +428,35 @@ async def get_users_by_role(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error retrieving users by role: {str(e)}"
+        )
+
+
+@router.get("/stats", response_model=UserStatsResponse)
+async def get_user_stats(
+    current_user: Annotated[dict, Depends(get_current_active_user)],
+    db: Annotated[Session, Depends(get_db)],
+    program_context: Annotated[Optional[str], Depends(get_program_context)],
+    bypass_program_filter: Optional[bool] = Query(None, description="Bypass program filtering (super admin only)")
+):
+    """
+    Get user statistics.
+    
+    Returns counts, role distribution, and other statistical information.
+    Respects program context for non-super-admin users.
+    """
+    try:
+        # Apply program context filtering for non-super-admin users  
+        context_filter = None
+        # Super admin can bypass program filtering when bypass_program_filter=true
+        if bypass_program_filter and current_user.get("role") == "super_admin":
+            context_filter = None  # No filtering for super admin bypass
+        elif not current_user.get("is_super_admin") and program_context:
+            context_filter = program_context
+            
+        stats = user_service.get_user_stats(db, context_filter)
+        return stats
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving user statistics: {str(e)}"
         )

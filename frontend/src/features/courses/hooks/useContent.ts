@@ -4,7 +4,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { apiClient, isApiSuccess } from '@/lib/api';
+import { httpClient } from '@/lib/api/httpClient';
 import { API_ENDPOINTS } from '@/lib/constants';
 import type {
   Lesson,
@@ -137,47 +137,47 @@ const mockContentApiService = {
         .map(([key, value]) => [key, value.toString()])
     ).toString();
     
-    const response = await apiClient.get<PaginatedResponse<Lesson>>(
+    const response = await httpClient.get<PaginatedResponse<Lesson>>(
       `${API_ENDPOINTS.courses.lessons.list}${queryString ? `?${queryString}` : ''}`
     );
     
-    if (isApiSuccess(response)) {
+    if (response.success && response.data) {
       return response.data;
     }
     throw new Error(response.error || 'Failed to fetch lessons');
   },
 
   getLesson: async (id: string): Promise<Lesson> => {
-    const response = await apiClient.get<Lesson>(API_ENDPOINTS.courses.lessons.get(id));
+    const response = await httpClient.get<Lesson>(API_ENDPOINTS.courses.lessons.get(id));
     
-    if (isApiSuccess(response)) {
+    if (response.success && response.data) {
       return response.data;
     }
     throw new Error(response.error || 'Failed to fetch lesson');
   },
 
   createLesson: async (data: LessonCreate): Promise<Lesson> => {
-    const response = await apiClient.post<Lesson>(API_ENDPOINTS.courses.lessons.create, data);
+    const response = await httpClient.post<Lesson>(API_ENDPOINTS.courses.lessons.create, data);
     
-    if (isApiSuccess(response)) {
+    if (response.success && response.data) {
       return response.data;
     }
     throw new Error(response.error || 'Failed to create lesson');
   },
 
   updateLesson: async (id: string, data: LessonUpdate): Promise<Lesson> => {
-    const response = await apiClient.put<Lesson>(API_ENDPOINTS.courses.lessons.update(id), data);
+    const response = await httpClient.put<Lesson>(API_ENDPOINTS.courses.lessons.update(id), data);
     
-    if (isApiSuccess(response)) {
+    if (response.success && response.data) {
       return response.data;
     }
     throw new Error(response.error || 'Failed to update lesson');
   },
 
   deleteLesson: async (id: string): Promise<void> => {
-    const response = await apiClient.delete(API_ENDPOINTS.courses.lessons.delete(id));
+    const response = await httpClient.delete(API_ENDPOINTS.courses.lessons.delete(id));
     
-    if (!isApiSuccess(response)) {
+    if (!response.success) {
       throw new Error(response.error || 'Failed to delete lesson');
     }
   },
@@ -188,90 +188,90 @@ const mockContentApiService = {
         .map(([key, value]) => [key, value.toString()])
     ).toString();
     
-    const response = await apiClient.get<PaginatedResponse<Assessment>>(
+    const response = await httpClient.get<PaginatedResponse<Assessment>>(
       `${API_ENDPOINTS.courses.assessments.list}${queryString ? `?${queryString}` : ''}`
     );
     
-    if (isApiSuccess(response)) {
+    if (response.success && response.data) {
       return response.data;
     }
     throw new Error(response.error || 'Failed to fetch assessments');
   },
 
   getAssessment: async (id: string): Promise<Assessment> => {
-    const response = await apiClient.get<Assessment>(API_ENDPOINTS.courses.assessments.get(id));
+    const response = await httpClient.get<Assessment>(API_ENDPOINTS.courses.assessments.get(id));
     
-    if (isApiSuccess(response)) {
+    if (response.success && response.data) {
       return response.data;
     }
     throw new Error(response.error || 'Failed to fetch assessment');
   },
 
   createAssessment: async (data: AssessmentCreate): Promise<Assessment> => {
-    const response = await apiClient.post<Assessment>(API_ENDPOINTS.courses.assessments.create, data);
+    const response = await httpClient.post<Assessment>(API_ENDPOINTS.courses.assessments.create, data);
     
-    if (isApiSuccess(response)) {
+    if (response.success && response.data) {
       return response.data;
     }
     throw new Error(response.error || 'Failed to create assessment');
   },
 
   updateAssessment: async (id: string, data: AssessmentUpdate): Promise<Assessment> => {
-    const response = await apiClient.put<Assessment>(API_ENDPOINTS.courses.assessments.update(id), data);
+    const response = await httpClient.put<Assessment>(API_ENDPOINTS.courses.assessments.update(id), data);
     
-    if (isApiSuccess(response)) {
+    if (response.success && response.data) {
       return response.data;
     }
     throw new Error(response.error || 'Failed to update assessment');
   },
 
   deleteAssessment: async (id: string): Promise<void> => {
-    const response = await apiClient.delete(API_ENDPOINTS.courses.assessments.delete(id));
+    const response = await httpClient.delete(API_ENDPOINTS.courses.assessments.delete(id));
     
-    if (!isApiSuccess(response)) {
+    if (!response.success) {
       throw new Error(response.error || 'Failed to delete assessment');
     }
   },
 
   getAssessmentCriteria: async (assessmentId: string): Promise<AssessmentCriteria[]> => {
-    const response = await apiClient.get<AssessmentCriteria[]>(API_ENDPOINTS.courses.assessments.criteria.list(assessmentId));
+    const response = await httpClient.get<AssessmentCriteria[]>(API_ENDPOINTS.courses.assessments.criteria.list(assessmentId));
     
-    if (isApiSuccess(response)) {
+    if (response.success && response.data) {
       return response.data;
     }
     throw new Error(response.error || 'Failed to fetch assessment criteria');
   },
 
   createAssessmentCriteria: async (data: AssessmentCriteriaCreate): Promise<AssessmentCriteria> => {
-    const response = await apiClient.post<AssessmentCriteria>(API_ENDPOINTS.courses.assessments.criteria.create(data.assessment_id), data);
+    const response = await httpClient.post<AssessmentCriteria>(API_ENDPOINTS.courses.assessments.criteria.create(data.assessment_id), data);
     
-    if (isApiSuccess(response)) {
+    if (response.success && response.data) {
       return response.data;
     }
     throw new Error(response.error || 'Failed to create assessment criteria');
   },
 
   updateAssessmentCriteria: async (id: string, data: AssessmentCriteriaUpdate): Promise<AssessmentCriteria> => {
-    const response = await apiClient.put<AssessmentCriteria>(API_ENDPOINTS.courses.assessments.criteria.update(id), data);
+    const response = await httpClient.put<AssessmentCriteria>(API_ENDPOINTS.courses.assessments.criteria.update(id), data);
     
-    if (isApiSuccess(response)) {
+    if (response.success && response.data) {
       return response.data;
     }
     throw new Error(response.error || 'Failed to update assessment criteria');
   },
 
   deleteAssessmentCriteria: async (id: string): Promise<void> => {
-    const response = await apiClient.delete(API_ENDPOINTS.courses.assessments.criteria.delete(id));
+    const response = await httpClient.delete(API_ENDPOINTS.courses.assessments.criteria.delete(id));
     
-    if (!isApiSuccess(response)) {
+    if (!response.success) {
       throw new Error(response.error || 'Failed to delete assessment criteria');
     }
   },
 
   reorderAssessmentCriteria: async (assessmentId: string, reorderData: Array<{ id: string; sequence: number }>): Promise<void> => {
-    const response = await apiClient.post(API_ENDPOINTS.courses.assessments.criteria.reorder(assessmentId), reorderData);
+    const response = await httpClient.post(API_ENDPOINTS.courses.assessments.criteria.reorder(assessmentId), reorderData);
     
-    if (!isApiSuccess(response)) {
+    if (!response.success) {
       throw new Error(response.error || 'Failed to reorder assessment criteria');
     }
   },

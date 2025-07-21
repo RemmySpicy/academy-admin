@@ -30,9 +30,19 @@ class UserService(BaseService[User, dict, dict]):
         created_by: str
     ) -> User:
         """Create a new user with specified roles."""
+        from app.features.authentication.utils.password import hash_password
+        
+        # Extract password and hash it
+        password = user_data.pop("password", None)
+        if not password:
+            raise ValueError("Password is required")
+            
+        password_hash = hash_password(password)
+        
         # Set up the user data
         user_dict = {
             **user_data,
+            "password_hash": password_hash,
             "roles": roles,
             "primary_role": roles[0] if roles else "student",
             "created_by": created_by,
@@ -343,6 +353,71 @@ class UserService(BaseService[User, dict, dict]):
         users = query.offset(offset).limit(per_page).all()
         
         return users, total_count
+    
+    def get_user_stats(self, db: Session, program_context: Optional[str] = None) -> Dict[str, Any]:
+        """Get user statistics with optional program context filtering."""
+        from datetime import datetime, timedelta
+        from app.features.authentication.schemas.user_enhanced import UserStatsResponse
+        
+        # Base query
+        query = db.query(User)
+        
+        # Apply program context filtering if provided
+        if program_context:
+            query = query.join(UserProgramAssignment, User.id == UserProgramAssignment.user_id).filter(
+                UserProgramAssignment.program_id == program_context
+            )
+        
+        # Total users
+        total_users = query.count()
+        
+        # Active/inactive users
+        active_users = query.filter(User.is_active == True).count()
+        inactive_users = query.filter(User.is_active == False).count()
+        
+        # Users by role
+        users_by_role = {}
+        for role in UserRole:
+            role_count = query.filter(User.roles.any(role.value)).count()
+            if role_count > 0:
+                users_by_role[role.value] = role_count
+        
+        # Recent registrations (last 30 days)
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        recent_registrations = query.filter(User.created_at >= thirty_days_ago).count()
+        
+        # Program assignment stats
+        if program_context:
+            # For specific program context
+            users_with_assignments = total_users
+            users_without_assignments = 0
+            total_assignments = total_users
+        else:
+            # For all users
+            users_with_assignments = db.query(User).join(
+                UserProgramAssignment, User.id == UserProgramAssignment.user_id
+            ).distinct().count()
+            
+            users_without_assignments = total_users - users_with_assignments
+            total_assignments = db.query(UserProgramAssignment).count()
+        
+        # Average programs per user
+        if total_users > 0:
+            average_programs_per_user = total_assignments / total_users
+        else:
+            average_programs_per_user = 0.0
+        
+        return UserStatsResponse(
+            total_users=total_users,
+            active_users=active_users,
+            inactive_users=inactive_users,
+            users_by_role=users_by_role,
+            recent_registrations=recent_registrations,
+            users_with_program_assignments=users_with_assignments,
+            users_without_program_assignments=users_without_assignments,
+            total_program_assignments=total_assignments,
+            average_programs_per_user=round(average_programs_per_user, 2)
+        )
 
 
 # Create singleton instance

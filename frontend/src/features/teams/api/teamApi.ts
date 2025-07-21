@@ -1,5 +1,5 @@
-import { httpClient } from '@/lib/httpClient';
-import { ApiResponse } from '@/lib/api';
+import { httpClient, ApiResponse } from '@/lib/api/httpClient';
+import { API_ENDPOINTS } from '@/lib/constants';
 
 // Types
 export interface TeamMember {
@@ -91,7 +91,6 @@ export interface AvailableUsersParams {
 }
 
 class TeamApi {
-  private readonly basePath = '/teams';
 
   /**
    * Get team members for the current program
@@ -107,7 +106,7 @@ class TeamApi {
     if (params?.sort_by) searchParams.append('sort_by', params.sort_by);
     if (params?.sort_order) searchParams.append('sort_order', params.sort_order);
 
-    const url = `${this.basePath}/members${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    const url = `${API_ENDPOINTS.teams.members}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
     return httpClient.get<TeamMemberListResponse>(url);
   }
 
@@ -115,21 +114,21 @@ class TeamApi {
    * Add a new team member to the program
    */
   async addTeamMember(request: AddTeamMemberRequest): Promise<ApiResponse<TeamMember>> {
-    return httpClient.post<TeamMember>(`${this.basePath}/members`, request);
+    return httpClient.post<TeamMember>(API_ENDPOINTS.teams.members, request);
   }
 
   /**
    * Update a team member's role or settings
    */
   async updateTeamMember(userId: string, request: UpdateTeamMemberRequest): Promise<ApiResponse<TeamMember>> {
-    return httpClient.put<TeamMember>(`${this.basePath}/members/${userId}`, request);
+    return httpClient.put<TeamMember>(API_ENDPOINTS.teams.memberUpdate(userId), request);
   }
 
   /**
    * Remove a team member from the program
    */
   async removeTeamMember(userId: string): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(`${this.basePath}/members/${userId}`);
+    return httpClient.delete<void>(API_ENDPOINTS.teams.memberUpdate(userId));
   }
 
   /**
@@ -142,7 +141,7 @@ class TeamApi {
     if (params?.per_page) searchParams.append('per_page', params.per_page.toString());
     if (params?.search) searchParams.append('search', params.search);
 
-    const url = `${this.basePath}/available-users${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    const url = `${API_ENDPOINTS.teams.availableUsers}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
     return httpClient.get<AvailableUserListResponse>(url);
   }
 
@@ -150,7 +149,7 @@ class TeamApi {
    * Get team statistics for the current program
    */
   async getTeamStats(): Promise<ApiResponse<TeamStats>> {
-    return httpClient.get<TeamStats>(`${this.basePath}/stats`);
+    return httpClient.get<TeamStats>(API_ENDPOINTS.teams.stats);
   }
 }
 
