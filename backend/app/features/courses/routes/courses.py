@@ -334,14 +334,15 @@ async def get_courses_by_program(
 async def get_course_tree(
     course_id: str,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[dict, Depends(get_current_active_user)]
+    current_user: Annotated[dict, Depends(get_current_active_user)],
+    program_context: Annotated[Optional[str], Depends(get_program_filter)],
 ):
     """
     Get course with full tree structure of curricula and levels.
     
     Returns hierarchical structure for navigation.
     """
-    tree = course_service.get_course_tree(db, course_id)
+    tree = course_service.get_course_tree(db, course_id, program_context)
     if not tree:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

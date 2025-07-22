@@ -18,6 +18,13 @@ import type {
 } from '@/lib/api/types';
 
 // Course Types
+export interface PricingEntry {
+  age_range: string;
+  location_type: string;
+  session_type: string;
+  price: number;
+}
+
 export interface Course {
   id: string;
   program_id: string;
@@ -26,14 +33,17 @@ export interface Course {
   description?: string;
   objectives?: string[];
   prerequisites?: string[];
-  duration_weeks: number;
-  difficulty_level: DifficultyLevel;
+  duration_weeks?: number;
+  sessions_per_payment: number;
+  completion_deadline_weeks: number;
+  age_ranges: string[];
+  location_types: string[];
+  session_types: string[];
+  pricing_matrix: PricingEntry[];
   status: CurriculumStatus;
   instructor_id?: string;
   max_students?: number;
   min_students?: number;
-  price?: number;
-  currency?: string;
   tags?: string[];
   image_url?: string;
   video_url?: string;
@@ -270,12 +280,14 @@ export interface EquipmentRequirement {
 export interface CourseSearchParams extends SearchParams {
   program_id?: string;
   instructor_id?: string;
-  difficulty_level?: DifficultyLevel;
   status?: CurriculumStatus;
   is_featured?: boolean;
   is_certification_course?: boolean;
   price_min?: number;
   price_max?: number;
+  age_ranges?: string[];
+  location_types?: string[];
+  session_types?: string[];
   tags?: string[];
 }
 
@@ -326,13 +338,16 @@ export interface CourseCreate {
   description?: string;
   objectives?: string[];
   prerequisites?: string[];
-  duration_weeks: number;
-  difficulty_level: DifficultyLevel;
+  duration_weeks?: number;
+  sessions_per_payment: number;
+  completion_deadline_weeks: number;
+  age_ranges: string[];
+  location_types: string[];
+  session_types: string[];
+  pricing_matrix: PricingEntry[];
   instructor_id?: string;
   max_students?: number;
   min_students?: number;
-  price?: number;
-  currency?: string;
   tags?: string[];
   image_url?: string;
   video_url?: string;
@@ -348,9 +363,11 @@ export interface BulkCourseUpdate {
   updates: {
     status?: CurriculumStatus;
     instructor_id?: string;
-    difficulty_level?: DifficultyLevel;
     tags?: string[];
     is_featured?: boolean;
+    age_ranges?: string[];
+    location_types?: string[];
+    session_types?: string[];
   };
 }
 

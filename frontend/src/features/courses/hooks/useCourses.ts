@@ -52,6 +52,8 @@ export const useCourseTree = (id: string) => {
     queryFn: () => courseApiService.getCourseTree(id),
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
+    retry: 1, // Only retry once to avoid auth issues
+    retryOnMount: false, // Don't retry on component mount
   });
 };
 

@@ -95,8 +95,8 @@ class Curriculum(BaseModel):
     
     # Relationships
     # Note: Relationships will be defined when related models are created
-    # course = relationship("Course", back_populates="curricula")
-    # levels = relationship("Level", back_populates="curriculum", cascade="all, delete-orphan")
+    course = relationship("Course", back_populates="curricula")
+    levels = relationship("Level", back_populates="curriculum", cascade="all, delete-orphan")
     
     # Indexes for performance
     __table_args__ = (

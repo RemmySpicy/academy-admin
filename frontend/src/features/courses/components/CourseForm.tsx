@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useProgramContext } from '@/store/programContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,36 +59,51 @@ const courseFormSchema = z.object({
   description: z.string().optional(),
   objectives: z.array(z.string()).optional(),
   prerequisites: z.array(z.string()).optional(),
-  duration_weeks: z.coerce.number().min(1, 'Duration must be at least 1 week').max(104, 'Duration cannot exceed 2 years'),
-  difficulty_level: z.enum(['beginner', 'intermediate', 'advanced', 'expert']),
+  duration_weeks: z.coerce.number().min(1, 'Duration must be at least 1 week').max(104, 'Duration cannot exceed 2 years').optional(),
+  sessions_per_payment: z.coerce.number().min(1, 'Must have at least 1 session').max(100, 'Cannot exceed 100 sessions'),
+  completion_deadline_weeks: z.coerce.number().min(1, 'Must have at least 1 week').max(52, 'Cannot exceed 1 year'),
+  age_ranges: z.array(z.string()).min(1, 'At least one age group is required'),
+  location_types: z.array(z.string()).min(1, 'At least one location type is required'),
+  session_types: z.array(z.string()).min(1, 'At least one session type is required'),
+  pricing_matrix: z.array(z.object({
+    age_range: z.string(),
+    location_type: z.string(),
+    session_type: z.string(),
+    price: z.coerce.number().min(0, 'Price cannot be negative'),
+  })).min(1, 'At least one price must be set'),
   instructor_id: z.string().optional(),
   max_students: z.coerce.number().optional(),
   min_students: z.coerce.number().optional(),
-  price: z.coerce.number().optional(),
-  currency: z.string().optional(),
   tags: z.array(z.string()).optional(),
   image_url: z.string().url().optional().or(z.literal('')),
   video_url: z.string().url().optional().or(z.literal('')),
   sequence: z.coerce.number().optional(),
+  difficulty_level: z.enum(['beginner', 'intermediate', 'advanced', 'expert']).optional().or(z.literal('')),
+  status: z.enum(['draft', 'under_review', 'approved', 'published', 'archived']).default('draft'),
   is_featured: z.boolean().default(false),
   is_certification_course: z.boolean().default(false),
 });
 
 type CourseFormData = z.infer<typeof courseFormSchema>;
 
-const difficultyOptions = [
-  { value: 'beginner', label: 'Beginner', color: 'bg-green-100 text-green-800' },
-  { value: 'intermediate', label: 'Intermediate', color: 'bg-yellow-100 text-yellow-800' },
-  { value: 'advanced', label: 'Advanced', color: 'bg-orange-100 text-orange-800' },
-  { value: 'expert', label: 'Expert', color: 'bg-red-100 text-red-800' },
+const ageRangeOptions = [
+  { value: '1-2-years', label: '1 - 2 years' },
+  { value: '2-5-years', label: '2 - 5 years' },
+  { value: '6-12-years', label: '6 - 12 years' },
+  { value: '6-18-years', label: '6 - 18 years' },
+  { value: '13-18-years', label: '13 - 18 years' },
+  { value: '18-30-years', label: '18 - 30 years' },
 ];
 
-const currencyOptions = [
-  { value: 'USD', label: 'USD ($)' },
-  { value: 'EUR', label: 'EUR (€)' },
-  { value: 'GBP', label: 'GBP (£)' },
-  { value: 'CAD', label: 'CAD ($)' },
-  { value: 'AUD', label: 'AUD ($)' },
+const locationTypeOptions = [
+  { value: 'our-facility', label: 'Our Facility' },
+  { value: 'client-location', label: 'Client\'s Preferred Location' },
+  { value: 'virtual', label: 'Virtual (Online)' },
+];
+
+const sessionTypeOptions = [
+  { value: 'group', label: 'Group Session' },
+  { value: 'private', label: 'Private Session' },
 ];
 
 export function CourseForm({
@@ -97,31 +113,41 @@ export function CourseForm({
   isLoading = false,
   className,
 }: CourseFormProps) {
+  const { currentProgram } = useProgramContext();
   const [objectives, setObjectives] = useState<string[]>(course?.objectives || ['']);
   const [prerequisites, setPrerequisites] = useState<string[]>(course?.prerequisites || ['']);
   const [tags, setTags] = useState<string[]>(course?.tags || []);
   const [newTag, setNewTag] = useState('');
+  const [selectedAgeRanges, setSelectedAgeRanges] = useState<string[]>(course?.age_ranges || []);
+  const [selectedLocationTypes, setSelectedLocationTypes] = useState<string[]>(course?.location_types || []);
+  const [selectedSessionTypes, setSelectedSessionTypes] = useState<string[]>(course?.session_types || []);
+  const [pricingMatrix, setPricingMatrix] = useState<any[]>(course?.pricing_matrix || []);
 
   const form = useForm<CourseFormData>({
     resolver: zodResolver(courseFormSchema),
     defaultValues: {
-      program_id: course?.program_id || '',
+      program_id: course?.program_id || currentProgram?.id || '',
       name: course?.name || '',
       code: course?.code || '',
       description: course?.description || '',
       objectives: course?.objectives || [],
       prerequisites: course?.prerequisites || [],
-      duration_weeks: course?.duration_weeks || 1,
-      difficulty_level: course?.difficulty_level || 'beginner',
+      duration_weeks: course?.duration_weeks || undefined,
+      sessions_per_payment: course?.sessions_per_payment || 8,
+      completion_deadline_weeks: course?.completion_deadline_weeks || 6,
+      age_ranges: course?.age_ranges || [],
+      location_types: course?.location_types || [],
+      session_types: course?.session_types || [],
+      pricing_matrix: course?.pricing_matrix || [],
       instructor_id: course?.instructor_id || '',
       max_students: course?.max_students || undefined,
       min_students: course?.min_students || undefined,
-      price: course?.price || undefined,
-      currency: course?.currency || 'USD',
       tags: course?.tags || [],
       image_url: course?.image_url || '',
       video_url: course?.video_url || '',
-      sequence: course?.sequence || undefined,
+      sequence: course?.sequence || 1,
+      difficulty_level: course?.difficulty_level || undefined,
+      status: course?.status || 'draft',
       is_featured: course?.is_featured || false,
       is_certification_course: course?.is_certification_course || false,
     },
@@ -134,14 +160,17 @@ export function CourseForm({
         objectives: objectives.filter(obj => obj.trim() !== ''),
         prerequisites: prerequisites.filter(prereq => prereq.trim() !== ''),
         tags: tags,
-        // Clean up empty optional fields
+        age_ranges: selectedAgeRanges,
+        location_types: selectedLocationTypes,
+        session_types: selectedSessionTypes,
+        pricing_matrix: pricingMatrix,
         image_url: data.image_url || undefined,
         video_url: data.video_url || undefined,
         instructor_id: data.instructor_id || undefined,
         max_students: data.max_students || undefined,
         min_students: data.min_students || undefined,
-        price: data.price || undefined,
-        sequence: data.sequence || undefined,
+        duration_weeks: data.duration_weeks || undefined,
+        sequence: data.sequence,
       };
 
       await onSubmit(submitData);
@@ -197,10 +226,70 @@ export function CourseForm({
     }
   };
 
+  // Generate pricing matrix when age groups, locations, or session types change
+  useEffect(() => {
+    if (selectedAgeRanges.length > 0 && selectedLocationTypes.length > 0 && selectedSessionTypes.length > 0) {
+      const newPricingMatrix = [];
+      for (const ageRange of selectedAgeRanges) {
+        for (const locationType of selectedLocationTypes) {
+          for (const sessionType of selectedSessionTypes) {
+            // Check if this combination already exists in the current matrix
+            const existingEntry = pricingMatrix.find(
+              entry => entry.age_range === ageRange && 
+                       entry.location_type === locationType && 
+                       entry.session_type === sessionType
+            );
+            
+            newPricingMatrix.push({
+              age_range: ageRange,
+              location_type: locationType,
+              session_type: sessionType,
+              price: existingEntry ? existingEntry.price : 0
+            });
+          }
+        }
+      }
+      setPricingMatrix(newPricingMatrix);
+      form.setValue('pricing_matrix', newPricingMatrix);
+    } else {
+      setPricingMatrix([]);
+      form.setValue('pricing_matrix', []);
+    }
+  }, [selectedAgeRanges, selectedLocationTypes, selectedSessionTypes, form]);
+
+  // Update program_id when current program changes
+  useEffect(() => {
+    if (currentProgram?.id && !course?.program_id) {
+      form.setValue('program_id', currentProgram.id);
+    }
+  }, [currentProgram, form, course]);
+
+  const handlePricingChange = (index: number, price: number) => {
+    const updatedMatrix = [...pricingMatrix];
+    updatedMatrix[index].price = price;
+    setPricingMatrix(updatedMatrix);
+    form.setValue('pricing_matrix', updatedMatrix);
+  };
+
+  const formatCurrency = (value: string) => {
+    // Remove non-numeric characters except decimal point
+    const numericValue = value.replace(/[^0-9.]/g, '');
+    // Format with commas (simple formatting)
+    const parts = numericValue.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.join('.');
+  };
+
+  const handleCurrencyChange = (entryIndex: number, value: string) => {
+    // Remove commas and convert to number
+    const numericValue = parseFloat(value.replace(/,/g, '')) || 0;
+    handlePricingChange(entryIndex, numericValue);
+  };
+
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div className={className ? `space-y-4 ${className}` : "space-y-4"}>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           {/* Basic Information */}
           <Card>
             <CardHeader>
@@ -258,45 +347,29 @@ export function CourseForm({
                 )}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="duration_weeks"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duration (weeks) *</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="number" min="1" max="104" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="difficulty_level"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Difficulty Level *</FormLabel>
+                      <FormLabel>Difficulty Level</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select difficulty" />
+                            <SelectValue placeholder="Select difficulty level" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {difficultyOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline" className={option.color}>
-                                  {option.label}
-                                </Badge>
-                              </div>
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="beginner">Beginner</SelectItem>
+                          <SelectItem value="intermediate">Intermediate</SelectItem>
+                          <SelectItem value="advanced">Advanced</SelectItem>
+                          <SelectItem value="expert">Expert</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormDescription>
+                        Course difficulty level for students
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -304,15 +377,79 @@ export function CourseForm({
 
                 <FormField
                   control={form.control}
-                  name="sequence"
+                  name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Sequence Order</FormLabel>
+                      <FormLabel>Course Status *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="draft">Draft</SelectItem>
+                          <SelectItem value="under_review">Under Review</SelectItem>
+                          <SelectItem value="approved">Approved</SelectItem>
+                          <SelectItem value="published">Published</SelectItem>
+                          <SelectItem value="archived">Archived</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Current status of the course
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="sessions_per_payment"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sessions per Payment *</FormLabel>
                       <FormControl>
-                        <Input {...field} type="number" min="0" placeholder="Optional" />
+                        <Input {...field} type="number" min="1" max="100" placeholder="e.g., 8" />
                       </FormControl>
                       <FormDescription>
-                        Order of this course in the program
+                        Number of sessions included in each payment
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="completion_deadline_weeks"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Completion Deadline (weeks) *</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="number" min="1" max="52" placeholder="e.g., 6" />
+                      </FormControl>
+                      <FormDescription>
+                        Time limit to complete paid sessions
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="duration_weeks"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Course Duration (weeks)</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="number" min="1" max="104" placeholder="Optional" />
+                      </FormControl>
+                      <FormDescription>
+                        Estimated course length (optional)
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -453,50 +590,228 @@ export function CourseForm({
                   )}
                 />
               </div>
+            </CardContent>
+          </Card>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="number" min="0" step="0.01" placeholder="0.00" />
-                      </FormControl>
-                      <FormDescription>
-                        Leave empty for free courses
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
 
-                <FormField
-                  control={form.control}
-                  name="currency"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Currency</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select currency" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {currencyOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          {/* Availability Options */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Availability Options
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Configure age groups, locations, and session types for this course
+              </p>
+            </CardHeader>
+            <CardContent>
+              {/* Side-by-side layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* Age Groups */}
+                <div className="bg-muted/20 rounded-lg border p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs font-medium text-muted-foreground">1.</span>
+                  <Label className="text-sm font-medium">Age Groups *</Label>
+                </div>
+                <div className="space-y-2">
+                  {ageRangeOptions.map((option) => (
+                    <div key={option.value} className="flex items-center space-x-2 p-1 rounded hover:bg-muted/30 transition-colors">
+                      <input
+                        type="checkbox"
+                        id={`age-${option.value}`}
+                        checked={selectedAgeRanges.includes(option.value)}
+                        onChange={(e) => {
+                          const updatedRanges = e.target.checked
+                            ? [...selectedAgeRanges, option.value]
+                            : selectedAgeRanges.filter(range => range !== option.value);
+                          setSelectedAgeRanges(updatedRanges);
+                          form.setValue('age_ranges', updatedRanges);
+                        }}
+                        className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-2 focus:ring-primary"
+                      />
+                      <Label 
+                        htmlFor={`age-${option.value}`}
+                        className="text-sm font-normal cursor-pointer"
+                      >
+                        {option.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                {form.formState.errors.age_ranges && (
+                  <p className="text-sm text-destructive mt-1">{form.formState.errors.age_ranges.message}</p>
+                )}
+                </div>
+
+                {/* Location Types */}
+                <div className="bg-muted/20 rounded-lg border p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs font-medium text-muted-foreground">2.</span>
+                  <Label className="text-sm font-medium">Location Types *</Label>
+                </div>
+                <div className="space-y-2">
+                  {locationTypeOptions.map((option) => (
+                    <div key={option.value} className="flex items-center space-x-2 p-1 rounded hover:bg-muted/30 transition-colors">
+                      <input
+                        type="checkbox"
+                        id={`location-${option.value}`}
+                        checked={selectedLocationTypes.includes(option.value)}
+                        onChange={(e) => {
+                          const updatedTypes = e.target.checked
+                            ? [...selectedLocationTypes, option.value]
+                            : selectedLocationTypes.filter(type => type !== option.value);
+                          setSelectedLocationTypes(updatedTypes);
+                          form.setValue('location_types', updatedTypes);
+                        }}
+                        className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-2 focus:ring-primary"
+                      />
+                      <Label 
+                        htmlFor={`location-${option.value}`}
+                        className="text-sm font-normal cursor-pointer"
+                      >
+                        {option.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                {form.formState.errors.location_types && (
+                  <p className="text-sm text-red-600 mt-1">{form.formState.errors.location_types.message}</p>
+                )}
+                </div>
+
+                {/* Session Types */}
+                <div className="bg-muted/20 rounded-lg border p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs font-medium text-muted-foreground">3.</span>
+                  <Label className="text-sm font-medium">Session Types *</Label>
+                </div>
+                <div className="space-y-2">
+                  {sessionTypeOptions.map((option) => (
+                    <div key={option.value} className="flex items-center space-x-2 p-1 rounded hover:bg-muted/30 transition-colors">
+                      <input
+                        type="checkbox"
+                        id={`session-${option.value}`}
+                        checked={selectedSessionTypes.includes(option.value)}
+                        onChange={(e) => {
+                          const updatedTypes = e.target.checked
+                            ? [...selectedSessionTypes, option.value]
+                            : selectedSessionTypes.filter(type => type !== option.value);
+                          setSelectedSessionTypes(updatedTypes);
+                          form.setValue('session_types', updatedTypes);
+                        }}
+                        className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-2 focus:ring-primary"
+                      />
+                      <Label 
+                        htmlFor={`session-${option.value}`}
+                        className="text-sm font-normal cursor-pointer"
+                      >
+                        {option.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                {form.formState.errors.session_types && (
+                  <p className="text-sm text-red-600 mt-1">{form.formState.errors.session_types.message}</p>
+                )}
+                </div>
               </div>
+
+              {/* Simple Progress Indicator */}
+              <div className="mt-4 p-3 bg-muted/50 rounded-md">
+                <div className="text-sm">
+                  <span className="font-medium">Progress: </span>
+                  <span className="text-muted-foreground">
+                    {selectedAgeRanges.length} age groups, {selectedLocationTypes.length} locations, {selectedSessionTypes.length} session types
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+
+          {/* Course Pricing Setup */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="h-5 w-5" />
+                Course Pricing Setup
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">Set prices for each age group, location, and session type combination</p>
+            </CardHeader>
+            <CardContent>
+              {pricingMatrix.length > 0 ? (
+                <div className="space-y-4">
+                  {selectedAgeRanges.map(ageRange => (
+                    <div key={ageRange} className="border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-3 h-3 bg-primary rounded-full"></div>
+                        <h4 className="font-semibold text-gray-900">
+                          {ageRangeOptions.find(opt => opt.value === ageRange)?.label || ageRange}
+                        </h4>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {selectedLocationTypes.map(locationType => (
+                          <div key={`${ageRange}-${locationType}`} className="space-y-2">
+                            <h5 className="text-sm font-medium text-gray-700 border-b pb-1">
+                              {locationTypeOptions.find(opt => opt.value === locationType)?.label || locationType}
+                            </h5>
+                            {selectedSessionTypes.map(sessionType => {
+                              const entryIndex = pricingMatrix.findIndex(
+                                entry => entry.age_range === ageRange && 
+                                        entry.location_type === locationType && 
+                                        entry.session_type === sessionType
+                              );
+                              const entry = pricingMatrix[entryIndex];
+                              
+                              return (
+                                <div key={`${ageRange}-${locationType}-${sessionType}`} 
+                                     className="flex items-center justify-between bg-muted/50 rounded px-3 py-2">
+                                  <span className="text-sm text-gray-600">
+                                    {sessionTypeOptions.find(opt => opt.value === sessionType)?.label || sessionType}
+                                  </span>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-sm text-gray-500">₦</span>
+                                    <Input
+                                      type="text"
+                                      value={entry?.price ? formatCurrency(entry.price.toString()) : ''}
+                                      onChange={(e) => handleCurrencyChange(entryIndex, e.target.value)}
+                                      className="w-24 h-8 text-sm"
+                                      placeholder="0"
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 px-4">
+                  <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-4">
+                    <Award className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Pricing Options Available</h3>
+                  <p className="text-gray-600 mb-1">
+                    To set course pricing, please first select:
+                  </p>
+                  <ul className="text-sm text-gray-500 space-y-1">
+                    <li>• At least one age group</li>
+                    <li>• At least one location type</li>
+                    <li>• At least one session type</li>
+                  </ul>
+                  <p className="text-xs text-muted-foreground mt-4">
+                    Once you make your selections above, pricing options will appear here automatically.
+                  </p>
+                </div>
+              )}
+              {form.formState.errors.pricing_matrix && (
+                <p className="text-sm text-red-600 mt-3">{form.formState.errors.pricing_matrix.message}</p>
+              )}
             </CardContent>
           </Card>
 
@@ -542,6 +857,28 @@ export function CourseForm({
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="sequence"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sequence Order</FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        type="number" 
+                        min="0" 
+                        placeholder="Course order in program" 
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Order of this course in the program
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </CardContent>
           </Card>
 
@@ -580,7 +917,7 @@ export function CourseForm({
             </CardContent>
           </Card>
 
-          {/* Course Flags */}
+          {/* Course Settings */}
           <Card>
             <CardHeader>
               <CardTitle>Course Settings</CardTitle>
@@ -660,3 +997,5 @@ export function CourseForm({
     </div>
   );
 }
+
+export default CourseForm;

@@ -115,7 +115,7 @@ class Level(BaseModel):
     
     # Relationships
     # Note: Relationships will be defined when related models are created
-    # curriculum = relationship("Curriculum", back_populates="levels")
+    curriculum = relationship("Curriculum", back_populates="levels")
     # modules = relationship("Module", back_populates="level", cascade="all, delete-orphan")
     # equipment_requirements = relationship("EquipmentRequirement", back_populates="level", cascade="all, delete-orphan")
     # assessment_rubrics = relationship("AssessmentRubric", back_populates="level", cascade="all, delete-orphan")
