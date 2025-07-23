@@ -2,8 +2,6 @@
 # This file is automatically loaded by docker-compose
 # for additional development-specific configurations
 
-version: '3.8'
-
 services:
   backend:
     environment:

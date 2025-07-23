@@ -55,7 +55,9 @@
       "Bash(sed:*)",
       "Bash(export TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTc1MzA2Njg2N30.ozwGgOzJiz9zkJjBgvhrUOuQkgFE7KNpPwKYjZD_kAg\")",
       "Bash(npm run typecheck:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(awk:*)",
+      "Bash(alembic upgrade:*)"
     ],
     "deny": []
   }

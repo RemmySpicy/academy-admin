@@ -148,8 +148,15 @@ class Lesson(BaseModel):
     
     # Relationships
     # Note: Relationships will be defined when related models are created
-    # section = relationship("Section", back_populates="lessons")
+    section = relationship("Section", back_populates="lessons")
     # media_files = relationship("MediaLibrary", back_populates="lesson", cascade="all, delete-orphan")
+    
+    # Progression system relationships (temporarily disabled due to circular import)
+    # student_progress = relationship(
+    #     "StudentLessonProgress",
+    #     back_populates="lesson",
+    #     cascade="all, delete-orphan"
+    # )
     
     # Indexes for performance
     __table_args__ = (

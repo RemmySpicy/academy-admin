@@ -21,19 +21,22 @@ class CurriculumBase(BaseModel):
     description: Optional[str] = Field(None, description="Curriculum description")
     course_id: str = Field(..., description="Course ID this curriculum belongs to")
     difficulty_level: DifficultyLevelEnum = Field(..., description="Difficulty level")
-    min_age: Optional[int] = Field(None, ge=3, le=100, description="Minimum age requirement")
-    max_age: Optional[int] = Field(None, ge=3, le=100, description="Maximum age requirement")
+    duration_hours: Optional[int] = Field(None, ge=1, description="Duration in hours for this curriculum")
+    age_ranges: List[str] = Field(..., min_items=1, description="Age ranges this curriculum applies to")
+    is_default_for_age_groups: List[str] = Field(default=[], description="Age groups for which this curriculum is the default")
     prerequisites: Optional[str] = Field(None, description="Prerequisites for this curriculum")
     learning_objectives: Optional[str] = Field(None, description="Learning objectives")
     status: CurriculumStatusEnum = Field(default=CurriculumStatusEnum.DRAFT, description="Curriculum status")
-    display_order: int = Field(default=0, description="Display order within course")
+    sequence: Optional[int] = Field(None, description="Sequence order for displaying curricula within course")
     
-    @validator('max_age')
-    def validate_max_age(cls, v, values):
-        """Validate max age is greater than min age."""
-        if v is not None and 'min_age' in values and values['min_age'] is not None:
-            if v < values['min_age']:
-                raise ValueError('Maximum age must be greater than or equal to minimum age')
+    @validator('is_default_for_age_groups')
+    def validate_default_age_groups(cls, v, values):
+        """Validate default age groups are subset of age ranges."""
+        if v and 'age_ranges' in values and values['age_ranges']:
+            age_ranges_set = set(values['age_ranges'])
+            default_set = set(v)
+            if not default_set.issubset(age_ranges_set):
+                raise ValueError('Default age groups must be a subset of age ranges')
         return v
 
 
@@ -51,19 +54,22 @@ class CurriculumUpdate(BaseModel):
     description: Optional[str] = Field(None)
     course_id: Optional[str] = Field(None)
     difficulty_level: Optional[DifficultyLevelEnum] = Field(None)
-    min_age: Optional[int] = Field(None, ge=3, le=100)
-    max_age: Optional[int] = Field(None, ge=3, le=100)
+    duration_hours: Optional[int] = Field(None, ge=1)
+    age_ranges: Optional[List[str]] = Field(None, min_items=1)
+    is_default_for_age_groups: Optional[List[str]] = Field(None)
     prerequisites: Optional[str] = Field(None)
     learning_objectives: Optional[str] = Field(None)
     status: Optional[CurriculumStatusEnum] = Field(None)
-    display_order: Optional[int] = Field(None)
+    sequence: Optional[int] = Field(None)
     
-    @validator('max_age')
-    def validate_max_age(cls, v, values):
-        """Validate max age is greater than min age."""
-        if v is not None and 'min_age' in values and values['min_age'] is not None:
-            if v < values['min_age']:
-                raise ValueError('Maximum age must be greater than or equal to minimum age')
+    @validator('is_default_for_age_groups')
+    def validate_default_age_groups(cls, v, values):
+        """Validate default age groups are subset of age ranges."""
+        if v and 'age_ranges' in values and values['age_ranges']:
+            age_ranges_set = set(values['age_ranges'])
+            default_set = set(v)
+            if not default_set.issubset(age_ranges_set):
+                raise ValueError('Default age groups must be a subset of age ranges')
         return v
 
 
@@ -77,9 +83,12 @@ class CurriculumResponse(CurriculumBase, TimestampMixin):
     program_name: Optional[str] = Field(None, description="Program name")
     program_code: Optional[str] = Field(None, description="Program code")
     
+    # Computed fields
+    is_default: bool = Field(False, description="Whether curriculum is default for any age group")
+    
     # Additional response fields
     level_count: Optional[int] = Field(None, description="Number of levels in this curriculum")
-    total_module_count: Optional[int] = Field(None, description="Total modules across all levels")
+    module_count: Optional[int] = Field(None, description="Number of modules in this curriculum")
     total_lesson_count: Optional[int] = Field(None, description="Total lessons across all modules")
     estimated_duration_hours: Optional[float] = Field(None, description="Estimated total duration in hours")
     
@@ -99,14 +108,16 @@ class CurriculumResponse(CurriculumBase, TimestampMixin):
                 "program_name": "Robotics Engineering",
                 "program_code": "ROBOT-ENG",
                 "difficulty_level": "beginner",
-                "min_age": 8,
-                "max_age": 12,
+                "duration_hours": 24,
+                "age_ranges": ["8-10 years", "11-12 years"],
+                "is_default_for_age_groups": ["8-10 years"],
+                "is_default": True,
                 "prerequisites": "None",
                 "learning_objectives": "Students will learn to build and program basic robots",
                 "status": "published",
-                "display_order": 1,
+                "sequence": 1,
                 "level_count": 3,
-                "total_module_count": 9,
+                "module_count": 9,
                 "total_lesson_count": 27,
                 "estimated_duration_hours": 24.0,
                 "created_at": "2025-01-08T12:00:00Z",
@@ -131,11 +142,11 @@ class CurriculumSearchParams(BaseModel):
     program_id: Optional[str] = Field(None, description="Filter by program ID")
     difficulty_level: Optional[DifficultyLevelEnum] = Field(None, description="Filter by difficulty level")
     status: Optional[CurriculumStatusEnum] = Field(None, description="Filter by status")
+    age_range: Optional[str] = Field(None, description="Filter by specific age range")
     min_age_from: Optional[int] = Field(None, ge=3, description="Minimum age filter from")
-    min_age_to: Optional[int] = Field(None, ge=3, description="Minimum age filter to")
-    max_age_from: Optional[int] = Field(None, ge=3, description="Maximum age filter from")
-    max_age_to: Optional[int] = Field(None, ge=3, description="Maximum age filter to")
-    sort_by: Optional[str] = Field("display_order", description="Sort field")
+    min_age_to: Optional[int] = Field(None, ge=3, description="Minimum age filter to") 
+    is_default_only: Optional[bool] = Field(None, description="Filter only default curricula")
+    sort_by: Optional[str] = Field("sequence", description="Sort field")
     sort_order: Optional[str] = Field("asc", pattern="^(asc|desc)$", description="Sort order")
 
 

@@ -27,28 +27,16 @@ import {
   Settings,
   Users,
   BookOpen,
-  Play,
   ChevronRight,
-  ChevronDown,
   Plus,
-  FileText,
-  Video,
-  Image,
   Award,
-  Clock,
   Target,
   Star,
-  Calendar,
-  DollarSign,
-  User,
-  MapPin,
-  Tag,
-  TrendingUp,
   BarChart3,
-  Download,
-  Share2,
-  CheckCircle
+  CheckCircle,
+  Eye
 } from 'lucide-react';
+import Link from 'next/link';
 import { toast } from 'sonner';
 import { useCourseDetail } from '../hooks/useCourses';
 import type { Course, CourseTree, Curriculum, Level, Module, Section, Lesson } from '../api/courseApiService';
@@ -80,97 +68,6 @@ const difficultyColors = {
   expert: 'bg-red-100 text-red-800',
 };
 
-const TreeNode = ({ 
-  type, 
-  item, 
-  children, 
-  onEdit, 
-  onDelete, 
-  onAddChild,
-  isExpanded,
-  onToggle 
-}: {
-  type: 'curriculum' | 'level' | 'module' | 'section' | 'lesson';
-  item: any;
-  children?: React.ReactNode;
-  onEdit?: () => void;
-  onDelete?: () => void;
-  onAddChild?: () => void;
-  isExpanded?: boolean;
-  onToggle?: () => void;
-}) => {
-  const getIcon = () => {
-    switch (type) {
-      case 'curriculum': return BookOpen;
-      case 'level': return Target;
-      case 'module': return FileText;
-      case 'section': return Play;
-      case 'lesson': return Video;
-      default: return FileText;
-    }
-  };
-
-  const Icon = getIcon();
-
-  return (
-    <div className="border rounded-lg">
-      <div className="flex items-center justify-between p-3 hover:bg-gray-50">
-        <div className="flex items-center gap-2 flex-1">
-          {children && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0"
-              onClick={onToggle}
-            >
-              {isExpanded ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-            </Button>
-          )}
-          <Icon className="h-4 w-4 text-blue-600" />
-          <div className="flex-1">
-            <h4 className="font-medium text-sm">{item.name}</h4>
-            {item.description && (
-              <p className="text-xs text-gray-600 mt-1 line-clamp-1">{item.description}</p>
-            )}
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-1">
-          {item.status && (
-            <Badge variant="outline" className={`${statusColors[item.status]} text-xs`}>
-              {item.status}
-            </Badge>
-          )}
-          {onAddChild && (
-            <Button variant="ghost" size="sm" onClick={onAddChild}>
-              <Plus className="h-3 w-3" />
-            </Button>
-          )}
-          {onEdit && (
-            <Button variant="ghost" size="sm" onClick={onEdit}>
-              <Edit className="h-3 w-3" />
-            </Button>
-          )}
-          {onDelete && (
-            <Button variant="ghost" size="sm" onClick={onDelete}>
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          )}
-        </div>
-      </div>
-      
-      {children && isExpanded && (
-        <div className="pl-8 pb-3">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-};
 
 export function CourseDetail({
   courseId,
@@ -185,7 +82,6 @@ export function CourseDetail({
   className,
 }: CourseDetailProps) {
   const [activeTab, setActiveTab] = useState('overview');
-  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
 
   const {
     course,
@@ -201,16 +97,6 @@ export function CourseDetail({
     totalModules,
     totalLessons,
   } = useCourseDetail(courseId);
-
-  const toggleNode = (nodeId: string) => {
-    const newExpanded = new Set(expandedNodes);
-    if (newExpanded.has(nodeId)) {
-      newExpanded.delete(nodeId);
-    } else {
-      newExpanded.add(nodeId);
-    }
-    setExpandedNodes(newExpanded);
-  };
 
   const handleDuplicate = async () => {
     if (!course) return;
@@ -313,6 +199,13 @@ export function CourseDetail({
               <Button variant="outline" onClick={() => onEdit?.(course)}>
                 <Edit className="h-4 w-4 mr-2" />
                 Edit
+              </Button>
+              <Button 
+                variant="default" 
+                onClick={() => window.location.href = `/admin/courses/${course.id}/curriculum-builder`}
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Enhanced Builder
               </Button>
               <Button variant="outline" onClick={handleDuplicate}>
                 <Copy className="h-4 w-4 mr-2" />
@@ -423,7 +316,9 @@ export function CourseDetail({
                   <div>
                     <span className="text-gray-600">Price:</span>
                     <p className="font-medium">
-                      {course.price ? `${course.price} ${course.currency || 'USD'}` : 'Free'}
+                      {course.pricing_matrix && course.pricing_matrix.length > 0 
+                        ? `${course.pricing_matrix.length} pricing options`
+                        : 'Free'}
                     </p>
                   </div>
                   <div>
@@ -504,87 +399,105 @@ export function CourseDetail({
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 Course Structure
-                {onCreateCurriculum && (
-                  <Button onClick={() => onCreateCurriculum(course.id)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Curriculum
-                  </Button>
-                )}
+                <Button asChild>
+                  <Link href="/admin/courses?tab=curricula">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Manage Curricula
+                  </Link>
+                </Button>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {courseTree?.curricula && courseTree.curricula.length > 0 ? (
+              {curricula && curricula.length > 0 ? (
                 <div className="space-y-4">
-                  {courseTree.curricula.map(({ curriculum, levels }) => (
-                    <TreeNode
-                      key={curriculum.id}
-                      type="curriculum"
-                      item={curriculum}
-                      isExpanded={expandedNodes.has(curriculum.id)}
-                      onToggle={() => toggleNode(curriculum.id)}
-                      onEdit={() => onEditCurriculum?.(curriculum)}
-                    >
-                      <div className="space-y-3">
-                        {levels.map(({ level, modules }) => (
-                          <TreeNode
-                            key={level.id}
-                            type="level"
-                            item={level}
-                            isExpanded={expandedNodes.has(level.id)}
-                            onToggle={() => toggleNode(level.id)}
-                          >
-                            <div className="space-y-2">
-                              {modules.map(({ module, sections }) => (
-                                <TreeNode
-                                  key={module.id}
-                                  type="module"
-                                  item={module}
-                                  isExpanded={expandedNodes.has(module.id)}
-                                  onToggle={() => toggleNode(module.id)}
-                                >
-                                  <div className="space-y-2">
-                                    {sections.map(({ section, lessons }) => (
-                                      <TreeNode
-                                        key={section.id}
-                                        type="section"
-                                        item={section}
-                                        isExpanded={expandedNodes.has(section.id)}
-                                        onToggle={() => toggleNode(section.id)}
-                                        onAddChild={() => onCreateLesson?.(section.id)}
-                                      >
-                                        <div className="space-y-1">
-                                          {lessons.map((lesson) => (
-                                            <TreeNode
-                                              key={lesson.id}
-                                              type="lesson"
-                                              item={lesson}
-                                              onEdit={() => onEditLesson?.(lesson)}
-                                            />
-                                          ))}
-                                        </div>
-                                      </TreeNode>
-                                    ))}
-                                  </div>
-                                </TreeNode>
-                              ))}
+                  {/* Curriculum Summary Cards */}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {curricula.map((curriculum) => (
+                      <Card key={curriculum.id} className="border-l-4 border-l-blue-500">
+                        <CardHeader className="pb-2">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <CardTitle className="text-base">{curriculum.name}</CardTitle>
+                              <Badge variant="outline" className={statusColors[curriculum.status]}>
+                                {curriculum.status}
+                              </Badge>
                             </div>
-                          </TreeNode>
-                        ))}
-                      </div>
-                    </TreeNode>
-                  ))}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.location.href = `/admin/curricula/${curriculum.id}`}
+                            >
+                              <Eye className="h-3 w-3 mr-1" />
+                              View
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <div className="grid grid-cols-3 gap-4 text-sm">
+                            <div className="text-center">
+                              <p className="text-lg font-semibold text-blue-600">{curriculum.level_count || 0}</p>
+                              <p className="text-xs text-gray-600">Levels</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-lg font-semibold text-green-600">{curriculum.module_count || 0}</p>
+                              <p className="text-xs text-gray-600">Modules</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-lg font-semibold text-purple-600">{curriculum.total_lesson_count || 0}</p>
+                              <p className="text-xs text-gray-600">Lessons</p>
+                            </div>
+                          </div>
+                          {curriculum.description && (
+                            <p className="text-sm text-gray-600 mt-3 line-clamp-2">
+                              {curriculum.description}
+                            </p>
+                          )}
+                          <div className="flex gap-2 mt-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.location.href = `/admin/curricula/${curriculum.id}/edit`}
+                            >
+                              <Edit className="h-3 w-3 mr-1" />
+                              Edit
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.location.href = `/admin/curricula/${curriculum.id}/builder`}
+                            >
+                              <Settings className="h-3 w-3 mr-1" />
+                              Builder
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  
+                  <div className="text-center pt-4 border-t">
+                    <p className="text-sm text-gray-600 mb-3">
+                      Need to manage curricula in detail? Use the dedicated curricula management page.
+                    </p>
+                    <Button asChild>
+                      <Link href="/admin/courses?tab=curricula">
+                        <BookOpen className="h-4 w-4 mr-2" />
+                        Open Curricula Management
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-8">
                   <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No curricula yet</h3>
                   <p className="text-gray-600 mb-4">Start building your course by adding curricula</p>
-                  {onCreateCurriculum && (
-                    <Button onClick={() => onCreateCurriculum(course.id)}>
+                  <Button asChild>
+                    <Link href={`/admin/curricula/new?course_id=${course.id}`}>
                       <Plus className="h-4 w-4 mr-2" />
-                      Add First Curriculum
-                    </Button>
-                  )}
+                      Create First Curriculum
+                    </Link>
+                  </Button>
                 </div>
               )}
             </CardContent>

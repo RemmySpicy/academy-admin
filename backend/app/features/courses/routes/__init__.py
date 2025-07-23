@@ -14,6 +14,7 @@ from .equipment import router as equipment_router
 from .media import router as media_router
 from .content_versions import router as content_versions_router
 from .advanced import router as advanced_router
+from .progression import router as progression_router
 
 __all__ = [
     "programs_router",
@@ -28,4 +29,5 @@ __all__ = [
     "media_router",
     "content_versions_router",
     "advanced_router",
+    "progression_router",
 ]

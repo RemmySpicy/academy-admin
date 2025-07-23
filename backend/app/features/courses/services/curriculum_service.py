@@ -175,17 +175,26 @@ class CurriculumService(BaseService[Curriculum, CurriculumCreate, CurriculumUpda
             if search_params.status:
                 query = query.filter(Curriculum.status == search_params.status)
             
-            if search_params.min_age_from:
-                query = query.filter(Curriculum.min_age >= search_params.min_age_from)
+            # Age range filtering (using JSON field)
+            if search_params.age_range:
+                age_ranges = search_params.age_range.split(',')
+                for age_range in age_ranges:
+                    age_range = age_range.strip()
+                    query = query.filter(
+                        func.json_contains(Curriculum.age_ranges, f'"{age_range}"')
+                    )
             
-            if search_params.min_age_to:
-                query = query.filter(Curriculum.min_age <= search_params.min_age_to)
+            # Optional: Advanced age filtering (min_age_from/min_age_to)
+            # For now, we'll skip complex age range parsing as age_ranges is a JSON array
+            if search_params.min_age_from or search_params.min_age_to:
+                # TODO: Implement age range parsing if needed
+                pass
             
-            if search_params.max_age_from:
-                query = query.filter(Curriculum.max_age >= search_params.max_age_from)
-            
-            if search_params.max_age_to:
-                query = query.filter(Curriculum.max_age <= search_params.max_age_to)
+            # Default curricula only
+            if search_params.is_default_only:
+                query = query.filter(
+                    func.json_length(Curriculum.is_default_for_age_groups) > 0
+                )
         
         # Apply sorting
         if search_params and search_params.sort_by:
@@ -647,14 +656,16 @@ class CurriculumService(BaseService[Curriculum, CurriculumCreate, CurriculumUpda
             program_name=program_name,
             program_code=program_code,
             difficulty_level=curriculum.difficulty_level,
-            min_age=curriculum.min_age,
-            max_age=curriculum.max_age,
+            duration_hours=curriculum.duration_hours,
+            age_ranges=curriculum.age_ranges or [],
+            is_default_for_age_groups=curriculum.is_default_for_age_groups or [],
+            is_default=curriculum.is_default,
             prerequisites=curriculum.prerequisites,
-            learning_objectives=curriculum.learning_objectives,
+            learning_objectives=getattr(curriculum, 'learning_objectives', curriculum.objectives),
             status=curriculum.status,
             sequence=curriculum.sequence,
             level_count=level_count,
-            total_module_count=total_module_count,
+            module_count=total_module_count,
             total_lesson_count=total_lesson_count,
             estimated_duration_hours=estimated_duration_hours,
             created_by=curriculum.created_by,
@@ -662,6 +673,107 @@ class CurriculumService(BaseService[Curriculum, CurriculumCreate, CurriculumUpda
             created_at=curriculum.created_at,
             updated_at=curriculum.updated_at
         )
+    
+    def set_default_curriculum(self,
+                              db: Session,
+                              curriculum_id: str,
+                              age_groups: List[str],
+                              program_context: Optional[str] = None) -> Optional[CurriculumResponse]:
+        """Set a curriculum as default for specific age groups."""
+        # Get curriculum with program context filtering
+        query = db.query(Curriculum).filter(Curriculum.id == curriculum_id)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            query = query.join(Course).filter(Course.program_id == program_context)
+        
+        curriculum = query.first()
+        if not curriculum:
+            return None
+        
+        # Validate age groups are subset of curriculum's age ranges
+        curriculum_age_ranges = set(curriculum.age_ranges or [])
+        age_groups_set = set(age_groups)
+        
+        if not age_groups_set.issubset(curriculum_age_ranges):
+            raise ValueError("Age groups must be a subset of curriculum's age ranges")
+        
+        # Get the course to identify other curricula that might be defaults
+        course = db.query(Course).filter(Course.id == curriculum.course_id).first()
+        if not course:
+            raise ValueError("Course not found")
+        
+        # Remove default status from other curricula for these age groups
+        other_curricula = db.query(Curriculum).filter(
+            Curriculum.course_id == curriculum.course_id,
+            Curriculum.id != curriculum_id
+        ).all()
+        
+        for other_curriculum in other_curricula:
+            if other_curriculum.is_default_for_age_groups:
+                # Remove overlapping age groups from other curricula's default status
+                updated_defaults = [
+                    age for age in other_curriculum.is_default_for_age_groups 
+                    if age not in age_groups_set
+                ]
+                other_curriculum.is_default_for_age_groups = updated_defaults
+        
+        # Set this curriculum as default for the specified age groups
+        current_defaults = set(curriculum.is_default_for_age_groups or [])
+        new_defaults = current_defaults.union(age_groups_set)
+        curriculum.is_default_for_age_groups = list(new_defaults)
+        
+        db.commit()
+        return self._to_curriculum_response(db, curriculum)
+    
+    def remove_default_curriculum(self,
+                                 db: Session,
+                                 curriculum_id: str,
+                                 age_groups: List[str],
+                                 program_context: Optional[str] = None) -> Optional[CurriculumResponse]:
+        """Remove default status from a curriculum for specific age groups."""
+        # Get curriculum with program context filtering
+        query = db.query(Curriculum).filter(Curriculum.id == curriculum_id)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            query = query.join(Course).filter(Course.program_id == program_context)
+        
+        curriculum = query.first()
+        if not curriculum:
+            return None
+        
+        # Remove age groups from default status
+        current_defaults = set(curriculum.is_default_for_age_groups or [])
+        age_groups_set = set(age_groups)
+        new_defaults = current_defaults - age_groups_set
+        curriculum.is_default_for_age_groups = list(new_defaults)
+        
+        db.commit()
+        return self._to_curriculum_response(db, curriculum)
+    
+    def get_default_curricula_by_course(self,
+                                      db: Session,
+                                      course_id: str,
+                                      program_context: Optional[str] = None) -> Dict[str, str]:
+        """Get default curricula mapping for each age group in a course."""
+        # Build query with program context filtering
+        query = db.query(Curriculum).filter(Curriculum.course_id == course_id)
+        
+        # 🔒 PROGRAM CONTEXT FILTERING
+        if program_context:
+            query = query.join(Course).filter(Course.program_id == program_context)
+        
+        curricula = query.all()
+        
+        # Build mapping of age group -> curriculum ID
+        defaults_mapping = {}
+        for curriculum in curricula:
+            if curriculum.is_default_for_age_groups:
+                for age_group in curriculum.is_default_for_age_groups:
+                    defaults_mapping[age_group] = curriculum.id
+        
+        return defaults_mapping
 
 
 # Global instance

@@ -11,7 +11,6 @@ export { CourseDetail } from './CourseDetail';
 // Enhanced Curriculum Management
 export { CurriculumBuilder } from './CurriculumBuilder';
 export { CurriculumTreeNavigator } from './CurriculumTreeNavigator';
-export { CurriculumManager } from './CurriculumManager';
 
 // Lesson Management
 export { LessonEditor } from './LessonEditor';

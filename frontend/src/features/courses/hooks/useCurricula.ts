@@ -250,3 +250,55 @@ export const useCurriculaManagement = (params: CurriculumSearchParams = {}) => {
     curriculaStats: stats.data,
   };
 };
+
+// Default Curriculum Management Hooks
+export const useSetDefaultCurriculum = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ curriculumId, ageGroups }: { curriculumId: string; ageGroups: string[] }) =>
+      curriculaApiService.setDefaultCurriculum(curriculumId, ageGroups),
+    onSuccess: (data) => {
+      // Invalidate and refetch curriculum queries
+      queryClient.invalidateQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULA] });
+      queryClient.invalidateQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULUM, data.id] });
+      queryClient.invalidateQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULA_BY_COURSE, data.course_id] });
+      
+      toast.success('Curriculum set as default successfully');
+    },
+    onError: (error: Error) => {
+      console.error('Error setting default curriculum:', error);
+      toast.error('Failed to set curriculum as default');
+    },
+  });
+};
+
+export const useRemoveDefaultCurriculum = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ curriculumId, ageGroups }: { curriculumId: string; ageGroups: string[] }) =>
+      curriculaApiService.removeDefaultCurriculum(curriculumId, ageGroups),
+    onSuccess: (data) => {
+      // Invalidate and refetch curriculum queries
+      queryClient.invalidateQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULA] });
+      queryClient.invalidateQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULUM, data.id] });
+      queryClient.invalidateQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULA_BY_COURSE, data.course_id] });
+      
+      toast.success('Default status removed successfully');
+    },
+    onError: (error: Error) => {
+      console.error('Error removing default curriculum:', error);
+      toast.error('Failed to remove default status');
+    },
+  });
+};
+
+export const useDefaultCurriculaByCourse = (courseId: string) => {
+  return useQuery({
+    queryKey: ['default-curricula', courseId],
+    queryFn: () => curriculaApiService.getDefaultCurriculaByCourse(courseId),
+    enabled: !!courseId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};

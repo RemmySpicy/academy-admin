@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.features.common.models.database import get_db
 from app.features.authentication.routes.auth import get_current_active_user
+from app.middleware import create_program_filter_dependency
 from app.features.courses.schemas.curriculum import (
     CurriculumCreate,
     CurriculumUpdate,
@@ -26,11 +27,15 @@ from app.features.courses.services.curriculum_service import curriculum_service
 
 router = APIRouter()
 
+# Create program filter dependency with authentication integration
+get_program_filter = create_program_filter_dependency(get_current_active_user)
+
 
 @router.post("/", response_model=CurriculumResponse, status_code=status.HTTP_201_CREATED)
 async def create_curriculum(
     curriculum_data: CurriculumCreate,
     db: Annotated[Session, Depends(get_db)],
+    program_context: Annotated[Optional[str], Depends(get_program_filter)],
     current_user: Annotated[dict, Depends(get_current_active_user)]
 ):
     """
@@ -45,7 +50,7 @@ async def create_curriculum(
         )
     
     try:
-        curriculum = curriculum_service.create_curriculum(db, curriculum_data, current_user["id"])
+        curriculum = curriculum_service.create_curriculum(db, curriculum_data, current_user["id"], program_context)
         return curriculum
     except ValueError as e:
         raise HTTPException(
@@ -62,6 +67,7 @@ async def create_curriculum(
 @router.get("/", response_model=CurriculumListResponse)
 async def list_curricula(
     db: Annotated[Session, Depends(get_db)],
+    program_context: Annotated[Optional[str], Depends(get_program_filter)],
     current_user: Annotated[dict, Depends(get_current_active_user)],
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(20, ge=1, le=100, description="Items per page"),
@@ -100,7 +106,8 @@ async def list_curricula(
             db=db,
             search_params=search_params,
             page=page,
-            per_page=per_page
+            per_page=per_page,
+            program_context=program_context
         )
         
         # Calculate pagination info
@@ -131,6 +138,7 @@ async def list_curricula(
 @router.get("/stats", response_model=CurriculumStatsResponse)
 async def get_curriculum_stats(
     db: Annotated[Session, Depends(get_db)],
+    program_context: Annotated[Optional[str], Depends(get_program_filter)],
     current_user: Annotated[dict, Depends(get_current_active_user)]
 ):
     """
@@ -152,6 +160,7 @@ async def get_curriculum_stats(
 async def get_curriculum(
     curriculum_id: str,
     db: Annotated[Session, Depends(get_db)],
+    program_context: Annotated[Optional[str], Depends(get_program_filter)],
     current_user: Annotated[dict, Depends(get_current_active_user)]
 ):
     """
@@ -159,7 +168,7 @@ async def get_curriculum(
     
     Returns detailed curriculum information.
     """
-    curriculum = curriculum_service.get_curriculum(db, curriculum_id)
+    curriculum = curriculum_service.get_curriculum(db, curriculum_id, program_context)
     if not curriculum:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -174,6 +183,7 @@ async def update_curriculum(
     curriculum_id: str,
     curriculum_data: CurriculumUpdate,
     db: Annotated[Session, Depends(get_db)],
+    program_context: Annotated[Optional[str], Depends(get_program_filter)],
     current_user: Annotated[dict, Depends(get_current_active_user)]
 ):
     """
@@ -182,7 +192,7 @@ async def update_curriculum(
     Allows partial updates of curriculum data.
     """
     try:
-        curriculum = curriculum_service.update_curriculum(db, curriculum_id, curriculum_data, current_user["id"])
+        curriculum = curriculum_service.update_curriculum(db, curriculum_id, curriculum_data, current_user["id"], program_context)
         if not curriculum:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -205,6 +215,7 @@ async def update_curriculum(
 async def delete_curriculum(
     curriculum_id: str,
     db: Annotated[Session, Depends(get_db)],
+    program_context: Annotated[Optional[str], Depends(get_program_filter)],
     current_user: Annotated[dict, Depends(get_current_active_user)]
 ):
     """
@@ -243,6 +254,7 @@ async def delete_curriculum(
 async def get_curricula_by_course(
     course_id: str,
     db: Annotated[Session, Depends(get_db)],
+    program_context: Annotated[Optional[str], Depends(get_program_filter)],
     current_user: Annotated[dict, Depends(get_current_active_user)],
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(20, ge=1, le=100, description="Items per page")
@@ -284,6 +296,7 @@ async def get_curricula_by_course(
 async def get_curriculum_tree(
     curriculum_id: str,
     db: Annotated[Session, Depends(get_db)],
+    program_context: Annotated[Optional[str], Depends(get_program_filter)],
     current_user: Annotated[dict, Depends(get_current_active_user)]
 ):
     """
@@ -306,6 +319,7 @@ async def duplicate_curriculum(
     curriculum_id: str,
     duplicate_data: CurriculumDuplicateRequest,
     db: Annotated[Session, Depends(get_db)],
+    program_context: Annotated[Optional[str], Depends(get_program_filter)],
     current_user: Annotated[dict, Depends(get_current_active_user)]
 ):
     """
@@ -339,6 +353,7 @@ async def duplicate_curriculum(
 async def bulk_move_curricula(
     move_data: CurriculumBulkMoveRequest,
     db: Annotated[Session, Depends(get_db)],
+    program_context: Annotated[Optional[str], Depends(get_program_filter)],
     current_user: Annotated[dict, Depends(get_current_active_user)]
 ):
     """
@@ -377,6 +392,7 @@ async def bulk_move_curricula(
 async def bulk_update_status(
     status_data: CurriculumBulkStatusUpdateRequest,
     db: Annotated[Session, Depends(get_db)],
+    program_context: Annotated[Optional[str], Depends(get_program_filter)],
     current_user: Annotated[dict, Depends(get_current_active_user)]
 ):
     """
@@ -408,4 +424,132 @@ async def bulk_update_status(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error updating curriculum status: {str(e)}"
+        )
+
+
+@router.post("/{curriculum_id}/set-default", response_model=CurriculumResponse)
+async def set_default_curriculum(
+    curriculum_id: str,
+    age_groups: List[str],
+    db: Annotated[Session, Depends(get_db)],
+    program_context: Annotated[Optional[str], Depends(get_program_filter)],
+    current_user: Annotated[dict, Depends(get_current_active_user)]
+):
+    """
+    Set a curriculum as default for specific age groups.
+    
+    Requires authentication and appropriate permissions.
+    """
+    if not current_user.get("is_active"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive user"
+        )
+    
+    try:
+        result = curriculum_service.set_default_curriculum(
+            db,
+            curriculum_id,
+            age_groups,
+            program_context
+        )
+        
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Curriculum not found"
+            )
+        
+        return result
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error setting default curriculum: {str(e)}"
+        )
+
+
+@router.delete("/{curriculum_id}/remove-default", response_model=CurriculumResponse)
+async def remove_default_curriculum(
+    curriculum_id: str,
+    age_groups: List[str],
+    db: Annotated[Session, Depends(get_db)],
+    program_context: Annotated[Optional[str], Depends(get_program_filter)],
+    current_user: Annotated[dict, Depends(get_current_active_user)]
+):
+    """
+    Remove default status from a curriculum for specific age groups.
+    
+    Requires authentication and appropriate permissions.
+    """
+    if not current_user.get("is_active"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive user"
+        )
+    
+    try:
+        result = curriculum_service.remove_default_curriculum(
+            db,
+            curriculum_id,
+            age_groups,
+            program_context
+        )
+        
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Curriculum not found"
+            )
+        
+        return result
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error removing default curriculum: {str(e)}"
+        )
+
+
+@router.get("/courses/{course_id}/defaults")
+async def get_default_curricula_by_course(
+    course_id: str,
+    db: Annotated[Session, Depends(get_db)],
+    program_context: Annotated[Optional[str], Depends(get_program_filter)],
+    current_user: Annotated[dict, Depends(get_current_active_user)]
+):
+    """
+    Get default curricula mapping for each age group in a course.
+    
+    Returns a mapping of age group -> curriculum ID.
+    """
+    if not current_user.get("is_active"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive user"
+        )
+    
+    try:
+        result = curriculum_service.get_default_curricula_by_course(
+            db,
+            course_id,
+            program_context
+        )
+        
+        return {"defaults": result}
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error getting default curricula: {str(e)}"
         )

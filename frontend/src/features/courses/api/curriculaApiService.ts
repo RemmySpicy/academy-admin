@@ -13,53 +13,51 @@ export interface Curriculum {
   course_id: string;
   name: string;
   description?: string;
-  min_age?: number;
-  max_age?: number;
+  duration_hours?: number;
+  age_ranges: string[];
+  is_default_for_age_groups: string[];
+  is_default: boolean;
   prerequisites?: string;
   learning_objectives?: string;
   status: CurriculumStatus;
-  display_order?: number;
-  curriculum_code?: string;
-  estimated_duration_weeks?: number;
-  skill_level?: DifficultyLevel;
+  sequence?: number;
+  difficulty_level: DifficultyLevel;
   created_at: string;
   updated_at: string;
-  course?: {
-    id: string;
-    name: string;
-    code?: string;
-  };
+  course_name?: string;
+  program_name?: string;
+  program_code?: string;
   level_count?: number;
-  lesson_count?: number;
+  module_count?: number;
+  total_lesson_count?: number;
+  estimated_duration_hours?: number;
 }
 
 export interface CurriculumCreate {
   course_id: string;
   name: string;
   description?: string;
-  min_age?: number;
-  max_age?: number;
+  duration_hours?: number;
+  age_ranges: string[];
+  is_default_for_age_groups?: string[];
   prerequisites?: string;
   learning_objectives?: string;
   status?: CurriculumStatus;
-  display_order?: number;
-  curriculum_code?: string;
-  estimated_duration_weeks?: number;
-  skill_level?: DifficultyLevel;
+  sequence?: number;
+  difficulty_level: DifficultyLevel;
 }
 
 export interface CurriculumUpdate {
   name?: string;
   description?: string;
-  min_age?: number;
-  max_age?: number;
+  duration_hours?: number;
+  age_ranges?: string[];
+  is_default_for_age_groups?: string[];
   prerequisites?: string;
   learning_objectives?: string;
   status?: CurriculumStatus;
-  display_order?: number;
-  curriculum_code?: string;
-  estimated_duration_weeks?: number;
-  skill_level?: DifficultyLevel;
+  sequence?: number;
+  difficulty_level?: DifficultyLevel;
 }
 
 export interface CurriculumSearchParams {
@@ -331,6 +329,53 @@ export const curriculaApiService = {
     const response = await httpClient.post<BulkActionResponse>(
       `${API_ENDPOINTS.courses.curricula.list}/reorder`,
       reorderData
+    );
+    
+    if (response.error) {
+      throw new Error(response.error);
+    }
+    
+    return response.data!;
+  },
+
+  /**
+   * Set a curriculum as default for specific age groups
+   */
+  setDefaultCurriculum: async (curriculumId: string, ageGroups: string[]): Promise<Curriculum> => {
+    const response = await httpClient.post<Curriculum>(
+      `${API_ENDPOINTS.courses.curricula.list}/${curriculumId}/set-default`,
+      ageGroups
+    );
+    
+    if (response.error) {
+      throw new Error(response.error);
+    }
+    
+    return response.data!;
+  },
+
+  /**
+   * Remove default status from a curriculum for specific age groups
+   */
+  removeDefaultCurriculum: async (curriculumId: string, ageGroups: string[]): Promise<Curriculum> => {
+    const response = await httpClient.delete<Curriculum>(
+      `${API_ENDPOINTS.courses.curricula.list}/${curriculumId}/remove-default`,
+      ageGroups
+    );
+    
+    if (response.error) {
+      throw new Error(response.error);
+    }
+    
+    return response.data!;
+  },
+
+  /**
+   * Get default curricula mapping for each age group in a course
+   */
+  getDefaultCurriculaByCourse: async (courseId: string): Promise<{ defaults: Record<string, string> }> => {
+    const response = await httpClient.get<{ defaults: Record<string, string> }>(
+      `${API_ENDPOINTS.courses.curricula.list}/courses/${courseId}/defaults`
     );
     
     if (response.error) {

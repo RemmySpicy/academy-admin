@@ -15,6 +15,7 @@ from app.features.courses.routes import (
     media,
     content_versions,
     advanced,
+    progression,
 )
 from app.features.facilities.routes import facilities
 from app.features.scheduling.routes import sessions_router, integration_router
@@ -40,6 +41,7 @@ api_router.include_router(equipment.router, prefix="/courses/equipment", tags=["
 api_router.include_router(media.router, prefix="/courses/media", tags=["course-media"])
 api_router.include_router(content_versions.router, prefix="/courses/content-versions", tags=["course-content-versions"])
 api_router.include_router(advanced.router, prefix="/courses/advanced", tags=["course-advanced"])
+api_router.include_router(progression.router, prefix="/courses/progression", tags=["course-progression"])
 
 # Program management routes (separate top-level)
 api_router.include_router(programs.router, prefix="/programs", tags=["programs"])

@@ -4,7 +4,8 @@ Curriculum model for curriculum management.
 
 from typing import List, Optional
 
-from sqlalchemy import ForeignKey, Index, String, Text, Integer
+from sqlalchemy import ForeignKey, Index, String, Text, Integer, Boolean
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.features.common.models.base import BaseModel
@@ -86,6 +87,20 @@ class Curriculum(BaseModel):
         comment="Curriculum code (e.g., SWIM-FUNDAMENTALS-01)",
     )
     
+    # Age Range Configuration  
+    age_ranges: Mapped[List[str]] = mapped_column(
+        JSONB,
+        nullable=False,
+        comment="Age ranges this curriculum applies to (e.g., ['6-8 years', '9-12 years'])",
+    )
+    
+    is_default_for_age_groups: Mapped[List[str]] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=list,
+        comment="Age groups for which this curriculum is the default",
+    )
+    
     # Status Management
     status: Mapped[str] = mapped_column(
         String(20),
@@ -97,6 +112,14 @@ class Curriculum(BaseModel):
     # Note: Relationships will be defined when related models are created
     course = relationship("Course", back_populates="curricula")
     levels = relationship("Level", back_populates="curriculum", cascade="all, delete-orphan")
+    
+    # Progression system relationships (temporarily disabled due to circular import)
+    # progression_settings = relationship(
+    #     "CurriculumProgressionSettings", 
+    #     back_populates="curriculum", 
+    #     uselist=False,
+    #     cascade="all, delete-orphan"
+    # )
     
     # Indexes for performance
     __table_args__ = (
@@ -119,6 +142,11 @@ class Curriculum(BaseModel):
     def is_active(self) -> bool:
         """Check if curriculum is active."""
         return self.status == "active"
+    
+    @property
+    def is_default(self) -> bool:
+        """Check if curriculum is default for any age group."""
+        return len(self.is_default_for_age_groups or []) > 0
     
     @property
     def full_name(self) -> str:

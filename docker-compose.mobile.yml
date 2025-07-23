@@ -1,8 +1,6 @@
 # Docker Compose configuration for mobile app development
 # Use: docker-compose -f docker-compose.yml -f docker-compose.mobile.yml up
 
-version: '3.8'
-
 services:
   # Mobile development requires backend and database
   db:

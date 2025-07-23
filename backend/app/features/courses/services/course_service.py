@@ -136,7 +136,7 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
                         Course.description.ilike(search_term),
                         Course.objectives.ilike(search_term),
                         Course.prerequisites.ilike(search_term),
-                        Course.course_code.ilike(search_term)
+                        Course.code.ilike(search_term)
                     )
                 )
             
@@ -147,11 +147,11 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
             if search_params.status:
                 query = query.filter(Course.status == search_params.status)
             
-            if search_params.duration_hours_min:
-                query = query.filter(Course.duration_hours >= search_params.duration_hours_min)
+            if search_params.duration_weeks_min:
+                query = query.filter(Course.duration_weeks >= search_params.duration_weeks_min)
             
-            if search_params.duration_hours_max:
-                query = query.filter(Course.duration_hours <= search_params.duration_hours_max)
+            if search_params.duration_weeks_max:
+                query = query.filter(Course.duration_weeks <= search_params.duration_weeks_max)
             
             if search_params.difficulty_level:
                 query = query.filter(Course.difficulty_level == search_params.difficulty_level)
@@ -230,8 +230,8 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
         courses_by_program = dict(program_stats)
         
         # Average duration
-        avg_duration = base_query.with_entities(func.avg(Course.duration_hours)).filter(
-            Course.duration_hours.isnot(None)
+        avg_duration = base_query.with_entities(func.avg(Course.duration_weeks)).filter(
+            Course.duration_weeks.isnot(None)
         ).scalar() or 0
         
         # Average curricula per course
@@ -242,18 +242,18 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
         avg_curricula_per_course = curriculum_counts / total_courses if total_courses > 0 else 0
         
         # Duration stats
-        min_duration = base_query.with_entities(func.min(Course.duration_hours)).filter(
-            Course.duration_hours.isnot(None)
+        min_duration = base_query.with_entities(func.min(Course.duration_weeks)).filter(
+            Course.duration_weeks.isnot(None)
         ).scalar() or 0
         
-        max_duration = base_query.with_entities(func.max(Course.duration_hours)).filter(
-            Course.duration_hours.isnot(None)
+        max_duration = base_query.with_entities(func.max(Course.duration_weeks)).filter(
+            Course.duration_weeks.isnot(None)
         ).scalar() or 0
         
         participant_capacity_stats = {
-            "average_duration_hours": avg_duration,
-            "min_duration_hours": min_duration,
-            "max_duration_hours": max_duration
+            "average_duration_weeks": avg_duration,
+            "min_duration_weeks": min_duration,
+            "max_duration_weeks": max_duration
         }
         
         return CourseStatsResponse(
@@ -508,21 +508,55 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
             # Skip lesson count if there are relationship issues
             pass
         
+        # Handle objectives and prerequisites safely
+        objectives = course.objectives
+        if objectives is None or objectives == 'null' or (isinstance(objectives, str) and objectives.strip() == ''):
+            objectives = []
+        elif isinstance(objectives, str):
+            try:
+                import json
+                objectives = json.loads(objectives)
+            except:
+                objectives = []
+        
+        prerequisites = course.prerequisites  
+        if prerequisites is None or prerequisites == 'null' or (isinstance(prerequisites, str) and prerequisites.strip() == ''):
+            prerequisites = []
+        elif isinstance(prerequisites, str):
+            try:
+                import json
+                prerequisites = json.loads(prerequisites)
+            except:
+                prerequisites = []
+        
         return CourseResponse(
             id=course.id,
             name=course.name,
+            code=course.code,
             description=course.description,
             program_id=course.program_id,
-            program_name=program_name,
-            program_code=program_code,
-            objectives=course.objectives,
-            duration_hours=course.duration_hours,
-            difficulty_level=course.difficulty_level,
-            prerequisites=course.prerequisites,
+            objectives=objectives,
+            prerequisites=prerequisites,
+            duration_weeks=course.duration_weeks,
+            sessions_per_payment=course.sessions_per_payment,
+            completion_deadline_weeks=course.completion_deadline_weeks,
+            age_ranges=course.age_ranges or [],
+            location_types=course.location_types or [],
+            session_types=course.session_types or [],
+            pricing_matrix=course.pricing_matrix or [],
+            instructor_id=course.instructor_id,
+            max_students=course.max_students,
+            min_students=course.min_students,
+            tags=course.tags or [],
+            image_url=course.image_url,
+            video_url=course.video_url,
             sequence=course.sequence,
+            difficulty_level=course.difficulty_level,
+            is_featured=course.is_featured,
+            is_certification_course=course.is_certification_course,
             status=course.status,
-            curriculum_count=curriculum_count,
-            total_lesson_count=total_lesson_count,
+            total_curricula=curriculum_count,
+            total_lessons=total_lesson_count,
             created_by=course.created_by,
             updated_by=course.updated_by,
             created_at=course.created_at,

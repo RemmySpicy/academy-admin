@@ -42,7 +42,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Progress } from '@/components/ui/progress';
-import type { Course } from '../api/courseApiService';
+import type { Course, PricingEntry } from '../api/courseApiService';
 
 interface CourseCardProps {
   course: Course;
@@ -119,12 +119,29 @@ export function CourseCard({
     setShowDeleteDialog(false);
   };
 
-  const formatPrice = (price?: number, currency?: string) => {
-    if (!price) return 'Free';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency || 'USD',
-    }).format(price);
+  const formatPrice = (pricing_matrix?: PricingEntry[]) => {
+    if (!pricing_matrix || pricing_matrix.length === 0) return 'Free';
+    
+    // Find the lowest and highest prices
+    const prices = pricing_matrix.map(entry => entry.price).filter(p => p > 0);
+    if (prices.length === 0) return 'Free';
+    
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    
+    const formatNGN = (amount: number) => 
+      new Intl.NumberFormat('en-NG', {
+        style: 'currency',
+        currency: 'NGN',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(amount);
+    
+    if (minPrice === maxPrice) {
+      return formatNGN(minPrice);
+    } else {
+      return `${formatNGN(minPrice)} - ${formatNGN(maxPrice)}`;
+    }
   };
 
 
@@ -197,7 +214,7 @@ export function CourseCard({
                   )}
                   <div className="flex items-center gap-1">
                     <DollarSign className="h-4 w-4" />
-                    <span>{formatPrice(course.price, course.currency)}</span>
+                    <span>{formatPrice(course.pricing_matrix)}</span>
                   </div>
                 </div>
 
@@ -306,7 +323,7 @@ export function CourseCard({
           {/* Price */}
           <div className="absolute bottom-3 right-3">
             <Badge variant="secondary" className="bg-white/90 text-gray-800 text-sm font-semibold">
-              {formatPrice(course.price, course.currency)}
+              {formatPrice(course.pricing_matrix)}
             </Badge>
           </div>
 
@@ -429,6 +446,28 @@ export function CourseCard({
                   <span className="font-medium">{course.average_rating.toFixed(1)}</span>
                   <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                 </div>
+              </div>
+            )}
+
+            {/* Age Groups */}
+            {course.age_ranges && course.age_ranges.length > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-1 text-gray-500">
+                  <Users className="h-4 w-4" />
+                  <span>Age Groups</span>
+                </div>
+                <span className="font-medium">{course.age_ranges.length}</span>
+              </div>
+            )}
+
+            {/* Pricing Options */}
+            {course.pricing_matrix && course.pricing_matrix.length > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-1 text-gray-500">
+                  <DollarSign className="h-4 w-4" />
+                  <span>Price Options</span>
+                </div>
+                <span className="font-medium">{course.pricing_matrix.length}</span>
               </div>
             )}
 

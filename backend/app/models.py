@@ -27,6 +27,16 @@ from app.features.courses.models.equipment import EquipmentRequirement
 from app.features.courses.models.media import MediaLibrary
 from app.features.courses.models.content_version import ContentVersion
 
+# Import progression system models
+from app.features.courses.models.progression import (
+    CurriculumProgressionSettings,
+    LevelAssessmentCriteria, 
+    StudentLessonProgress,
+    StudentModuleUnlock,
+    StudentLevelAssessment,
+    ProgressionAnalytics
+)
+
 # This ensures all models are imported and available for Alembic
 __all__ = [
     "Base",
@@ -47,4 +57,10 @@ __all__ = [
     "EquipmentRequirement",
     "MediaLibrary",
     "ContentVersion",
+    "CurriculumProgressionSettings",
+    "LevelAssessmentCriteria", 
+    "StudentLessonProgress",
+    "StudentModuleUnlock",
+    "StudentLevelAssessment",
+    "ProgressionAnalytics",
 ]
