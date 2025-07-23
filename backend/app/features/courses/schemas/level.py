@@ -18,7 +18,10 @@ class LevelBase(BaseModel):
     """Base level schema with common fields."""
     
     name: str = Field(..., min_length=1, max_length=200, description="Level name")
+    title: Optional[str] = Field(None, max_length=255, description="Custom title for the level (displays as 'Level 1: Title Name')")
     description: Optional[str] = Field(None, description="Level description")
+    intro_video_url: Optional[str] = Field(None, max_length=500, description="URL link to introductory video for this level")
+    equipment_needed: Optional[str] = Field(None, description="Equipment needed for this level")
     curriculum_id: str = Field(..., description="Curriculum ID this level belongs to")
     sequence: int = Field(..., ge=1, description="Sequence order within curriculum")
     entry_criteria: Optional[str] = Field(None, description="Criteria for entering this level")
@@ -47,7 +50,10 @@ class LevelUpdate(BaseModel):
     """Schema for updating level information."""
     
     name: Optional[str] = Field(None, min_length=1, max_length=200)
+    title: Optional[str] = Field(None, max_length=255)
     description: Optional[str] = Field(None)
+    intro_video_url: Optional[str] = Field(None, max_length=500)
+    equipment_needed: Optional[str] = Field(None)
     curriculum_id: Optional[str] = Field(None)
     sequence: Optional[int] = Field(None, ge=1)
     entry_criteria: Optional[str] = Field(None)

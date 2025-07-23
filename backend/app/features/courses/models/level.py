@@ -43,10 +43,28 @@ class Level(BaseModel):
         comment="Level name (e.g., Level 1, Level 2, Beginner Level)",
     )
     
+    title: Mapped[Optional[str]] = mapped_column(
+        String(255),
+        nullable=True,
+        comment="Custom title for the level (displays as 'Level 1: Title Name')",
+    )
+    
     description: Mapped[Optional[str]] = mapped_column(
         Text,
         nullable=True,
         comment="Detailed level description",
+    )
+    
+    intro_video_url: Mapped[Optional[str]] = mapped_column(
+        String(500),
+        nullable=True,
+        comment="URL link to introductory video for this level",
+    )
+    
+    equipment_needed: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Equipment needed for this level",
     )
     
     # Sequencing and Progression
@@ -116,9 +134,21 @@ class Level(BaseModel):
     # Relationships
     # Note: Relationships will be defined when related models are created
     curriculum = relationship("Curriculum", back_populates="levels")
-    # modules = relationship("Module", back_populates="level", cascade="all, delete-orphan")
+    modules = relationship("Module", back_populates="level", cascade="all, delete-orphan")
     # equipment_requirements = relationship("EquipmentRequirement", back_populates="level", cascade="all, delete-orphan")
-    # assessment_rubrics = relationship("AssessmentRubric", back_populates="level", cascade="all, delete-orphan")
+    
+    # Progression system relationships (temporarily disabled due to circular import)
+    # assessment_criteria = relationship(
+    #     "LevelAssessmentCriteria", 
+    #     back_populates="level", 
+    #     cascade="all, delete-orphan",
+    #     order_by="LevelAssessmentCriteria.sequence_order"
+    # )
+    # student_assessments = relationship(
+    #     "StudentLevelAssessment",
+    #     back_populates="level",
+    #     cascade="all, delete-orphan"
+    # )
     
     # Indexes for performance
     __table_args__ = (

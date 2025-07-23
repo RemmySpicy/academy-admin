@@ -18,6 +18,7 @@ class ModuleBase(BaseModel):
     """Base module schema with common fields."""
     
     name: str = Field(..., min_length=1, max_length=200, description="Module name")
+    title: Optional[str] = Field(None, max_length=255, description="Custom title for the module (displays as 'Module 1: Title Name')")
     description: Optional[str] = Field(None, description="Module description")
     level_id: str = Field(..., description="Level ID this module belongs to")
     sequence: int = Field(..., ge=1, description="Sequence order within level")
@@ -47,6 +48,7 @@ class ModuleUpdate(BaseModel):
     """Schema for updating module information."""
     
     name: Optional[str] = Field(None, min_length=1, max_length=200)
+    title: Optional[str] = Field(None, max_length=255)
     description: Optional[str] = Field(None)
     level_id: Optional[str] = Field(None)
     sequence: Optional[int] = Field(None, ge=1)

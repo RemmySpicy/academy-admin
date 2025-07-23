@@ -18,6 +18,7 @@ class SectionBase(BaseModel):
     """Base section schema with common fields."""
     
     name: str = Field(..., min_length=1, max_length=200, description="Section name")
+    title: Optional[str] = Field(None, max_length=255, description="Custom title for the section (displays as 'Section 1: Title Name')")
     description: Optional[str] = Field(None, description="Section description")
     module_id: str = Field(..., description="Module ID this section belongs to")
     sequence: int = Field(..., ge=1, description="Sequence order within module")
@@ -27,6 +28,11 @@ class SectionBase(BaseModel):
     safety_considerations: Optional[str] = Field(None, description="Safety considerations and precautions")
     materials_needed: Optional[str] = Field(None, description="Materials and supplies needed")
     preparation_notes: Optional[str] = Field(None, description="Preparation notes for instructors")
+    # Workout Components
+    warm_up: Optional[str] = Field(None, description="Warm up instructions for this section")
+    preset: Optional[str] = Field(None, description="Preset instructions for this section")
+    post_set: Optional[str] = Field(None, description="Post set instructions for this section")
+    cool_down: Optional[str] = Field(None, description="Cool down instructions for this section")
     status: CurriculumStatusEnum = Field(default=CurriculumStatusEnum.DRAFT, description="Section status")
     
     @validator('estimated_duration_minutes')
@@ -51,6 +57,7 @@ class SectionUpdate(BaseModel):
     """Schema for updating section information."""
     
     name: Optional[str] = Field(None, min_length=1, max_length=200)
+    title: Optional[str] = Field(None, max_length=255)
     description: Optional[str] = Field(None)
     module_id: Optional[str] = Field(None)
     sequence: Optional[int] = Field(None, ge=1)
@@ -60,6 +67,11 @@ class SectionUpdate(BaseModel):
     safety_considerations: Optional[str] = Field(None)
     materials_needed: Optional[str] = Field(None)
     preparation_notes: Optional[str] = Field(None)
+    # Workout Components
+    warm_up: Optional[str] = Field(None)
+    preset: Optional[str] = Field(None)
+    post_set: Optional[str] = Field(None)
+    cool_down: Optional[str] = Field(None)
     status: Optional[CurriculumStatusEnum] = Field(None)
     
     @validator('estimated_duration_minutes')

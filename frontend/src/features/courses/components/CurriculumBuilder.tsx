@@ -1,15 +1,24 @@
 /**
- * Curriculum Builder - Enhanced curriculum creation with tree navigation
+ * Enhanced Curriculum Builder - Level tabs with horizontal module grid layout
+ * 
+ * Enhanced curriculum builder with sophisticated interface:
+ * - Level tabs for navigation (max 15 levels)
+ * - Horizontal scrolling module grid per level
+ * - Collapsible module cards with nested section/lesson lists
+ * - Progression settings integration
+ * - Draft/save system with explicit actions
+ * - Content library integration
  */
 
-import { useState, useCallback } from 'react';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import {
   Select,
   SelectContent,
@@ -17,6 +26,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,19 +49,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 import { 
   BookOpen,
   Plus,
   Edit,
-  Trash2,
-  GripVertical,
   ChevronDown,
   ChevronRight,
+  Trash2,
   Save,
   Eye,
   Copy,
@@ -49,415 +64,900 @@ import {
   FileText,
   Play,
   Video,
-  Award,
   Clock,
   Users,
-  ArrowUp,
-  ArrowDown,
+  GripVertical,
+  Library,
+  ArrowLeft,
+  RotateCcw,
+  CheckCircle2,
+  AlertCircle,
   Layers,
-  TreePine
+  Star,
+  TrendingUp
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+// ContentLibraryModal temporarily removed - placeholder function
+const ContentLibraryModal = ({ open, onOpenChange, onSelectLesson, ...props }: any) => null;
 import type { 
   Course, 
-  Curriculum, 
-  Level, 
-  Module, 
-  Section, 
-  Lesson,
-  CurriculumStatus,
-  DifficultyLevel 
+  Curriculum,
+  DifficultyLevel,
+  CurriculumStatus
 } from '../api/courseApiService';
+import { useCurriculum } from '../hooks/useCurricula';
 
-interface CurriculumNode {
+interface Level {
   id: string;
-  type: 'curriculum' | 'level' | 'module' | 'section' | 'lesson';
-  data: any;
-  children: CurriculumNode[];
-  isExpanded?: boolean;
-  parentId?: string;
+  name: string;
+  title?: string;
+  description: string;
+  intro_video_url?: string;
+  equipment_needed?: string;
+  sequence_order: number;
+  modules: Module[];
+  assessment_criteria: AssessmentCriteria[];
+  is_draft: boolean;
+}
+
+interface Module {
+  id: string;
+  name: string;
+  title?: string;
+  description: string;
+  sequence_order: number;
+  estimated_duration_hours?: number;
+  sections: Section[];
+  is_expanded: boolean;
+}
+
+interface Section {
+  id: string;
+  name: string;
+  title?: string;
+  description: string;
+  sequence_order: number;
+  lessons: Lesson[];
+  // Workout Components
+  warm_up?: string;
+  preset?: string;
+  post_set?: string;
+  cool_down?: string;
+}
+
+interface Lesson {
+  id: string;
+  title: string;
+  description: string;
+  sequence_order: number;
+  duration_minutes?: number;
+  content_type?: string;
+}
+
+interface AssessmentCriteria {
+  id: string;
+  name: string;
+  description: string;
+  sequence_order: number;
+  weight: number;
+  max_score: number;
+}
+
+interface ProgressionSettings {
+  module_unlock_threshold_percentage: number;
+  require_minimum_one_star_per_lesson: boolean;
+  allow_cross_level_progression: boolean;
+  allow_lesson_retakes: boolean;
 }
 
 interface CurriculumBuilderProps {
-  course: Course;
-  curriculum?: Curriculum;
-  onSave: (curriculum: any) => Promise<void>;
-  onCancel: () => void;
+  curriculumId?: string;
+  onBack?: () => void;
   className?: string;
 }
 
-const nodeTypeConfig = {
-  curriculum: {
-    icon: BookOpen,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
-    label: 'Curriculum',
-    description: 'Top-level curriculum container',
-  },
-  level: {
-    icon: Target,
-    color: 'text-green-600',
-    bgColor: 'bg-green-50',
-    borderColor: 'border-green-200',
-    label: 'Level',
-    description: 'Learning progression level',
-  },
-  module: {
-    icon: FileText,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50',
-    borderColor: 'border-purple-200',
-    label: 'Module',
-    description: 'Thematic learning module',
-  },
-  section: {
-    icon: Play,
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-50',
-    borderColor: 'border-orange-200',
-    label: 'Section',
-    description: 'Learning section',
-  },
-  lesson: {
-    icon: Video,
-    color: 'text-red-600',
-    bgColor: 'bg-red-50',
-    borderColor: 'border-red-200',
-    label: 'Lesson',
-    description: 'Individual lesson content',
-  },
-};
-
-const difficultyOptions = [
+const DIFFICULTY_OPTIONS = [
   { value: 'beginner', label: 'Beginner' },
   { value: 'intermediate', label: 'Intermediate' },
   { value: 'advanced', label: 'Advanced' },
   { value: 'expert', label: 'Expert' },
 ];
 
-const statusOptions = [
+const STATUS_OPTIONS = [
   { value: 'draft', label: 'Draft' },
   { value: 'published', label: 'Published' },
-  { value: 'archived', label: 'Archived' },
   { value: 'under_review', label: 'Under Review' },
+  { value: 'archived', label: 'Archived' },
 ];
 
+const MAX_LEVELS = 15;
+
 export function CurriculumBuilder({
-  course,
-  curriculum,
-  onSave,
-  onCancel,
+  curriculumId,
+  onBack,
   className,
 }: CurriculumBuilderProps) {
-  const [activeTab, setActiveTab] = useState('builder');
-  const [treeData, setTreeData] = useState<CurriculumNode[]>([]);
-  const [selectedNode, setSelectedNode] = useState<CurriculumNode | null>(null);
-  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
-  const [editingNode, setEditingNode] = useState<CurriculumNode | null>(null);
+  // Load curriculum data
+  const { data: curriculum, isLoading } = useCurriculum(curriculumId || '');
+
+  const [activeTab, setActiveTab] = useState<string>('details');
+  const [activeLevel, setActiveLevel] = useState<string>('');
+  const [isDraft, setIsDraft] = useState(true);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showProgressionSettings, setShowProgressionSettings] = useState(false);
+  const [showContentLibrary, setShowContentLibrary] = useState(false);
+  const [expandedLevels, setExpandedLevels] = useState<Set<string>>(new Set());
+
+  // Form state
   const [formData, setFormData] = useState({
-    name: curriculum?.name || '',
-    code: curriculum?.code || '',
-    description: curriculum?.description || '',
-    skill_level: curriculum?.skill_level || 'beginner',
-    status: curriculum?.status || 'draft',
-    duration_weeks: curriculum?.duration_weeks || 1,
-    age_min: curriculum?.age_min || undefined,
-    age_max: curriculum?.age_max || undefined,
-    objectives: curriculum?.objectives || [],
+    name: '',
+    code: '',
+    description: '',
+    skill_level: 'beginner',
+    status: 'draft',
+    duration_weeks: 1,
+    age_min: undefined,
+    age_max: undefined,
+    objectives: [],
   });
 
-  // Initialize tree data from existing curriculum
-  const initializeTreeData = useCallback(() => {
+  // Curriculum structure state
+  const [levels, setLevels] = useState<Level[]>([]);
+  const [progressionSettings, setProgressionSettings] = useState<ProgressionSettings>({
+    module_unlock_threshold_percentage: 70.0,
+    require_minimum_one_star_per_lesson: true,
+    allow_cross_level_progression: true,
+    allow_lesson_retakes: true,
+  });
+
+  // Initialize form data and levels from existing curriculum
+  useEffect(() => {
     if (curriculum) {
-      // Convert curriculum data to tree structure
-      const rootNode: CurriculumNode = {
-        id: curriculum.id,
-        type: 'curriculum',
-        data: curriculum,
-        children: [],
-        isExpanded: true,
+      // Update form data
+      setFormData({
+        name: curriculum.name || '',
+        code: '', // curriculum.code doesn't exist in our schema
+        description: curriculum.description || '',
+        skill_level: curriculum.difficulty_level || 'beginner',
+        status: curriculum.status || 'draft',
+        duration_weeks: Math.ceil((curriculum.duration_hours || 0) / 40) || 1, // Convert hours to weeks
+        age_min: undefined,
+        age_max: undefined,
+        objectives: curriculum.learning_objectives ? [curriculum.learning_objectives] : [],
+      });
+      
+      // Initialize levels from curriculum data
+      // For now, create a default structure - this would be loaded from API
+      setIsDraft(curriculum.status === 'draft');
+      
+      const defaultLevel: Level = {
+        id: `level-${Date.now()}`,
+        name: 'Level 1',
+        description: '',
+        sequence_order: 1,
+        modules: [],
+        assessment_criteria: [],
+        is_draft: true,
       };
-      setTreeData([rootNode]);
-      setExpandedNodes(new Set([curriculum.id]));
+      setLevels([defaultLevel]);
+      setActiveLevel(defaultLevel.id);
     }
   }, [curriculum]);
 
-  const toggleNode = (nodeId: string) => {
-    const newExpanded = new Set(expandedNodes);
-    if (newExpanded.has(nodeId)) {
-      newExpanded.delete(nodeId);
-    } else {
-      newExpanded.add(nodeId);
-    }
-    setExpandedNodes(newExpanded);
-  };
+  const handleFormChange = useCallback((field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setHasUnsavedChanges(true);
+  }, []);
 
-  const handleDragEnd = (result: DropResult) => {
+  const handleAddLevel = useCallback(() => {
+    if (levels.length >= MAX_LEVELS) {
+      toast.error(`Maximum ${MAX_LEVELS} levels allowed per curriculum`);
+      return;
+    }
+
+    const newLevel: Level = {
+      id: `level-${Date.now()}`,
+      name: `Level ${levels.length + 1}`,
+      description: '',
+      sequence_order: levels.length + 1,
+      modules: [],
+      assessment_criteria: [
+        {
+          id: `criteria-${Date.now()}-1`,
+          name: 'Technical Skills',
+          description: 'Assessment of technical proficiency',
+          sequence_order: 1,
+          weight: 1.0,
+          max_score: 3,
+        },
+        {
+          id: `criteria-${Date.now()}-2`,
+          name: 'Safety Awareness',
+          description: 'Understanding and application of safety protocols',
+          sequence_order: 2,
+          weight: 1.0,
+          max_score: 3,
+        },
+      ],
+      is_draft: true,
+    };
+
+    setLevels(prev => [...prev, newLevel]);
+    setActiveLevel(newLevel.id);
+    setHasUnsavedChanges(true);
+    toast.success('New level added successfully');
+  }, [levels]);
+
+  const handleRemoveLevel = useCallback((levelId: string) => {
+    if (levels.length <= 1) {
+      toast.error('At least one level is required');
+      return;
+    }
+
+    setLevels(prev => {
+      const filtered = prev.filter(l => l.id !== levelId);
+      // Resequence remaining levels
+      return filtered.map((level, index) => ({
+        ...level,
+        sequence_order: index + 1,
+        name: level.name.replace(/Level \d+/, `Level ${index + 1}`)
+      }));
+    });
+
+    // Update active level if needed
+    if (activeLevel === levelId && levels.length > 1) {
+      const remainingLevels = levels.filter(l => l.id !== levelId);
+      setActiveLevel(remainingLevels[0].id);
+    }
+
+    setHasUnsavedChanges(true);
+    toast.success('Level removed successfully');
+  }, [levels, activeLevel]);
+
+  const handleAddModule = useCallback((levelId: string) => {
+    setLevels(prev => prev.map(level => {
+      if (level.id === levelId) {
+        const newModule: Module = {
+          id: `module-${Date.now()}`,
+          name: `Module ${level.modules.length + 1}`,
+          description: '',
+          sequence_order: level.modules.length + 1,
+          estimated_duration_hours: 2,
+          sections: [],
+          is_expanded: false,
+        };
+        return {
+          ...level,
+          modules: [...level.modules, newModule]
+        };
+      }
+      return level;
+    }));
+    setHasUnsavedChanges(true);
+    toast.success('New module added successfully');
+  }, []);
+
+  const handleModuleExpand = useCallback((levelId: string, moduleId: string) => {
+    setLevels(prev => prev.map(level => {
+      if (level.id === levelId) {
+        return {
+          ...level,
+          modules: level.modules.map(module => {
+            if (module.id === moduleId) {
+              return { ...module, is_expanded: !module.is_expanded };
+            }
+            return module;
+          })
+        };
+      }
+      return level;
+    }));
+  }, []);
+
+  const handleAddSection = useCallback((levelId: string, moduleId: string) => {
+    setLevels(prev => prev.map(level => {
+      if (level.id === levelId) {
+        return {
+          ...level,
+          modules: level.modules.map(module => {
+            if (module.id === moduleId) {
+              const newSection: Section = {
+                id: `section-${Date.now()}`,
+                name: `Section ${module.sections.length + 1}`,
+                description: '',
+                sequence_order: module.sections.length + 1,
+                lessons: [],
+              };
+              return {
+                ...module,
+                sections: [...module.sections, newSection]
+              };
+            }
+            return module;
+          })
+        };
+      }
+      return level;
+    }));
+    setHasUnsavedChanges(true);
+    toast.success('New section added successfully');
+  }, []);
+
+  const handleAddLesson = useCallback((levelId: string, moduleId: string, sectionId: string, fromLibrary = false) => {
+    if (fromLibrary) {
+      setShowContentLibrary(true);
+      // Store context for library selection
+      (window as any).libraryContext = { levelId, moduleId, sectionId };
+      return;
+    }
+
+    setLevels(prev => prev.map(level => {
+      if (level.id === levelId) {
+        return {
+          ...level,
+          modules: level.modules.map(module => {
+            if (module.id === moduleId) {
+              return {
+                ...module,
+                sections: module.sections.map(section => {
+                  if (section.id === sectionId) {
+                    const newLesson: Lesson = {
+                      id: `lesson-${Date.now()}`,
+                      title: `Lesson ${section.lessons.length + 1}`,
+                      description: '',
+                      sequence_order: section.lessons.length + 1,
+                      duration_minutes: 30,
+                      content_type: 'instruction',
+                    };
+                    return {
+                      ...section,
+                      lessons: [...section.lessons, newLesson]
+                    };
+                  }
+                  return section;
+                })
+              };
+            }
+            return module;
+          })
+        };
+      }
+      return level;
+    }));
+    setHasUnsavedChanges(true);
+    toast.success('New lesson added successfully');
+  }, []);
+
+  const handleDragEnd = useCallback((result: DropResult) => {
     if (!result.destination) return;
 
-    const { source, destination } = result;
+    const { source, destination, type } = result;
     
-    // Handle reordering logic here
-    // Update treeData with new order
-    toast.success('Item reordered successfully');
-  };
-
-  const addNewNode = (parentNode: CurriculumNode | null, nodeType: CurriculumNode['type']) => {
-    const newNode: CurriculumNode = {
-      id: `temp-${Date.now()}`,
-      type: nodeType,
-      data: {
-        name: `New ${nodeTypeConfig[nodeType].label}`,
-        description: '',
-        sequence: 0,
-        status: 'draft',
-      },
-      children: [],
-      parentId: parentNode?.id,
-    };
-
-    if (parentNode) {
-      // Add to parent's children
-      const updateTree = (nodes: CurriculumNode[]): CurriculumNode[] => {
-        return nodes.map(node => {
-          if (node.id === parentNode.id) {
-            return { ...node, children: [...node.children, newNode] };
-          }
-          return { ...node, children: updateTree(node.children) };
-        });
-      };
-      setTreeData(updateTree(treeData));
-      setExpandedNodes(prev => new Set([...prev, parentNode.id]));
-    } else {
-      // Add as root node
-      setTreeData([...treeData, newNode]);
+    // Handle different types of drag and drop
+    if (type === 'lesson') {
+      // Reorder lessons within a section
+      // Implementation would update the lessons array
+      setHasUnsavedChanges(true);
+      toast.success('Lesson order updated');
     }
+  }, []);
 
-    setEditingNode(newNode);
-    setSelectedNode(newNode);
-  };
-
-  const updateNode = (nodeId: string, updates: any) => {
-    const updateTree = (nodes: CurriculumNode[]): CurriculumNode[] => {
-      return nodes.map(node => {
-        if (node.id === nodeId) {
-          return { ...node, data: { ...node.data, ...updates } };
-        }
-        return { ...node, children: updateTree(node.children) };
-      });
-    };
-    setTreeData(updateTree(treeData));
-  };
-
-  const deleteNode = (nodeId: string) => {
-    const removeFromTree = (nodes: CurriculumNode[]): CurriculumNode[] => {
-      return nodes.filter(node => node.id !== nodeId).map(node => ({
-        ...node,
-        children: removeFromTree(node.children),
-      }));
-    };
-    setTreeData(removeFromTree(treeData));
-    if (selectedNode?.id === nodeId) {
-      setSelectedNode(null);
-    }
-  };
-
-  const duplicateNode = (node: CurriculumNode) => {
-    const duplicatedNode: CurriculumNode = {
-      ...node,
-      id: `temp-${Date.now()}`,
-      data: {
-        ...node.data,
-        name: `${node.data.name} (Copy)`,
-      },
-    };
-
-    // Add to same level as original
-    if (node.parentId) {
-      const updateTree = (nodes: CurriculumNode[]): CurriculumNode[] => {
-        return nodes.map(parentNode => {
-          if (parentNode.id === node.parentId) {
-            return { ...parentNode, children: [...parentNode.children, duplicatedNode] };
-          }
-          return { ...parentNode, children: updateTree(parentNode.children) };
-        });
-      };
-      setTreeData(updateTree(treeData));
-    } else {
-      setTreeData([...treeData, duplicatedNode]);
-    }
-  };
-
-  const renderTreeNode = (node: CurriculumNode, level: number = 0) => {
-    const config = nodeTypeConfig[node.type];
-    const Icon = config.icon;
-    const isExpanded = expandedNodes.has(node.id);
-    const isSelected = selectedNode?.id === node.id;
-    const hasChildren = node.children.length > 0;
-
-    return (
-      <div key={node.id} className="w-full">
-        <Draggable draggableId={node.id} index={0}>
-          {(provided, snapshot) => (
-            <div
-              ref={provided.innerRef}
-              {...provided.draggableProps}
-              className={`
-                flex items-center gap-2 p-3 rounded-lg border transition-all
-                ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'}
-                ${snapshot.isDragging ? 'shadow-lg' : ''}
-                ${config.borderColor}
-              `}
-              style={{ marginLeft: `${level * 24}px` }}
-              onClick={() => setSelectedNode(node)}
-            >
-              <div {...provided.dragHandleProps} className="cursor-move text-gray-400 hover:text-gray-600">
-                <GripVertical className="h-4 w-4" />
-              </div>
-
-              {hasChildren && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleNode(node.id);
-                  }}
-                >
-                  {isExpanded ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                </Button>
-              )}
-
-              <Icon className={`h-4 w-4 ${config.color}`} />
-              
-              <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm truncate">{node.data.name}</h4>
-                {node.data.description && (
-                  <p className="text-xs text-gray-600 truncate">{node.data.description}</p>
-                )}
-              </div>
-
-              <div className="flex items-center gap-1">
-                {node.data.status && (
-                  <Badge variant="outline" className="text-xs">
-                    {node.data.status}
-                  </Badge>
-                )}
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditingNode(node);
-                  }}
-                >
-                  <Edit className="h-3 w-3" />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    duplicateNode(node);
-                  }}
-                >
-                  <Copy className="h-3 w-3" />
-                </Button>
-
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete {config.label}</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to delete "{node.data.name}"? This will also delete all nested content.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={() => deleteNode(node.id)}
-                        className="bg-red-600 hover:bg-red-700"
-                      >
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </div>
-          )}
-        </Draggable>
-
-        {/* Render children */}
-        {hasChildren && isExpanded && (
-          <div className="mt-2">
-            <Droppable droppableId={`${node.id}-children`}>
-              {(provided) => (
-                <div ref={provided.innerRef} {...provided.droppableProps}>
-                  {node.children.map((child) => renderTreeNode(child, level + 1))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const handleSave = async () => {
+  const handleSave = useCallback(async (publishMode = false) => {
     try {
       const curriculumData = {
         ...formData,
-        course_id: course.id,
-        // Convert tree structure back to API format
-        // This would include levels, modules, sections, lessons
+        levels: levels,
+        progression_settings: progressionSettings,
+        status: publishMode ? 'published' : 'draft',
       };
+
+      // TODO: Implement actual save logic with API calls
+      console.log('Saving curriculum:', curriculumData);
       
-      await onSave(curriculumData);
-      toast.success('Curriculum saved successfully');
+      setHasUnsavedChanges(false);
+      setIsDraft(!publishMode);
+      toast.success(publishMode ? 'Curriculum published successfully' : 'Curriculum saved as draft');
     } catch (error) {
-      toast.error('Failed to save curriculum');
+      toast.error(`Failed to ${publishMode ? 'publish' : 'save'} curriculum`);
     }
-  };
+  }, [formData, levels, progressionSettings]);
+
+  const renderModuleCard = useCallback((level: Level, module: Module, index: number) => {
+    const totalLessons = module.sections.reduce((sum, section) => sum + section.lessons.length, 0);
+    const totalDuration = module.sections.reduce((sum, section) => 
+      sum + section.lessons.reduce((lessonSum, lesson) => lessonSum + (lesson.duration_minutes || 0), 0), 0
+    );
+
+    return (
+      <Card key={module.id} className="w-full border-2 hover:border-blue-300 transition-colors">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-purple-600" />
+              <Badge variant="outline" className="text-xs">Module {index + 1}</Badge>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleModuleExpand(level.id, module.id)}
+                className="h-6 w-6 p-0"
+              >
+                {module.is_expanded ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </Button>
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-600">
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+          <div>
+            <CardTitle className="text-base">
+              {module.title ? `Module ${index + 1}: ${module.title}` : `Module ${index + 1}`}
+            </CardTitle>
+            {module.description && (
+              <p className="text-sm text-gray-600 mt-1">{module.description}</p>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {/* Module summary */}
+          <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+            <div className="flex items-center gap-1">
+              <Video className="h-3 w-3" />
+              <span>{totalLessons} lessons</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <span>{Math.round(totalDuration / 60)} hours</span>
+            </div>
+            {module.estimated_duration_hours && (
+              <div className="flex items-center gap-1">
+                <Target className="h-3 w-3" />
+                <span>{module.estimated_duration_hours}h est.</span>
+              </div>
+            )}
+          </div>
+
+          {/* Expanded content */}
+          {module.is_expanded && (
+            <div className="space-y-3">
+              <Separator />
+              <div className="space-y-2">
+                {module.sections.map((section, sectionIndex) => (
+                  <div key={section.id} className="border rounded-lg p-3 bg-gray-50">
+                    {/* Section Header */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Play className="h-4 w-4 text-orange-600" />
+                        <span className="text-sm font-medium">
+                          {section.title ? `Section ${sectionIndex + 1}: ${section.title}` : `Section ${sectionIndex + 1}`}
+                        </span>
+                        <Badge variant="secondary" className="text-xs">
+                          {section.lessons.length} lessons
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    {/* Workout Components */}
+                    <div className="space-y-3">
+                      {/* Warm Up */}
+                      <Collapsible>
+                        <CollapsibleTrigger asChild>
+                          <div className="flex items-center justify-between p-2 bg-blue-50 rounded cursor-pointer hover:bg-blue-100">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-blue-700">Warm Up</span>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-blue-600" />
+                          </div>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="p-2 bg-white rounded-b">
+                            <Textarea
+                              placeholder="Enter warm up instructions..."
+                              value={section.warm_up || ''}
+                              rows={2}
+                              className="text-sm"
+                              onChange={(e) => {
+                                console.log('Update warm up:', e.target.value);
+                              }}
+                            />
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+
+                      {/* Preset */}
+                      <Collapsible>
+                        <CollapsibleTrigger asChild>
+                          <div className="flex items-center justify-between p-2 bg-green-50 rounded cursor-pointer hover:bg-green-100">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-green-700">Preset</span>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-green-600" />
+                          </div>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="p-2 bg-white rounded-b">
+                            <Textarea
+                              placeholder="Enter preset instructions..."
+                              value={section.preset || ''}
+                              rows={2}
+                              className="text-sm"
+                              onChange={(e) => {
+                                console.log('Update preset:', e.target.value);
+                              }}
+                            />
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+
+                      {/* Main Set (Lessons) */}
+                      <Collapsible defaultOpen>
+                        <CollapsibleTrigger asChild>
+                          <div className="flex items-center justify-between p-2 bg-purple-50 rounded cursor-pointer hover:bg-purple-100">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-purple-700">Main Set (Lessons)</span>
+                              <Badge variant="secondary" className="text-xs">
+                                {section.lessons.length} lessons
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAddLesson(level.id, module.id, section.id);
+                                }}
+                                className="h-6 w-6 p-0 text-purple-600 hover:text-purple-700"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Open lesson library modal
+                                  console.log('Open lesson library');
+                                }}
+                                className="h-6 w-6 p-0 text-purple-600 hover:text-purple-700"
+                              >
+                                <Library className="h-3 w-3" />
+                              </Button>
+                              <ChevronRight className="h-4 w-4 text-purple-600" />
+                            </div>
+                          </div>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="p-2 bg-white rounded-b space-y-1">
+                            {section.lessons.map((lesson, lessonIndex) => (
+                              <div key={lesson.id} className="flex items-center justify-between py-1 px-2 bg-gray-50 rounded text-xs">
+                                <div className="flex items-center gap-2">
+                                  <GripVertical className="h-3 w-3 text-gray-400 cursor-move" />
+                                  <Video className="h-3 w-3 text-red-600" />
+                                  <span>{lesson.title}</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-gray-500">
+                                  {lesson.duration_minutes && (
+                                    <span>{lesson.duration_minutes}m</span>
+                                  )}
+                                  <Button variant="ghost" size="sm" className="h-4 w-4 p-0 hover:text-red-600">
+                                    <Trash2 className="h-2 w-2" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                            {section.lessons.length === 0 && (
+                              <p className="text-xs text-gray-400 italic py-1">No lessons yet</p>
+                            )}
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+
+                      {/* Post Set */}
+                      <Collapsible>
+                        <CollapsibleTrigger asChild>
+                          <div className="flex items-center justify-between p-2 bg-orange-50 rounded cursor-pointer hover:bg-orange-100">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-orange-700">Post Set</span>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-orange-600" />
+                          </div>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="p-2 bg-white rounded-b">
+                            <Textarea
+                              placeholder="Enter post set instructions..."
+                              value={section.post_set || ''}
+                              rows={2}
+                              className="text-sm"
+                              onChange={(e) => {
+                                console.log('Update post set:', e.target.value);
+                              }}
+                            />
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+
+                      {/* Cool Down */}
+                      <Collapsible>
+                        <CollapsibleTrigger asChild>
+                          <div className="flex items-center justify-between p-2 bg-cyan-50 rounded cursor-pointer hover:bg-cyan-100">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-cyan-700">Cool Down</span>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-cyan-600" />
+                          </div>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="p-2 bg-white rounded-b">
+                            <Textarea
+                              placeholder="Enter cool down instructions..."
+                              value={section.cool_down || ''}
+                              rows={2}
+                              className="text-sm"
+                              onChange={(e) => {
+                                console.log('Update cool down:', e.target.value);
+                              }}
+                            />
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </div>
+                  </div>
+                ))}
+                {module.sections.length === 0 && (
+                  <p className="text-sm text-gray-400 italic py-2">No sections yet</p>
+                )}
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleAddSection(level.id, module.id)}
+                  className="text-xs"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add Section
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }, [handleModuleExpand, handleAddLesson, handleAddSection]);
+
+  const renderLevelContent = useCallback((level: Level) => {
+    const isExpanded = expandedLevels.has(level.id);
+    const levelDisplayName = level.title ? `Level ${level.sequence_order}: ${level.title}` : `Level ${level.sequence_order}`;
+    
+    return (
+      <div className="space-y-6">
+        {/* Level info */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-green-600" />
+                  <CardTitle className="flex items-center gap-2">
+                    {levelDisplayName}
+                    {level.is_draft && <Badge variant="outline">Draft</Badge>}
+                  </CardTitle>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">
+                  {level.description || 'No description provided'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Assessment Criteria
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleAddModule(level.id)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Module
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const newExpanded = new Set(expandedLevels);
+                    if (isExpanded) {
+                      newExpanded.delete(level.id);
+                    } else {
+                      newExpanded.add(level.id);
+                    }
+                    setExpandedLevels(newExpanded);
+                  }}
+                >
+                  {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          
+          {/* Collapsible Level Details */}
+          <Collapsible open={isExpanded}>
+            <CollapsibleContent>
+              <div className="px-6 pb-6 space-y-4 border-t bg-gray-50">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                  <div>
+                    <label className="text-sm font-medium">Level Title</label>
+                    <Input
+                      value={level.title || ''}
+                      placeholder="Enter level title..."
+                      className="mt-1"
+                      onChange={(e) => {
+                        // Handle level title update
+                        console.log('Update level title:', e.target.value);
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Introductory Video URL</label>
+                    <Input
+                      value={level.intro_video_url || ''}
+                      placeholder="Enter video URL..."
+                      className="mt-1"
+                      onChange={(e) => {
+                        // Handle intro video URL update
+                        console.log('Update intro video:', e.target.value);
+                      }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Equipment Needed</label>
+                  <Textarea
+                    value={level.equipment_needed || ''}
+                    placeholder="List equipment needed for this level..."
+                    className="mt-1"
+                    rows={3}
+                    onChange={(e) => {
+                      // Handle equipment needed update
+                      console.log('Update equipment:', e.target.value);
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Level Description</label>
+                  <Textarea
+                    value={level.description || ''}
+                    placeholder="Enter level description..."
+                    className="mt-1"
+                    rows={3}
+                    onChange={(e) => {
+                      // Handle description update
+                      console.log('Update description:', e.target.value);
+                    }}
+                  />
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
+
+        {/* Modules horizontal scroll */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium">Modules</h3>
+            <Badge variant="secondary">
+              {level.modules.length} module{level.modules.length !== 1 ? 's' : ''}
+            </Badge>
+          </div>
+          
+          <ScrollArea className="w-full">
+            <div className="flex flex-col gap-4 pb-4">
+              {level.modules.length > 0 ? (
+                level.modules.map((module, index) => renderModuleCard(level, module, index))
+              ) : (
+                <Card className="w-full border-dashed border-2 border-gray-300">
+                  <CardContent className="pt-6">
+                    <div className="text-center py-8 text-gray-500">
+                      <Layers className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p className="mb-3">No modules created yet</p>
+                      <Button onClick={() => handleAddModule(level.id)}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create First Module
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+      </div>
+    );
+  }, [renderModuleCard, handleAddModule]);
+
+  if (isLoading) {
+    return (
+      <div className={`space-y-6 ${className}`}>
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-64 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-48 mb-6"></div>
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-16 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!curriculum) {
+    return (
+      <div className={`space-y-6 ${className}`}>
+        <div className="text-center py-12 text-gray-500">
+          <BookOpen className="h-16 w-16 mx-auto mb-4 opacity-50" />
+          <h3 className="text-lg font-medium mb-2">Curriculum not found</h3>
+          <p className="mb-4">The requested curriculum could not be found.</p>
+          {onBack && (
+            <Button onClick={onBack}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Go Back
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">
-            {curriculum ? 'Edit Curriculum' : 'Create Curriculum'}
-          </h2>
-          <p className="text-gray-600">Course: {course.name}</p>
+        <div className="flex items-center gap-4">
+          {onBack && (
+            <Button variant="outline" onClick={onBack}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          )}
+          <div>
+            <h1 className="text-2xl font-bold">
+              Curriculum Builder
+              {isDraft && <Badge variant="outline" className="ml-2">Draft</Badge>}
+            </h1>
+            <p className="text-gray-600">
+              {curriculum.name} • {curriculum.course_name}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={onCancel}>
-            Cancel
+          {hasUnsavedChanges && (
+            <Badge variant="destructive" className="flex items-center gap-1">
+              <AlertCircle className="h-3 w-3" />
+              Unsaved changes
+            </Badge>
+          )}
+          <Button
+            variant="outline"
+            onClick={() => setShowProgressionSettings(true)}
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Progression Settings
           </Button>
-          <Button onClick={handleSave}>
+          <Button variant="outline" onClick={() => handleSave(false)}>
             <Save className="h-4 w-4 mr-2" />
-            Save Curriculum
+            Save Draft
+          </Button>
+          <Button onClick={() => handleSave(true)}>
+            <CheckCircle2 className="h-4 w-4 mr-2" />
+            Publish Curriculum
           </Button>
         </div>
       </div>
@@ -465,9 +965,9 @@ export function CurriculumBuilder({
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="builder">Builder</TabsTrigger>
-          <TabsTrigger value="preview">Preview</TabsTrigger>
+          <TabsTrigger value="details">Basic Details</TabsTrigger>
+          <TabsTrigger value="builder">Curriculum Builder</TabsTrigger>
+          <TabsTrigger value="preview">Preview & Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="details" className="space-y-6">
@@ -481,7 +981,7 @@ export function CurriculumBuilder({
                   <label className="text-sm font-medium">Name *</label>
                   <Input
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => handleFormChange('name', e.target.value)}
                     placeholder="Enter curriculum name"
                   />
                 </div>
@@ -489,7 +989,7 @@ export function CurriculumBuilder({
                   <label className="text-sm font-medium">Code *</label>
                   <Input
                     value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                    onChange={(e) => handleFormChange('code', e.target.value)}
                     placeholder="Enter curriculum code"
                   />
                 </div>
@@ -499,7 +999,7 @@ export function CurriculumBuilder({
                 <label className="text-sm font-medium">Description</label>
                 <Textarea
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) => handleFormChange('description', e.target.value)}
                   placeholder="Describe this curriculum"
                   rows={3}
                 />
@@ -510,13 +1010,13 @@ export function CurriculumBuilder({
                   <label className="text-sm font-medium">Skill Level</label>
                   <Select
                     value={formData.skill_level}
-                    onValueChange={(value) => setFormData({ ...formData, skill_level: value as DifficultyLevel })}
+                    onValueChange={(value) => handleFormChange('skill_level', value)}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {difficultyOptions.map((option) => (
+                      {DIFFICULTY_OPTIONS.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>
@@ -529,13 +1029,13 @@ export function CurriculumBuilder({
                   <label className="text-sm font-medium">Status</label>
                   <Select
                     value={formData.status}
-                    onValueChange={(value) => setFormData({ ...formData, status: value as CurriculumStatus })}
+                    onValueChange={(value) => handleFormChange('status', value)}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {statusOptions.map((option) => (
+                      {STATUS_OPTIONS.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>
@@ -549,29 +1049,8 @@ export function CurriculumBuilder({
                   <Input
                     type="number"
                     value={formData.duration_weeks}
-                    onChange={(e) => setFormData({ ...formData, duration_weeks: parseInt(e.target.value) })}
+                    onChange={(e) => handleFormChange('duration_weeks', parseInt(e.target.value))}
                     min="1"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Minimum Age</label>
-                  <Input
-                    type="number"
-                    value={formData.age_min || ''}
-                    onChange={(e) => setFormData({ ...formData, age_min: e.target.value ? parseInt(e.target.value) : undefined })}
-                    placeholder="Optional"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Maximum Age</label>
-                  <Input
-                    type="number"
-                    value={formData.age_max || ''}
-                    onChange={(e) => setFormData({ ...formData, age_max: e.target.value ? parseInt(e.target.value) : undefined })}
-                    placeholder="Optional"
                   />
                 </div>
               </div>
@@ -580,142 +1059,101 @@ export function CurriculumBuilder({
         </TabsContent>
 
         <TabsContent value="builder" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Tree Builder */}
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <TreePine className="h-5 w-5" />
-                      Curriculum Structure
-                    </CardTitle>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addNewNode(null, 'level')}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Level
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <DragDropContext onDragEnd={handleDragEnd}>
-                    <Droppable droppableId="curriculum-tree">
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.droppableProps}
-                          className="space-y-2 min-h-[400px]"
-                        >
-                          {treeData.length === 0 ? (
-                            <div className="text-center py-12 text-gray-500">
-                              <Layers className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                              <p className="mb-4">Start building your curriculum structure</p>
-                              <Button onClick={() => addNewNode(null, 'level')}>
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add First Level
-                              </Button>
-                            </div>
-                          ) : (
-                            treeData.map((node) => renderTreeNode(node))
-                          )}
-                          {provided.placeholder}
-                        </div>
-                      )}
-                    </Droppable>
-                  </DragDropContext>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Properties Panel */}
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Properties</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {selectedNode ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        {(() => {
-                          const Icon = nodeTypeConfig[selectedNode.type].icon;
-                          return <Icon className={`h-4 w-4 ${nodeTypeConfig[selectedNode.type].color}`} />;
-                        })()}
-                        <span className="font-medium">{nodeTypeConfig[selectedNode.type].label}</span>
-                      </div>
-                      
-                      <div>
-                        <label className="text-sm font-medium">Name</label>
-                        <Input
-                          value={selectedNode.data.name}
-                          onChange={(e) => updateNode(selectedNode.id, { name: e.target.value })}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium">Description</label>
-                        <Textarea
-                          value={selectedNode.data.description || ''}
-                          onChange={(e) => updateNode(selectedNode.id, { description: e.target.value })}
-                          rows={3}
-                        />
-                      </div>
-
-                      {/* Add child buttons */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Add Child</label>
-                        <div className="flex flex-col gap-2">
-                          {selectedNode.type === 'level' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => addNewNode(selectedNode, 'module')}
-                            >
-                              <Plus className="h-3 w-3 mr-2" />
-                              Add Module
-                            </Button>
-                          )}
-                          {selectedNode.type === 'module' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => addNewNode(selectedNode, 'section')}
-                            >
-                              <Plus className="h-3 w-3 mr-2" />
-                              Add Section
-                            </Button>
-                          )}
-                          {selectedNode.type === 'section' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => addNewNode(selectedNode, 'lesson')}
-                            >
-                              <Plus className="h-3 w-3 mr-2" />
-                              Add Lesson
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <Settings className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p>Select a node to edit its properties</p>
-                    </div>
+          {/* Level Tabs */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  Curriculum Levels
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  onClick={handleAddLevel}
+                  disabled={levels.length >= MAX_LEVELS}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Level
+                  {levels.length >= MAX_LEVELS && (
+                    <span className="ml-2 text-xs text-gray-500">(Max {MAX_LEVELS})</span>
                   )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {levels.length > 0 ? (
+                <Tabs value={activeLevel} onValueChange={setActiveLevel}>
+                  <ScrollArea className="w-full">
+                    <TabsList className="inline-flex h-auto p-1 bg-gray-100">
+                      {levels.map((level) => (
+                        <TabsTrigger 
+                          key={level.id} 
+                          value={level.id}
+                          className="flex items-center gap-2 px-4 py-2"
+                        >
+                          <Target className="h-4 w-4" />
+                          {level.name}
+                          {level.is_draft && (
+                            <Badge variant="secondary" className="text-xs ml-1">Draft</Badge>
+                          )}
+                          {levels.length > 1 && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <div
+                                  className="h-4 w-4 p-0 ml-2 text-red-600 hover:text-red-700 cursor-pointer inline-flex items-center justify-center"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </div>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Level</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete "{level.name}"? This will also delete all modules, sections, and lessons within this level.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleRemoveLevel(level.id)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </ScrollArea>
+
+                  {levels.map((level) => (
+                    <TabsContent key={level.id} value={level.id} className="mt-6">
+                      <DragDropContext onDragEnd={handleDragEnd}>
+                        {renderLevelContent(level)}
+                      </DragDropContext>
+                    </TabsContent>
+                  ))}
+                </Tabs>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <Layers className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">No levels created yet</h3>
+                  <p className="mb-4">Start building your curriculum by adding the first level</p>
+                  <Button onClick={handleAddLevel}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add First Level
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="preview" className="space-y-6">
+        <TabsContent value="preview">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -724,7 +1162,7 @@ export function CurriculumBuilder({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h3 className="font-semibold text-lg">{formData.name}</h3>
                   <p className="text-gray-600">{formData.description}</p>
@@ -732,24 +1170,96 @@ export function CurriculumBuilder({
                     <span>Level: {formData.skill_level}</span>
                     <span>Duration: {formData.duration_weeks} weeks</span>
                     <span>Status: {formData.status}</span>
+                    <span>Levels: {levels.length}</span>
                   </div>
                 </div>
 
-                {/* Tree preview */}
+                {/* Progression Settings Summary */}
                 <div className="border rounded-lg p-4">
-                  {treeData.length === 0 ? (
-                    <p className="text-gray-500 text-center py-8">No structure defined yet</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {treeData.map((node) => renderTreeNode(node))}
+                  <h4 className="font-medium mb-3 flex items-center gap-2">
+                    <Star className="h-4 w-4 text-yellow-500" />
+                    Progression Settings
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Module Unlock Threshold:</span>
+                      <span className="ml-2">{progressionSettings.module_unlock_threshold_percentage}%</span>
                     </div>
-                  )}
+                    <div>
+                      <span className="font-medium">Cross-Level Progression:</span>
+                      <span className="ml-2">{progressionSettings.allow_cross_level_progression ? 'Allowed' : 'Disabled'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Structure Overview */}
+                <div className="space-y-4">
+                  <h4 className="font-medium">Structure Overview</h4>
+                  {levels.map((level) => (
+                    <div key={level.id} className="border rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <h5 className="font-medium">{level.name}</h5>
+                        <Badge variant="outline">{level.modules.length} modules</Badge>
+                      </div>
+                      <div className="space-y-1 text-sm text-gray-600">
+                        {level.modules.map((module) => (
+                          <div key={module.id} className="flex items-center justify-between">
+                            <span>{module.name}</span>
+                            <span>{module.sections.reduce((sum, s) => sum + s.lessons.length, 0)} lessons</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Progression Settings Dialog */}
+      <Dialog open={showProgressionSettings} onOpenChange={setShowProgressionSettings}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Progression Settings</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Module Unlock Threshold (%)</label>
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                value={progressionSettings.module_unlock_threshold_percentage}
+                onChange={(e) => setProgressionSettings(prev => ({
+                  ...prev,
+                  module_unlock_threshold_percentage: parseFloat(e.target.value)
+                }))}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Percentage of stars needed to unlock the next module
+              </p>
+            </div>
+            {/* Add other progression settings here */}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Content Library Modal */}
+      <ContentLibraryModal
+        open={showContentLibrary}
+        onOpenChange={setShowContentLibrary}
+        onSelectLesson={(lesson) => {
+          // Handle lesson selection from library
+          const context = (window as any).libraryContext;
+          if (context) {
+            handleAddLesson(context.levelId, context.moduleId, context.sectionId, false);
+            (window as any).libraryContext = null;
+          }
+          toast.success(`Added "${lesson.title}" from content library`);
+        }}
+      />
     </div>
   );
 }

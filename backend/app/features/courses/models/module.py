@@ -41,6 +41,12 @@ class Module(BaseModel):
         comment="Module name (e.g., Module 1, Floating Techniques, Safety Skills)",
     )
     
+    title: Mapped[Optional[str]] = mapped_column(
+        String(255),
+        nullable=True,
+        comment="Custom title for the module (displays as 'Module 1: Title Name')",
+    )
+    
     description: Mapped[Optional[str]] = mapped_column(
         Text,
         nullable=True,
@@ -113,8 +119,15 @@ class Module(BaseModel):
     
     # Relationships
     # Note: Relationships will be defined when related models are created
-    # level = relationship("Level", back_populates="modules")
-    # sections = relationship("Section", back_populates="module", cascade="all, delete-orphan")
+    level = relationship("Level", back_populates="modules")
+    sections = relationship("Section", back_populates="module", cascade="all, delete-orphan")
+    
+    # Progression system relationships (temporarily disabled due to circular import)
+    # student_unlocks = relationship(
+    #     "StudentModuleUnlock",
+    #     back_populates="module",
+    #     cascade="all, delete-orphan"
+    # )
     
     # Indexes for performance
     __table_args__ = (

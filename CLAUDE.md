@@ -5,13 +5,14 @@ Academy Management System with program-centric architecture, role-based access c
 
 **📖 For detailed setup instructions, see: [`docs/setup/PROJECT_SETUP.md`](docs/setup/PROJECT_SETUP.md)**
 
-## Current Status (2025-07-21)
+## Current Status (2025-07-23)
 
 ### ✅ **Fully Implemented Features**
 - **Database Schema**: PostgreSQL with program-centric design ✅ **FIXED (2025-07-21)**
 - **Authentication System**: JWT with 4-role system (Super Admin, Program Admin, Program Coordinator, Instructor) ✅ **TESTED**
 - **Program Context Architecture**: HTTP header-based filtering with automatic security enforcement
 - **Course Management**: Full CRUD with program context integration
+- **🆕 Curriculum Management**: Complete curriculum-centric management system ✅ **IMPLEMENTED (2025-07-23)**
 - **Facility Management**: Complete facility management system
 - **User Management**: Role-based program assignments ✅ **VERIFIED**
 - **Teams Management**: Program-specific team member management with role-based access control
@@ -35,7 +36,15 @@ Academy Management System with program-centric architecture, role-based access c
 
 **📖 For complete API reference, see: [`docs/api/API_ENDPOINTS.md`](docs/api/API_ENDPOINTS.md)**
 
-### 🔧 **Recent Fixes (2025-07-21)**
+### 🔧 **Recent Updates (2025-07-23)**
+- **🆕 Curriculum Management Overhaul**: Complete restructuring from course-centric to curriculum-centric management
+- **🆕 Unified Tabbed Interface**: Edit pages now use Details + Builder tabs instead of separate pages
+- **🆕 Default Curriculum System**: Curricula can be set as default for age groups with conflict resolution
+- **🆕 Course-Grouped Display**: Curricula organized by course in collapsible sections with advanced search
+- **🆕 Age Range Management**: JSON-based flexible age group configuration and filtering
+- **🆕 Component Architecture Cleanup**: Renamed and restructured CurriculumBuilder component
+
+### 🔧 **Previous Fixes (2025-07-21)**
 - **Database Migration Issues**: Fixed PostgreSQL ENUM type mismatches and explicit casting problems
 - **SQLAlchemy Relationships**: Resolved circular import issues with CourseEnrollment and UserProgramAssignment models
 - **Program Status Enum**: Fixed mismatch between `programstatus` (lowercase) and `curriculumstatus` (uppercase) enum types
@@ -43,11 +52,11 @@ Academy Management System with program-centric architecture, role-based access c
 - **API Error Resolution**: Resolved 500 Internal Server Error issues on Academy Admin pages
 - **Data Initialization**: Successfully created default admin users and academy programs
 - **Code Cleanup**: Removed temporary files, Python cache files, and setup scripts
-- **🆕 API Client Migration**: Migrated all frontend API calls from legacy apiClient to httpClient with program context headers
-- **🆕 Endpoint Standardization**: Replaced all hardcoded API paths with centralized API_ENDPOINTS constants
-- **🆕 Response Format Unification**: Standardized all API responses to use `{success, data, error}` format
-- **🆕 Program Context Standardization**: All pages now auto-refresh on program context switching
-- **🆕 Nigerian Naira (NGN)**: Standardized all pricing to use NGN currency throughout the system
+- **API Client Migration**: Migrated all frontend API calls from legacy apiClient to httpClient with program context headers
+- **Endpoint Standardization**: Replaced all hardcoded API paths with centralized API_ENDPOINTS constants
+- **Response Format Unification**: Standardized all API responses to use `{success, data, error}` format
+- **Program Context Standardization**: All pages now auto-refresh on program context switching
+- **Nigerian Naira (NGN)**: Standardized all pricing to use NGN currency throughout the system
 
 ### 🚨 **Known Issues Resolved**
 - ✅ Programs API returning 500 errors → **FIXED**: Enum type mapping corrected
@@ -61,6 +70,7 @@ Academy Management System with program-centric architecture, role-based access c
 ### 📄 **Current Page Status**
 **✅ Program Context Compliant Pages** (Auto-refresh on program switching):
 - **Courses Page**: Perfect implementation with `useCourses`, `useCurricula` hooks
+- **🆕 Curriculum Management**: Complete curriculum-centric system with tabbed interface
 - **Facilities Page**: Recently fixed - uses `useFacilities` hook with program context  
 - **Students & Parents Page**: Uses `useStudents`, `useParents` hooks with program context
 - **Teams, Payments, Scheduling Pages**: Use proper component delegation
@@ -68,6 +78,17 @@ Academy Management System with program-centric architecture, role-based access c
 **✅ Academy Admin Pages** (Correctly bypass program context):
 - **Users Management** (`/admin/users/*`): Super Admin only, uses bypass headers
 - **Academy Programs** (`/admin/academy/*`): Super Admin only, cross-program access
+
+### 🎓 **Curriculum Management System (NEW)**
+- **Full-Page Workflows**: Moved from modal-based to dedicated page interfaces
+- **Course-Grouped Display**: Curricula organized by course in collapsible sections
+- **Unified Edit Interface**: Single edit page with Details and Builder tabs
+- **Default Management**: Set curricula as default for age groups with automatic conflict resolution
+- **Advanced Search**: Filter by course, difficulty, status, age groups, and default status
+- **Age Range Configuration**: JSON-based flexible age group management
+- **Program Context Security**: All curriculum operations filtered by program assignments
+
+**📖 For complete curriculum documentation, see: [`docs/features/curriculum/README.md`](docs/features/curriculum/README.md)**
 
 ## Development Commands
 
@@ -179,6 +200,8 @@ Every new feature page MUST follow:
 - `docs/api/API_ENDPOINTS.md` - Complete API reference
 - `docs/development/` - Development workflow and standards
 - `docs/features/` - Feature-specific documentation
+  - **[`docs/features/curriculum/README.md`](docs/features/curriculum/README.md)** - Complete curriculum management system documentation
+  - **[`docs/features/curriculum/CURRICULUM_PROGRESSION_SPECIFICATION.md`](docs/features/curriculum/CURRICULUM_PROGRESSION_SPECIFICATION.md)** - Star-based progression and assessment specification
 
 ## Security & Compliance
 
@@ -393,13 +416,22 @@ academy-admin/                    # Main repository
 - API changes: Read `docs/api/API_ENDPOINTS.md`  
 - Architecture questions: Read `docs/architecture/PROGRAM_CONTEXT_ARCHITECTURE.md`
 - Setup issues: Read `docs/setup/PROJECT_SETUP.md`
+- **Curriculum work**: Read `docs/features/curriculum/README.md` for complete curriculum system documentation
+- **Progression systems**: Read `docs/features/curriculum/CURRICULUM_PROGRESSION_SPECIFICATION.md` for star-based assessment details
 - Feature specifications: Read `docs/features/[feature-name]/README.md`
 
 **Remember: Documentation is your friend. When in doubt, check the docs first!**
 
-## 🧹 **Project Status & Cleanup (2025-07-19)**
+## 🧹 **Project Status & Cleanup (2025-07-23)**
 
-### ✅ **Recently Cleaned Up**
+### ✅ **Recently Completed (2025-07-23)**
+- **🆕 Curriculum System Restructuring**: Complete migration from course-centric to curriculum-centric management
+- **🆕 Documentation Organization**: Moved curriculum docs to proper `docs/features/curriculum/` structure
+- **🆕 Component Architecture**: Renamed `EnhancedCurriculumBuilder` to `CurriculumBuilder` with proper integration
+- **🆕 Tabbed Interface Implementation**: Unified Details + Builder tabs in edit workflows
+- **🆕 Default Management System**: Age group-based curriculum defaults with conflict resolution
+
+### ✅ **Previous Cleanup (2025-07-19)**
 - **Removed temporary files**: `backend.log`, `frontend.log`, build caches
 - **Consolidated documentation**: Merged `git-subtree-workflow.md` into `PROJECT_STRUCTURE.md`
 - **Removed backup files**: `CLAUDE_BACKUP.md` no longer needed
@@ -410,4 +442,4 @@ academy-admin/                    # Main repository
 - **Main Repository**: `RemmySpicy/academy-admin` (development)
 - **Mobile Repositories**: `RemmySpicy/academy-instructors-app`, `RemmySpicy/academy-students-app` (deployment)
 - **Shared Resources**: Unified across all applications
-- **Documentation**: Consolidated and up-to-date
+- **Documentation**: Consolidated, organized, and up-to-date with proper feature separation

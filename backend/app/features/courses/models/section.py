@@ -41,10 +41,41 @@ class Section(BaseModel):
         comment="Section name (e.g., Introduction to Frog Kick, Water Safety Basics)",
     )
     
+    title: Mapped[Optional[str]] = mapped_column(
+        String(255),
+        nullable=True,
+        comment="Custom title for the section (displays as 'Section 1: Title Name')",
+    )
+    
     description: Mapped[Optional[str]] = mapped_column(
         Text,
         nullable=True,
         comment="Detailed section description",
+    )
+    
+    # Workout Components
+    warm_up: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Warm up instructions for this section",
+    )
+    
+    preset: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Preset instructions for this section",
+    )
+    
+    post_set: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Post set instructions for this section",
+    )
+    
+    cool_down: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Cool down instructions for this section",
     )
     
     # Sequencing and Progression
@@ -119,8 +150,8 @@ class Section(BaseModel):
     
     # Relationships
     # Note: Relationships will be defined when related models are created
-    # module = relationship("Module", back_populates="sections")
-    # lessons = relationship("Lesson", back_populates="section", cascade="all, delete-orphan")
+    module = relationship("Module", back_populates="sections")
+    lessons = relationship("Lesson", back_populates="section", cascade="all, delete-orphan")
     
     # Indexes for performance
     __table_args__ = (
