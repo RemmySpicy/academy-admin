@@ -57,7 +57,8 @@
       "Bash(npm run typecheck:*)",
       "Bash(npm run:*)",
       "Bash(awk:*)",
-      "Bash(alembic upgrade:*)"
+      "Bash(alembic upgrade:*)",
+      "Bash(git restore:*)"
     ],
     "deny": []
   }

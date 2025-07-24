@@ -17,7 +17,8 @@ import {
   Building,
   ChevronLeft,
   ChevronRight,
-  LogOut
+  LogOut,
+  TestTube
 } from 'lucide-react';
 import { useAuth } from '@/features/authentication/hooks';
 import { useProgramContextHooks } from '@/store';
@@ -94,10 +95,15 @@ const navigationSections: NavSection[] = [
     ]
   },
   
-  // Settings and Logout - Available to all roles
+  // Settings and Test - Available to all roles
   {
     title: '',
     items: [
+      {
+        title: 'Test Page',
+        href: '/admin/test',
+        icon: TestTube
+      },
       {
         title: 'Settings',
         href: '/admin/settings',

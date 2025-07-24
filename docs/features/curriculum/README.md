@@ -26,7 +26,7 @@ Program
         │       └── Sections (workout/lesson groups with custom titles)
         │           ├── Title: "Section 1: Pool Entry Techniques"
         │           ├── Warm Up Instructions
-        │           ├── Preset Instructions  
+        │           ├── Pre Set Instructions  
         │           ├── Main Set (Lessons - individual content)
         │           ├── Post Set Instructions
         │           └── Cool Down Instructions
@@ -58,7 +58,7 @@ Program
 
 #### **4. Structured Workout Components**
 - **Warm Up** (Blue): Text input for warm-up instructions
-- **Preset** (Green): Text input for preparation instructions  
+- **Pre Set** (Green): Text input for preparation instructions  
 - **Main Set** (Purple): Lesson management with create/library access
 - **Post Set** (Orange): Text input for post-workout instructions
 - **Cool Down** (Cyan): Text input for cool-down instructions
@@ -154,7 +154,7 @@ Each section within a module is organized into five distinct workout phases:
 - **Usage**: Instructions for getting students ready for main activities
 - **Example**: "5 minutes light jogging, arm circles, dynamic stretching"
 
-#### **2. Preset** (Green Theme)  
+#### **2. Pre Set** (Green Theme)  
 - **Purpose**: Specific preparation for main set activities
 - **Interface**: Collapsible text input with green color coding
 - **Usage**: Technical preparation or equipment setup instructions
@@ -196,7 +196,7 @@ Each section within a module is organized into five distinct workout phases:
 - ✅ Default curriculum management with conflict resolution
 - ✅ Advanced search and filtering system
 - ✅ Custom title system for Levels, Modules, and Sections
-- ✅ Structured workout components (Warm Up, Preset, Main Set, Post Set, Cool Down)
+- ✅ Structured workout components (Warm Up, Pre Set, Main Set, Post Set, Cool Down)
 - ✅ Level details with intro video URL and equipment needed fields
 - ✅ Vertical module layout for improved content organization
 - ✅ Color-coded collapsible workout interface

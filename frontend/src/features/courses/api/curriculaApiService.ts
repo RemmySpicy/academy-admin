@@ -13,6 +13,7 @@ export interface Curriculum {
   course_id: string;
   name: string;
   description?: string;
+  curriculum_code?: string;
   duration_hours?: number;
   age_ranges: string[];
   is_default_for_age_groups: string[];
@@ -37,6 +38,7 @@ export interface CurriculumCreate {
   course_id: string;
   name: string;
   description?: string;
+  curriculum_code?: string;
   duration_hours?: number;
   age_ranges: string[];
   is_default_for_age_groups?: string[];
@@ -50,6 +52,7 @@ export interface CurriculumCreate {
 export interface CurriculumUpdate {
   name?: string;
   description?: string;
+  curriculum_code?: string;
   duration_hours?: number;
   age_ranges?: string[];
   is_default_for_age_groups?: string[];
@@ -383,6 +386,123 @@ export const curriculaApiService = {
     }
     
     return response.data!;
+  },
+
+  /**
+   * Level Management Methods
+   */
+
+  /**
+   * Get levels for a curriculum
+   */
+  getLevelsByCurriculum: async (curriculumId: string): Promise<any[]> => {
+    const response = await httpClient.get<any>(
+      `${API_ENDPOINTS.courses.levels.list}/by-curriculum/${curriculumId}`
+    );
+    
+    if (response.error) {
+      throw new Error(response.error);
+    }
+    
+    return response.data?.items || [];
+  },
+
+  /**
+   * Create a new level
+   */
+  createLevel: async (data: any): Promise<any> => {
+    const response = await httpClient.post<any>(
+      API_ENDPOINTS.courses.levels.create,
+      data
+    );
+    
+    if (response.error) {
+      throw new Error(response.error);
+    }
+    
+    return response.data!;
+  },
+
+  /**
+   * Update level information
+   */
+  updateLevel: async (id: string, data: any): Promise<any> => {
+    const response = await httpClient.put<any>(
+      API_ENDPOINTS.courses.levels.update(id),
+      data
+    );
+    
+    if (response.error) {
+      throw new Error(response.error);
+    }
+    
+    return response.data!;
+  },
+
+  /**
+   * Delete a level
+   */
+  deleteLevel: async (id: string): Promise<void> => {
+    const response = await httpClient.delete(
+      API_ENDPOINTS.courses.levels.delete(id)
+    );
+    
+    if (response.error) {
+      throw new Error(response.error);
+    }
+  },
+
+  /**
+   * Bulk save curriculum structure (levels, modules, sections, lessons)
+   */
+  saveCurriculumStructure: async (curriculumId: string, structure: {
+    levels: any[];
+    progressionSettings: any;
+  }): Promise<any> => {
+    // For now, we'll save levels individually
+    // TODO: Implement bulk structure save endpoint
+    const savedLevels = [];
+    
+    for (const level of structure.levels) {
+      try {
+        let savedLevel;
+        if (level.id && level.id.startsWith('level-')) {
+          // This is a new level (has temporary ID)
+          const levelData = {
+            curriculum_id: curriculumId,
+            name: level.name,
+            title: level.title,
+            description: level.description,
+            sequence_order: level.sequence_order,
+            equipment_needed: level.equipment_needed,
+            learning_objectives: level.learning_objectives,
+            intro_video_url: level.intro_video_url,
+          };
+          savedLevel = await curriculaApiService.createLevel(levelData);
+        } else if (level.id) {
+          // This is an existing level - update it
+          const levelData = {
+            name: level.name,
+            title: level.title,
+            description: level.description,
+            sequence_order: level.sequence_order,
+            equipment_needed: level.equipment_needed,
+            learning_objectives: level.learning_objectives,
+            intro_video_url: level.intro_video_url,
+          };
+          savedLevel = await curriculaApiService.updateLevel(level.id, levelData);
+        }
+        
+        if (savedLevel) {
+          savedLevels.push(savedLevel);
+        }
+      } catch (error) {
+        console.error('Error saving level:', level.name, error);
+        throw error;
+      }
+    }
+    
+    return { levels: savedLevels };
   },
 };
 

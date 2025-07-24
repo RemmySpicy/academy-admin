@@ -160,18 +160,6 @@ export function CurriculumCard({
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          
-          {/* Primary Action Buttons */}
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleViewDetails} className="flex-1">
-              <Eye className="h-3 w-3 mr-1" />
-              View Details
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleEdit} className="flex-1">
-              <Edit className="h-3 w-3 mr-1" />
-              Edit
-            </Button>
-          </div>
         </CardHeader>
         
         <CardContent className="pt-0 space-y-3">
@@ -234,6 +222,18 @@ export function CurriculumCard({
               ))}
             </div>
           )}
+
+          {/* Primary Action Buttons */}
+          <div className="flex gap-2 pt-2 border-t border-gray-100">
+            <Button variant="outline" size="sm" onClick={handleViewDetails} className="flex-1">
+              <Eye className="h-3 w-3 mr-1" />
+              View Details
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleEdit} className="flex-1">
+              <Edit className="h-3 w-3 mr-1" />
+              Edit
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

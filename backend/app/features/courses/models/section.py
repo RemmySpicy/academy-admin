@@ -60,10 +60,10 @@ class Section(BaseModel):
         comment="Warm up instructions for this section",
     )
     
-    preset: Mapped[Optional[str]] = mapped_column(
+    pre_set: Mapped[Optional[str]] = mapped_column(
         Text,
         nullable=True,
-        comment="Preset instructions for this section",
+        comment="Pre set instructions for this section",
     )
     
     post_set: Mapped[Optional[str]] = mapped_column(

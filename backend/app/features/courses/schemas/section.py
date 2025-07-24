@@ -30,7 +30,7 @@ class SectionBase(BaseModel):
     preparation_notes: Optional[str] = Field(None, description="Preparation notes for instructors")
     # Workout Components
     warm_up: Optional[str] = Field(None, description="Warm up instructions for this section")
-    preset: Optional[str] = Field(None, description="Preset instructions for this section")
+    pre_set: Optional[str] = Field(None, description="Pre set instructions for this section")
     post_set: Optional[str] = Field(None, description="Post set instructions for this section")
     cool_down: Optional[str] = Field(None, description="Cool down instructions for this section")
     status: CurriculumStatusEnum = Field(default=CurriculumStatusEnum.DRAFT, description="Section status")
@@ -69,7 +69,7 @@ class SectionUpdate(BaseModel):
     preparation_notes: Optional[str] = Field(None)
     # Workout Components
     warm_up: Optional[str] = Field(None)
-    preset: Optional[str] = Field(None)
+    pre_set: Optional[str] = Field(None)
     post_set: Optional[str] = Field(None)
     cool_down: Optional[str] = Field(None)
     status: Optional[CurriculumStatusEnum] = Field(None)

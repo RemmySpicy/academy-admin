@@ -302,3 +302,80 @@ export const useDefaultCurriculaByCourse = (courseId: string) => {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
+
+// Level Management Hooks
+export const useLevelsByCurriculum = (curriculumId: string) => {
+  return useQuery({
+    queryKey: ['levels-by-curriculum', curriculumId],
+    queryFn: () => curriculaApiService.getLevelsByCurriculum(curriculumId),
+    enabled: !!curriculumId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+export const useCreateLevel = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: any) => curriculaApiService.createLevel(data),
+    onSuccess: (newLevel) => {
+      queryClient.invalidateQueries({ queryKey: ['levels-by-curriculum', newLevel.curriculum_id] });
+      queryClient.invalidateQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULUM_TREE, newLevel.curriculum_id] });
+      toast.success('Level created successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to create level: ${error.message}`);
+    },
+  });
+};
+
+export const useUpdateLevel = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => 
+      curriculaApiService.updateLevel(id, data),
+    onSuccess: (updatedLevel) => {
+      queryClient.invalidateQueries({ queryKey: ['levels-by-curriculum', updatedLevel.curriculum_id] });
+      queryClient.invalidateQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULUM_TREE, updatedLevel.curriculum_id] });
+      toast.success('Level updated successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update level: ${error.message}`);
+    },
+  });
+};
+
+export const useDeleteLevel = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: string) => curriculaApiService.deleteLevel(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['levels-by-curriculum'] });
+      queryClient.invalidateQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULUM_TREE] });
+      toast.success('Level deleted successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to delete level: ${error.message}`);
+    },
+  });
+};
+
+export const useSaveCurriculumStructure = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ curriculumId, structure }: { curriculumId: string; structure: any }) => 
+      curriculaApiService.saveCurriculumStructure(curriculumId, structure),
+    onSuccess: (result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['levels-by-curriculum', variables.curriculumId] });
+      queryClient.invalidateQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULUM, variables.curriculumId] });
+      queryClient.invalidateQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULUM_TREE, variables.curriculumId] });
+      toast.success('Curriculum structure saved successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to save curriculum structure: ${error.message}`);
+    },
+  });
+};

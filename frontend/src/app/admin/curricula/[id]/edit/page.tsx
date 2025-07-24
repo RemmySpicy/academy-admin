@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,16 +17,36 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Save, Eye, Award, Settings } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { ArrowLeft, Save, Eye, Award, Settings, Plus, Target, Trash2, ChevronDown, ChevronRight, Layers, AlertCircle, GripVertical, Library, FileText, Video, Clock, Play, Star, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { useCourse } from '@/features/courses/hooks/useCourses';
-import { useCurriculum, useUpdateCurriculum } from '@/features/courses/hooks/useCurricula';
+import { useCurriculum, useUpdateCurriculum, useSaveCurriculumStructure, useLevelsByCurriculum } from '@/features/courses/hooks/useCurricula';
 import { CurriculumBuilder } from '@/features/courses/components/CurriculumBuilder';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { toast } from 'sonner';
 
 interface CurriculumFormData {
   name: string;
+  curriculum_code: string;
   description: string;
   difficulty_level: string;
   duration_hours: string;
@@ -60,11 +80,14 @@ export default function EditCurriculumPage() {
   
   const [activeTab, setActiveTab] = useState(initialTab);
   const { data: curriculum, isLoading } = useCurriculum(curriculumId);
-  const { data: course } = useCourse(curriculum?.course_id || '', { enabled: !!curriculum?.course_id });
+  const { data: course } = useCourse(curriculum?.course_id || '');
   const updateCurriculum = useUpdateCurriculum();
+  const saveCurriculumStructure = useSaveCurriculumStructure();
+  const { data: existingLevels, isLoading: levelsLoading } = useLevelsByCurriculum(curriculumId);
 
   const [formData, setFormData] = useState<CurriculumFormData>({
     name: '',
+    curriculum_code: '',
     description: '',
     difficulty_level: 'beginner',
     duration_hours: '',
@@ -74,6 +97,21 @@ export default function EditCurriculumPage() {
     is_default_for_age_groups: [],
     status: 'draft',
   });
+
+  // New Builder tab state
+  const [levels, setLevels] = useState<any[]>([]);
+  const [activeLevel, setActiveLevel] = useState<string>('');
+  const [expandedLevels, setExpandedLevels] = useState<Set<string>>(new Set());
+
+  // Progression settings state
+  const [progressionSettings, setProgressionSettings] = useState({
+    module_unlock_threshold_percentage: 70.0,
+    require_minimum_one_star_per_lesson: true,
+    allow_cross_level_progression: true,
+    allow_lesson_retakes: true,
+  });
+
+  const MAX_LEVELS = 15;
 
   usePageTitle(
     curriculum ? `Edit ${curriculum.name}` : 'Edit Curriculum',
@@ -85,6 +123,7 @@ export default function EditCurriculumPage() {
     if (curriculum) {
       setFormData({
         name: curriculum.name || '',
+        curriculum_code: curriculum.curriculum_code || '',
         description: curriculum.description || '',
         difficulty_level: curriculum.difficulty_level || 'beginner',
         duration_hours: curriculum.duration_hours ? curriculum.duration_hours.toString() : '',
@@ -103,12 +142,32 @@ export default function EditCurriculumPage() {
     e.preventDefault();
     
     try {
-      const submitData = {
-        ...formData,
+      // Save basic curriculum metadata
+      const submitData: any = {
+        name: formData.name,
+        curriculum_code: formData.curriculum_code,
+        description: formData.description,
+        difficulty_level: formData.difficulty_level,
         duration_hours: formData.duration_hours ? parseInt(formData.duration_hours) : undefined,
+        prerequisites: formData.prerequisites,
+        learning_objectives: formData.learning_objectives,
+        age_ranges: formData.age_ranges,
+        is_default_for_age_groups: formData.is_default_for_age_groups,
       };
       
       await updateCurriculum.mutateAsync({ id: curriculumId, data: submitData });
+      
+      // Save curriculum structure (levels, modules, sections, lessons)
+      if (levels.length > 0) {
+        await saveCurriculumStructure.mutateAsync({
+          curriculumId,
+          structure: {
+            levels,
+            progressionSettings
+          }
+        });
+      }
+      
       toast.success('Curriculum updated successfully');
       router.push(`/admin/curricula/${curriculumId}`);
     } catch (error) {
@@ -118,15 +177,34 @@ export default function EditCurriculumPage() {
 
   const handleSaveDraft = async () => {
     try {
-      const submitData = {
-        ...formData,
-        status: 'draft',
+      // Save basic curriculum metadata as draft
+      const submitData: any = {
+        name: formData.name,
+        curriculum_code: formData.curriculum_code,
+        description: formData.description,
+        difficulty_level: formData.difficulty_level,
         duration_hours: formData.duration_hours ? parseInt(formData.duration_hours) : undefined,
+        prerequisites: formData.prerequisites,
+        learning_objectives: formData.learning_objectives,
+        age_ranges: formData.age_ranges,
+        is_default_for_age_groups: formData.is_default_for_age_groups,
+        status: 'draft',
       };
       
       await updateCurriculum.mutateAsync({ id: curriculumId, data: submitData });
-      toast.success('Curriculum draft saved successfully');
-      router.push(`/admin/curricula/${curriculumId}`);
+      
+      // Save curriculum structure (levels, modules, sections, lessons)
+      if (levels.length > 0) {
+        await saveCurriculumStructure.mutateAsync({
+          curriculumId,
+          structure: {
+            levels,
+            progressionSettings
+          }
+        });
+      }
+      
+      toast.success('Curriculum saved as draft');
     } catch (error) {
       toast.error('Failed to save curriculum draft');
     }
@@ -137,142 +215,118 @@ export default function EditCurriculumPage() {
       ...prev,
       age_ranges: checked 
         ? [...prev.age_ranges, ageRange]
-        : prev.age_ranges.filter(ar => ar !== ageRange)
+        : prev.age_ranges.filter(range => range !== ageRange)
     }));
   };
 
-  const handleDefaultToggle = (ageRange: string, checked: boolean) => {
+  const handleDefaultAgeGroupToggle = (ageGroup: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
-      is_default_for_age_groups: checked 
-        ? [...prev.is_default_for_age_groups, ageRange]
-        : prev.is_default_for_age_groups.filter(ar => ar !== ageRange)
+      is_default_for_age_groups: checked
+        ? [...prev.is_default_for_age_groups, ageGroup]
+        : prev.is_default_for_age_groups.filter(group => group !== ageGroup)
     }));
   };
 
   if (isLoading) {
     return (
       <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/admin/curricula"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Curricula
+          </Link>
+        </div>
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-64 mb-4"></div>
-          <div className="h-8 bg-gray-200 rounded w-96 mb-6"></div>
-          <div className="space-y-4">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="h-4 bg-gray-200 rounded"></div>
-            ))}
-          </div>
+          <div className="h-8 bg-gray-200 rounded w-48 mb-4"></div>
+          <div className="h-64 bg-gray-200 rounded"></div>
         </div>
       </div>
     );
   }
-
-  if (!curriculum) {
-    return (
-      <div className="space-y-6">
-        <Card className="border-red-200">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2">Curriculum not found</h3>
-              <p className="text-gray-600 mb-4">The requested curriculum could not be found.</p>
-              <Button asChild>
-                <Link href="/admin/courses?tab=curricula">
-                  Go to Curricula
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const isFormValid = formData.name.trim() && formData.age_ranges.length > 0;
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb Navigation */}
-      <div className="flex items-center gap-2 text-sm text-gray-600">
-        <Link href="/admin/courses" className="hover:text-blue-600">
-          Courses
-        </Link>
-        <span>/</span>
-        <Link href="/admin/courses?tab=curricula" className="hover:text-blue-600">
-          Curricula
-        </Link>
-        <span>/</span>
-        <Link href={`/admin/courses/${curriculum.course_id}`} className="hover:text-blue-600">
-          {curriculum.course_name}
-        </Link>
-        <span>/</span>
-        <Link href={`/admin/curricula/${curriculum.id}`} className="hover:text-blue-600">
-          {curriculum.name}
-        </Link>
-        <span>/</span>
-        <span className="text-gray-900 font-medium">Edit</span>
-      </div>
-
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Edit Curriculum</h1>
-          <p className="text-gray-600">
-            Update {curriculum.name} for {curriculum.course_name}
-          </p>
-        </div>
-        <Button variant="outline" asChild>
-          <Link href={`/admin/curricula/${curriculum.id}`}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Curriculum
+        <div className="flex items-center gap-4">
+          <Link
+            href="/admin/curricula"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Curricula
           </Link>
-        </Button>
+        </div>
       </div>
 
       {/* Tabbed Interface */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="details" className="flex items-center gap-2">
-            <Eye className="h-4 w-4" />
-            Details
-          </TabsTrigger>
-          <TabsTrigger value="builder" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Builder
-          </TabsTrigger>
+          <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsTrigger value="builder">Builder</TabsTrigger>
         </TabsList>
 
         <TabsContent value="details" className="space-y-6">
-
           <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Form */}
-          <div className="lg:col-span-2 space-y-6">
+            {/* Basic Information */}
             <Card>
               <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Target className="h-5 w-5" />
+                      Basic Information
+                    </CardTitle>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleSaveDraft}
+                      disabled={updateCurriculum.isPending}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Draft
+                    </Button>
+                    <Button type="submit" disabled={updateCurriculum.isPending}>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Changes
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="name">Curriculum Name *</Label>
                     <Input
                       id="name"
                       value={formData.name}
                       onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="e.g., Swimming Fundamentals - Beginner"
+                      placeholder="Enter curriculum name"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Course</Label>
-                    <Input value={curriculum.course_name} disabled className="bg-gray-50" />
-                    <p className="text-xs text-gray-500">Course cannot be changed after creation</p>
+                    <Label htmlFor="curriculum_code">Curriculum Code *</Label>
+                    <Input
+                      id="curriculum_code"
+                      value={formData.curriculum_code}
+                      onChange={(e) => setFormData(prev => ({ ...prev, curriculum_code: e.target.value }))}
+                      placeholder="e.g., SWIM-101"
+                      required
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="difficulty_level">Difficulty Level</Label>
-                    <Select 
-                      value={formData.difficulty_level} 
+                    <Select
+                      value={formData.difficulty_level}
                       onValueChange={(value) => setFormData(prev => ({ ...prev, difficulty_level: value }))}
                     >
                       <SelectTrigger>
@@ -289,191 +343,161 @@ export default function EditCurriculumPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="duration_hours">Duration (hours)</Label>
+                    <Label htmlFor="duration_hours">Duration (Hours)</Label>
                     <Input
                       id="duration_hours"
                       type="number"
-                      min="1"
                       value={formData.duration_hours}
                       onChange={(e) => setFormData(prev => ({ ...prev, duration_hours: e.target.value }))}
                       placeholder="e.g., 40"
                     />
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Describe what students will learn in this curriculum..."
-                    rows={3}
-                  />
+                  <div className="md:col-span-2 space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Describe what this curriculum covers..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="md:col-span-2 space-y-2">
+                    <Label htmlFor="learning_objectives">Learning Objectives</Label>
+                    <Textarea
+                      id="learning_objectives"
+                      value={formData.learning_objectives}
+                      onChange={(e) => setFormData(prev => ({ ...prev, learning_objectives: e.target.value }))}
+                      placeholder="What will students learn from this curriculum?"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="md:col-span-2 space-y-2">
+                    <Label htmlFor="prerequisites">Prerequisites</Label>
+                    <Textarea
+                      id="prerequisites"
+                      value={formData.prerequisites}
+                      onChange={(e) => setFormData(prev => ({ ...prev, prerequisites: e.target.value }))}
+                      placeholder="What should students know before starting this curriculum?"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Status</Label>
+                    <Select
+                      value={formData.status}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statusOptions.map((status) => (
+                          <SelectItem key={status.value} value={status.value}>
+                            {status.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Learning Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="learning_objectives">Learning Objectives</Label>
-                  <Textarea
-                    id="learning_objectives"
-                    value={formData.learning_objectives}
-                    onChange={(e) => setFormData(prev => ({ ...prev, learning_objectives: e.target.value }))}
-                    placeholder="List the main learning objectives for this curriculum..."
-                    rows={4}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="prerequisites">Prerequisites</Label>
-                  <Textarea
-                    id="prerequisites"
-                    value={formData.prerequisites}
-                    onChange={(e) => setFormData(prev => ({ ...prev, prerequisites: e.target.value }))}
-                    placeholder="List any prerequisites or prior knowledge required..."
-                    rows={3}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Age Groups Selection */}
+            {/* Age Groups Configuration */}
             {courseAgeRanges.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Age Groups *</CardTitle>
-                  <p className="text-sm text-gray-600">
-                    Select the age groups this curriculum applies to
-                  </p>
+                  <CardTitle className="flex items-center gap-2">
+                    <Award className="h-5 w-5" />
+                    Age Groups Configuration
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {courseAgeRanges.map((ageRange) => (
-                      <div key={ageRange} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <Checkbox
-                            id={`age-${ageRange}`}
-                            checked={formData.age_ranges.includes(ageRange)}
-                            onCheckedChange={(checked) => handleAgeRangeToggle(ageRange, checked as boolean)}
-                          />
-                          <Label htmlFor={`age-${ageRange}`} className="font-medium">
-                            {ageRange}
-                          </Label>
-                        </div>
-                        
-                        {formData.age_ranges.includes(ageRange) && (
-                          <div className="flex items-center space-x-2">
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-base font-medium">Target Age Ranges</Label>
+                      <p className="text-sm text-gray-600 mb-3">
+                        Select which age groups this curriculum is designed for
+                      </p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {courseAgeRanges.map((ageRange) => (
+                          <div key={ageRange} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`age-range-${ageRange}`}
+                              checked={formData.age_ranges.includes(ageRange)}
+                              onCheckedChange={(checked) => 
+                                handleAgeRangeToggle(ageRange, checked as boolean)
+                              }
+                            />
+                            <Label 
+                              htmlFor={`age-range-${ageRange}`}
+                              className="text-sm font-normal cursor-pointer"
+                            >
+                              {ageRange}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <Label className="text-base font-medium flex items-center gap-2">
+                        <Award className="h-4 w-4" />
+                        Default Curriculum for Age Groups
+                      </Label>
+                      <p className="text-sm text-gray-600 mb-3">
+                        Set this curriculum as the default for specific age groups (students will be automatically assigned to this curriculum)
+                      </p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {formData.age_ranges.map((ageRange) => (
+                          <div key={ageRange} className="flex items-center space-x-2">
                             <Checkbox
                               id={`default-${ageRange}`}
                               checked={formData.is_default_for_age_groups.includes(ageRange)}
-                              onCheckedChange={(checked) => handleDefaultToggle(ageRange, checked as boolean)}
+                              onCheckedChange={(checked) => 
+                                handleDefaultAgeGroupToggle(ageRange, checked as boolean)
+                              }
                             />
-                            <Label htmlFor={`default-${ageRange}`} className="text-sm text-orange-600">
-                              <Award className="h-3 w-3 inline mr-1" />
-                              Set as default
+                            <Label 
+                              htmlFor={`default-${ageRange}`}
+                              className="text-sm font-normal cursor-pointer"
+                            >
+                              {ageRange}
                             </Label>
                           </div>
-                        )}
+                        ))}
                       </div>
-                    ))}
+                      {formData.is_default_for_age_groups.length > 0 && (
+                        <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                          <p className="text-sm text-amber-800">
+                            <strong>Note:</strong> Setting this as default will automatically assign new students 
+                            in the selected age groups to this curriculum. Any existing default curricula 
+                            for these age groups will be updated.
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Publication Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select 
-                    value={formData.status} 
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statusOptions.map((status) => (
-                        <SelectItem key={status.value} value={status.value}>
-                          {status.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="pt-4 border-t">
-                  <h4 className="font-medium mb-2">Selected Age Groups:</h4>
-                  {formData.age_ranges.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {formData.age_ranges.map((ageRange) => (
-                        <Badge 
-                          key={ageRange} 
-                          variant={formData.is_default_for_age_groups.includes(ageRange) ? "default" : "outline"}
-                        >
-                          {formData.is_default_for_age_groups.includes(ageRange) && (
-                            <Award className="h-3 w-3 mr-1" />
-                          )}
-                          {ageRange}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-500">No age groups selected</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button 
-                  type="submit" 
-                  className="w-full"
-                  disabled={!isFormValid || updateCurriculum.isPending}
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  Update Curriculum
-                </Button>
-                
-                <Button 
-                  type="button"
-                  variant="outline" 
-                  className="w-full"
-                  onClick={handleSaveDraft}
-                  disabled={!formData.name.trim() || updateCurriculum.isPending}
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  Save as Draft
-                </Button>
-              </CardContent>
-            </Card>
-            </div>
-          </div>
-        </form>
+          </form>
         </TabsContent>
 
         <TabsContent value="builder" className="space-y-6">
-          <CurriculumBuilder
-            curriculumId={curriculumId}
-            onBack={() => setActiveTab('details')}
-            className="bg-white rounded-lg border p-6"
-          />
+          <div className="bg-white rounded-lg border p-6">
+            <CurriculumBuilder
+              curriculumId={curriculumId}
+              onBack={() => setActiveTab('details')}
+            />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
