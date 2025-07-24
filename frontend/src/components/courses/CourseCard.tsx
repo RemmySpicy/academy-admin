@@ -65,7 +65,7 @@ export function CourseCard({
       case 'course':
         const course = item as Course;
         return {
-          primary: course.curriculum_count || 0,
+          primary: course.total_curricula || 0,
           primaryLabel: 'Curricula',
           secondary: course.lesson_count || 0,
           secondaryLabel: 'Lessons',

@@ -5,6 +5,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { curriculaApiService } from '../api/curriculaApiService';
+import { COURSE_QUERY_KEYS } from './useCourses';
 import type {
   Curriculum,
   CurriculumCreate,
@@ -79,11 +80,19 @@ export const useCreateCurriculum = () => {
   return useMutation({
     mutationFn: (data: CurriculumCreate) => curriculaApiService.createCurriculum(data),
     onSuccess: (newCurriculum) => {
+      // Invalidate curriculum-related queries
       queryClient.invalidateQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULA] });
       queryClient.invalidateQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULUM_STATS] });
       queryClient.invalidateQueries({ 
         queryKey: [CURRICULA_QUERY_KEYS.CURRICULA_BY_COURSE, newCurriculum.course_id] 
       });
+      
+      // Invalidate course-related queries to update statistics
+      queryClient.invalidateQueries({ queryKey: [COURSE_QUERY_KEYS.COURSES] });
+      queryClient.invalidateQueries({ queryKey: [COURSE_QUERY_KEYS.COURSE_STATS] });
+      queryClient.invalidateQueries({ queryKey: [COURSE_QUERY_KEYS.COURSE_TREE, newCurriculum.course_id] });
+      queryClient.invalidateQueries({ queryKey: [COURSE_QUERY_KEYS.COURSE, newCurriculum.course_id] });
+      
       toast.success('Curriculum created successfully');
     },
     onError: (error: Error) => {
@@ -99,12 +108,20 @@ export const useUpdateCurriculum = () => {
     mutationFn: ({ id, data }: { id: string; data: CurriculumUpdate }) => 
       curriculaApiService.updateCurriculum(id, data),
     onSuccess: (updatedCurriculum) => {
+      // Invalidate curriculum-related queries
       queryClient.invalidateQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULA] });
       queryClient.invalidateQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULUM, updatedCurriculum.id] });
       queryClient.invalidateQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULUM_STATS] });
       queryClient.invalidateQueries({ 
         queryKey: [CURRICULA_QUERY_KEYS.CURRICULA_BY_COURSE, updatedCurriculum.course_id] 
       });
+      
+      // Invalidate course-related queries to update statistics
+      queryClient.invalidateQueries({ queryKey: [COURSE_QUERY_KEYS.COURSES] });
+      queryClient.invalidateQueries({ queryKey: [COURSE_QUERY_KEYS.COURSE_STATS] });
+      queryClient.invalidateQueries({ queryKey: [COURSE_QUERY_KEYS.COURSE_TREE, updatedCurriculum.course_id] });
+      queryClient.invalidateQueries({ queryKey: [COURSE_QUERY_KEYS.COURSE, updatedCurriculum.course_id] });
+      
       toast.success('Curriculum updated successfully');
     },
     onError: (error: Error) => {
@@ -118,10 +135,21 @@ export const useDeleteCurriculum = () => {
   
   return useMutation({
     mutationFn: (id: string) => curriculaApiService.deleteCurriculum(id),
-    onSuccess: () => {
+    onSuccess: (_, deletedId) => {
+      // Invalidate curriculum-related queries
       queryClient.invalidateQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULA] });
       queryClient.invalidateQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULUM_STATS] });
       queryClient.invalidateQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULA_BY_COURSE] });
+      
+      // Invalidate all course-related queries since we don't have specific course_id
+      // This is more aggressive but ensures consistency
+      queryClient.invalidateQueries({ queryKey: [COURSE_QUERY_KEYS.COURSES] });
+      queryClient.invalidateQueries({ queryKey: [COURSE_QUERY_KEYS.COURSE_STATS] });
+      // Note: We can't invalidate specific course tree without course_id, but list queries will refresh
+      
+      // Remove the deleted curriculum from cache
+      queryClient.removeQueries({ queryKey: [CURRICULA_QUERY_KEYS.CURRICULUM, deletedId] });
+      
       toast.success('Curriculum deleted successfully');
     },
     onError: (error: Error) => {

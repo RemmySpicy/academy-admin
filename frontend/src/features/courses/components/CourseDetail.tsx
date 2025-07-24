@@ -200,13 +200,6 @@ export function CourseDetail({
                 <Edit className="h-4 w-4 mr-2" />
                 Edit
               </Button>
-              <Button 
-                variant="default" 
-                onClick={() => window.location.href = `/admin/courses/${course.id}/curriculum-builder`}
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                Enhanced Builder
-              </Button>
               <Button variant="outline" onClick={handleDuplicate}>
                 <Copy className="h-4 w-4 mr-2" />
                 Duplicate
