@@ -14,9 +14,20 @@ import { CourseGroupedCurriculaList } from '@/features/courses/components/Course
 import type { CurriculumSearchParams } from '@/features/courses/api/curriculaApiService';
 import { ContentCard } from '@/features/courses/components/ContentCard';
 import { ContentFilter } from '@/features/courses/components/ContentFilter';
+import { ContentTable } from '@/features/courses/components/ContentTable';
+import { ContentViewControls, ViewMode, BulkAction } from '@/features/courses/components/ContentViewControls';
+import { GlobalContentEditModal } from '@/features/courses/components/GlobalContentEditModal';
+import { ContentUsageDialog } from '@/features/courses/components/ContentUsageDialog';
+import { ContentCreateDialog } from '@/features/courses/components/ContentCreateDialog';
 import { MediaLibrary } from '@/features/courses/components/MediaLibrary';
 import { EquipmentManager } from '@/features/courses/components/EquipmentManager';
-import { useContentManagement, ContentSearchParams } from '@/features/courses/hooks/useContent';
+import { 
+  useContent, 
+  useContentMutations, 
+  useContentUsage,
+  ContentSearchParams 
+} from '@/features/courses/hooks/useContent';
+import { ContentCreateData } from '@/features/courses/api/contentApiService';
 import { SearchAndFilter } from '@/components/courses/SearchAndFilter';
 import { Pagination } from '@/components/courses/Pagination';
 import { SearchParams } from '@/lib/api/types';
@@ -34,8 +45,18 @@ export default function CoursesPage() {
   });
   const [contentSearchParams, setContentSearchParams] = useState<ContentSearchParams>({
     page: 1,
-    per_page: 12,
+    per_page: 20,
   });
+  
+  // Content management state
+  const [contentViewMode, setContentViewMode] = useState<ViewMode>('cards');
+  const [selectedContentItems, setSelectedContentItems] = useState<string[]>([]);
+  const [editingContent, setEditingContent] = useState<any>(null);
+  const [viewingUsageContent, setViewingUsageContent] = useState<any>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showUsageDialog, setShowUsageDialog] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [createContentType, setCreateContentType] = useState<'lesson' | 'assessment'>('lesson');
   
   const [curriculumSearchParams, setCurriculumSearchParams] = useState<CurriculumSearchParams>({
     page: 1,
@@ -49,16 +70,17 @@ export default function CoursesPage() {
     activeTab === 'courses' ? searchParams : { page: 1, per_page: 1 }
   );
   
-  // Content management
-  const {
-    allContent,
-    contentStats,
-    isLoading: contentLoading,
-    totalContent,
-    contentItems,
-    stats: contentStatsData,
-  } = useContentManagement(
-    activeTab === 'contents' ? contentSearchParams : { page: 1, per_page: 1 }
+  // Get content management data using new unified hooks
+  const { data: contentData, isLoading: contentLoading, error: contentError } = useContent(
+    activeTab === 'contents' ? contentSearchParams : {}
+  );
+  
+  // Content mutations
+  const contentMutations = useContentMutations();
+  
+  // Usage info for currently viewing content
+  const { data: usageInfo } = useContentUsage(
+    viewingUsageContent?.id || ''
   );
 
   const handleSearch = (params: SearchParams) => {
@@ -73,8 +95,91 @@ export default function CoursesPage() {
     setContentSearchParams({
       ...params,
       page: 1,
-      per_page: 12,
+      per_page: 20,
     });
+  };
+
+  // Content management handlers
+  const handleCreateContent = (contentType: 'lesson' | 'assessment') => {
+    setCreateContentType(contentType);
+    setShowCreateDialog(true);
+  };
+
+  const handleCreateContentSubmit = async (data: ContentCreateData) => {
+    try {
+      await contentMutations.createContent.mutateAsync(data);
+      setShowCreateDialog(false);
+      toast.success(`${createContentType === 'lesson' ? 'Lesson' : 'Assessment'} created successfully`);
+    } catch (error) {
+      toast.error(`Failed to create ${createContentType}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const handleBulkAction = (action: BulkAction, contentIds: string[]) => {
+    switch (action.type) {
+      case 'delete':
+        contentMutations.bulkAction.mutate({
+          action: 'delete',
+          content_ids: contentIds,
+        });
+        break;
+      case 'export':
+        contentMutations.exportContent.mutate({
+          content_ids: contentIds,
+          format: action.payload?.export_format || 'json',
+        });
+        break;
+      case 'status_change':
+        contentMutations.bulkAction.mutate({
+          action: 'status_change',
+          content_ids: contentIds,
+          parameters: { new_status: action.payload?.new_status },
+        });
+        break;
+      default:
+        toast.info('Bulk action functionality coming soon');
+    }
+  };
+
+  const handleViewContent = (content: any) => {
+    toast.info('Content detail view coming soon');
+  };
+
+  const handleEditContent = (content: any) => {
+    setEditingContent(content);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteContent = (content: any) => {
+    contentMutations.deleteContent.mutate({ id: content.id });
+  };
+
+  const handleDuplicateContent = (content: any) => {
+    contentMutations.duplicateContent.mutate({ id: content.id });
+  };
+
+  const handleViewUsage = (content: any) => {
+    setViewingUsageContent(content);
+    setShowUsageDialog(true);
+  };
+
+  const handleManageReferences = (content: any) => {
+    setViewingUsageContent(content);
+    setShowUsageDialog(true);
+  };
+
+  const handleNavigateToCurriculum = (curriculumId: string) => {
+    window.location.href = `/admin/curricula/${curriculumId}`;
+  };
+
+  const handleSaveContent = (contentId: string, updateData: any, versionData: any) => {
+    contentMutations.updateContent.mutate({
+      id: contentId,
+      data: updateData,
+      versionData,
+    });
+    setShowEditModal(false);
+    setEditingContent(null);
   };
 
   const handlePageChange = (page: number) => {
@@ -118,7 +223,7 @@ export default function CoursesPage() {
       case 'courses':
         return { data: coursesData, isLoading: coursesLoading };
       case 'contents':
-        return { data: allContent.data, isLoading: contentLoading };
+        return { data: contentData, isLoading: contentLoading };
       default:
         return { data: null, isLoading: false };
     }
@@ -166,29 +271,6 @@ export default function CoursesPage() {
     }
   };
 
-  // Content handlers
-  const handleViewContent = (content: any) => {
-    // TODO: Implement content detail view
-    console.log('View content:', content);
-  };
-
-  const handleEditContent = (content: any) => {
-    // TODO: Implement content edit form
-    console.log('Edit content:', content);
-  };
-
-  const handleDeleteContent = (content: any) => {
-    if (!confirm(`Are you sure you want to delete "${content.name}"? This will affect all curricula where this content is used.`)) {
-      return;
-    }
-    // TODO: Implement content deletion
-    console.log('Delete content:', content);
-  };
-
-  const handleDuplicateContent = (content: any) => {
-    // TODO: Implement content duplication
-    console.log('Duplicate content:', content);
-  };
 
   return (
     <div className="space-y-6">
@@ -320,95 +402,148 @@ export default function CoursesPage() {
         </TabsContent>
 
         <TabsContent value="contents" className="space-y-4">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">All Content</h3>
-                <p className="text-sm text-muted-foreground">
-                  Centralized management of all lessons, assessments, and activities across curricula
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button disabled>
-                  <Plus className="mr-2 h-4 w-4" />
-                  New Lesson
-                </Button>
-                <Button disabled>
-                  <Plus className="mr-2 h-4 w-4" />
-                  New Assessment
-                </Button>
-              </div>
+          {/* Content Tab Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Content Library</h3>
+              <p className="text-sm text-muted-foreground">
+                Centralized management of reusable lessons and assessments across all curricula
+              </p>
             </div>
+          </div>
 
-            <ContentFilter
-              onFilterChange={handleContentSearch}
-              initialParams={contentSearchParams}
-            />
+          {/* Content View Controls */}
+          <ContentViewControls
+            viewMode={contentViewMode}
+            onViewModeChange={setContentViewMode}
+            selectedItems={selectedContentItems}
+            onSelectionChange={setSelectedContentItems}
+            totalItems={contentData?.total || 0}
+            onBulkAction={handleBulkAction}
+            onCreateContent={handleCreateContent}
+            showBulkActions={true}
+          />
 
-            {currentLoading ? (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <Card key={i}>
-                    <CardHeader>
-                      <Skeleton className="h-6 w-24 mb-2" />
-                      <Skeleton className="h-4 w-48" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-col gap-2">
-                        <Skeleton className="h-10 w-full" />
-                        <Skeleton className="h-10 w-full" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : contentItems.length > 0 ? (
-              <>
+          {/* Content Filter */}
+          <ContentFilter
+            onFilterChange={handleContentSearch}
+            initialParams={contentSearchParams}
+          />
+
+          {/* Content Display */}
+          {contentLoading ? (
+            <div className="space-y-4">
+              {contentViewMode === 'cards' ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {contentItems.map((content) => (
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Card key={i}>
+                      <CardHeader>
+                        <Skeleton className="h-6 w-24 mb-2" />
+                        <Skeleton className="h-4 w-48" />
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex flex-col gap-2">
+                          <Skeleton className="h-10 w-full" />
+                          <Skeleton className="h-10 w-full" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      {Array.from({ length: 8 }).map((_, i) => (
+                        <div key={i} className="h-12 bg-muted animate-pulse rounded" />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          ) : contentData?.items && contentData.items.length > 0 ? (
+            <>
+              {contentViewMode === 'cards' ? (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {contentData.items.map((content) => (
                     <ContentCard
                       key={content.id}
-                      content={content as any}
-                      contentType={content.type}
+                      content={content}
+                      showUsageInfo={true}
                       onView={handleViewContent}
                       onEdit={handleEditContent}
                       onDelete={handleDeleteContent}
                       onDuplicate={handleDuplicateContent}
+                      onViewUsage={handleViewUsage}
+                      onManageReferences={handleManageReferences}
+                      onNavigateToCurriculum={handleNavigateToCurriculum}
                     />
                   ))}
                 </div>
-                
-                {currentData && currentData.total_pages > 1 && (
-                  <Pagination
-                    currentPage={currentData.page}
-                    totalPages={currentData.total_pages}
-                    onPageChange={handleContentPageChange}
-                  />
-                )}
-              </>
-            ) : (
-              <div className="text-center py-12">
-                <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Content Found</h3>
-                <p className="text-muted-foreground mb-6">
-                  {contentSearchParams.search ? 
-                    'No content matches your search criteria.' : 
-                    'Start by creating lessons and assessments in your curricula.'
-                  }
-                </p>
-                <div className="flex gap-2 justify-center">
-                  <Button variant="outline" disabled>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Lesson
-                  </Button>
-                  <Button variant="outline" disabled>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Assessment
-                  </Button>
-                </div>
+              ) : (
+                <ContentTable
+                  content={contentData.items}
+                  loading={contentLoading}
+                  selectedItems={selectedContentItems}
+                  onSelectionChange={setSelectedContentItems}
+                  onSort={(column, direction) => {
+                    handleContentSearch({
+                      ...contentSearchParams,
+                      sort_by: column,
+                      sort_order: direction,
+                    });
+                  }}
+                  onView={handleViewContent}
+                  onEdit={handleEditContent}
+                  onDelete={handleDeleteContent}
+                  onDuplicate={handleDuplicateContent}
+                  onViewUsage={handleViewUsage}
+                  onManageReferences={handleManageReferences}
+                  onNavigateToCurriculum={handleNavigateToCurriculum}
+                  showUsageInfo={true}
+                />
+              )}
+              
+              {contentData && contentData.total_pages > 1 && (
+                <Pagination
+                  currentPage={contentData.page}
+                  totalPages={contentData.total_pages}
+                  onPageChange={(page) => handleContentSearch({
+                    ...contentSearchParams,
+                    page,
+                  })}
+                />
+              )}
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No Content Found</h3>
+              <p className="text-muted-foreground mb-6">
+                {contentSearchParams.search ? 
+                  'No content matches your search criteria.' : 
+                  'Content will appear here as you create lessons and assessments in your curricula.'
+                }
+              </p>
+              <div className="flex gap-2 justify-center">
+                <Button
+                  variant="outline"
+                  onClick={() => handleCreateContent('lesson')}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Lesson
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleCreateContent('assessment')}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Assessment
+                </Button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="media" className="space-y-4">
@@ -419,6 +554,41 @@ export default function CoursesPage() {
           <EquipmentManager mode="inventory" />
         </TabsContent>
       </Tabs>
+
+      {/* Content Management Modals */}
+      <GlobalContentEditModal
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        content={editingContent}
+        onSave={handleSaveContent}
+        onNavigateToCurriculum={handleNavigateToCurriculum}
+        loading={contentMutations.updateContent.isPending}
+      />
+
+      <ContentUsageDialog
+        open={showUsageDialog}
+        onOpenChange={setShowUsageDialog}
+        content={viewingUsageContent}
+        usageInfo={usageInfo}
+        onNavigateToCurriculum={handleNavigateToCurriculum}
+        onAssignToCurriculum={(contentId, assignmentData) => {
+          contentMutations.assignToCurriculum.mutate({ contentId, assignmentData });
+        }}
+        onRemoveFromCurriculum={(contentId, curriculumId) => {
+          contentMutations.removeFromCurriculum.mutate({ contentId, curriculumId });
+        }}
+        loading={contentMutations.assignToCurriculum.isPending || contentMutations.removeFromCurriculum.isPending}
+      />
+
+      <ContentCreateDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        contentType={createContentType}
+        onSubmit={handleCreateContentSubmit}
+        loading={contentMutations.createContent.isPending}
+        availableCourses={coursesData?.items || []}
+        availableCurricula={[]} // TODO: Add curricula data when available
+      />
     </div>
   );
 }

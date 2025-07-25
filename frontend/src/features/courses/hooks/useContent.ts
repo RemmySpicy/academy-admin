@@ -1,9 +1,24 @@
 /**
- * React hooks for content management (lessons, assessments, activities)
+ * Content Management Hooks - TanStack Query hooks for unified content management
  */
 
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useProgramContext } from '@/store/programContext';
+import { 
+  contentApiService, 
+  type ContentItem, 
+  type ContentSearchParams, 
+  type ContentCreateData, 
+  type ContentUpdateData,
+  type ContentVersionData,
+  type CurriculumAssignmentData,
+  type BulkContentAction,
+  type ContentUsageInfo
+} from '../api/contentApiService';
 import { toast } from 'sonner';
+
+// Legacy imports for compatibility
 import { httpClient } from '@/lib/api/httpClient';
 import { API_ENDPOINTS } from '@/lib/constants';
 import type {
@@ -22,7 +37,18 @@ import type {
   AssessmentType,
 } from '@/lib/api/types';
 
-// Query Keys
+// New Unified Query Keys
+export const contentQueryKeys = {
+  all: ['content'] as const,
+  lists: () => [...contentQueryKeys.all, 'list'] as const,
+  list: (params: ContentSearchParams) => [...contentQueryKeys.lists(), params] as const,
+  details: () => [...contentQueryKeys.all, 'detail'] as const,
+  detail: (id: string) => [...contentQueryKeys.details(), id] as const,
+  usage: (id: string) => [...contentQueryKeys.all, 'usage', id] as const,
+  lockStatus: (id: string) => [...contentQueryKeys.all, 'lock', id] as const,
+};
+
+// Legacy Query Keys (for backward compatibility)
 export const CONTENT_QUERY_KEYS = {
   LESSONS: 'lessons',
   LESSON: 'lesson',
@@ -549,3 +575,363 @@ export const useContentManagement = (params: ContentSearchParams = {}) => {
     stats: contentStats.data,
   };
 };
+
+// =============================================================================
+// NEW UNIFIED CONTENT HOOKS
+// =============================================================================
+
+// Hook for fetching content list with search/filter
+export function useContent(params: ContentSearchParams = {}) {
+  const { currentProgram } = useProgramContext();
+  const currentProgramId = currentProgram?.id;
+  
+  return useQuery({
+    queryKey: contentQueryKeys.list({ ...params, program_id: currentProgramId }),
+    queryFn: async () => {
+      const response = await contentApiService.getContent(params);
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to fetch content');
+      }
+      return response.data;
+    },
+    enabled: !!currentProgramId,
+    staleTime: 30000, // 30 seconds
+    refetchOnWindowFocus: false,
+  });
+}
+
+// Hook for fetching single content item
+export function useContentDetail(id: string) {
+  return useQuery({
+    queryKey: contentQueryKeys.detail(id),
+    queryFn: async () => {
+      const response = await contentApiService.getContentById(id);
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to fetch content details');
+      }
+      return response.data;
+    },
+    enabled: !!id,
+    staleTime: 30000,
+  });
+}
+
+// Hook for content usage information
+export function useContentUsage(id: string) {
+  return useQuery({
+    queryKey: contentQueryKeys.usage(id),
+    queryFn: async () => {
+      const response = await contentApiService.getContentUsage(id);
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to fetch usage information');
+      }
+      return response.data;
+    },
+    enabled: !!id,
+    staleTime: 60000, // 1 minute - usage info changes less frequently
+  });
+}
+
+// Hook for content edit lock status
+export function useContentLockStatus(id: string) {
+  return useQuery({
+    queryKey: contentQueryKeys.lockStatus(id),
+    queryFn: async () => {
+      const response = await contentApiService.checkEditLock(id);
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to check lock status');
+      }
+      return response.data;
+    },
+    enabled: !!id,
+    refetchInterval: 30000, // Check every 30 seconds
+    staleTime: 0, // Always fresh for lock status
+  });
+}
+
+// Content mutation hooks
+export function useContentMutations() {
+  const queryClient = useQueryClient();
+  const { currentProgram } = useProgramContext();
+  const currentProgramId = currentProgram?.id;
+
+  const createContent = useMutation({
+    mutationFn: async (data: ContentCreateData) => {
+      const response = await contentApiService.createContent(data);
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to create content');
+      }
+      return response.data;
+    },
+    onSuccess: (newContent) => {
+      // Invalidate content lists
+      queryClient.invalidateQueries({ queryKey: contentQueryKeys.lists() });
+      
+      // Add to cache
+      queryClient.setQueryData(
+        contentQueryKeys.detail(newContent.id), 
+        newContent
+      );
+      
+      toast.success('Content created successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const updateContent = useMutation({
+    mutationFn: async ({ 
+      id, 
+      data, 
+      versionData 
+    }: { 
+      id: string; 
+      data: ContentUpdateData; 
+      versionData?: ContentVersionData;
+    }) => {
+      const response = await contentApiService.updateContent(id, data, versionData);
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to update content');
+      }
+      return response.data;
+    },
+    onSuccess: (updatedContent, { id, versionData }) => {
+      // Update content detail cache
+      queryClient.setQueryData(
+        contentQueryKeys.detail(id), 
+        updatedContent
+      );
+      
+      // Invalidate content lists to reflect changes
+      queryClient.invalidateQueries({ queryKey: contentQueryKeys.lists() });
+      
+      // If creating new version, invalidate usage queries for affected curricula
+      if (versionData?.version_strategy === 'new_version') {
+        queryClient.invalidateQueries({ queryKey: contentQueryKeys.usage(id) });
+      }
+      
+      toast.success(
+        versionData?.version_strategy === 'new_version' 
+          ? 'New version created successfully' 
+          : 'Content updated successfully'
+      );
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const deleteContent = useMutation({
+    mutationFn: async ({ id, force }: { id: string; force?: boolean }) => {
+      const response = await contentApiService.deleteContent(id, force);
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to delete content');
+      }
+      return response.data;
+    },
+    onSuccess: (_, { id }) => {
+      // Remove from cache
+      queryClient.removeQueries({ queryKey: contentQueryKeys.detail(id) });
+      queryClient.removeQueries({ queryKey: contentQueryKeys.usage(id) });
+      
+      // Invalidate lists
+      queryClient.invalidateQueries({ queryKey: contentQueryKeys.lists() });
+      
+      toast.success('Content deleted successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const duplicateContent = useMutation({
+    mutationFn: async ({ 
+      id, 
+      options 
+    }: { 
+      id: string; 
+      options?: { 
+        new_name?: string; 
+        copy_usage?: boolean; 
+        assign_to_curriculum?: string;
+      };
+    }) => {
+      const response = await contentApiService.duplicateContent(id, options);
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to duplicate content');
+      }
+      return response.data;
+    },
+    onSuccess: (duplicatedContent) => {
+      // Add to cache
+      queryClient.setQueryData(
+        contentQueryKeys.detail(duplicatedContent.id), 
+        duplicatedContent
+      );
+      
+      // Invalidate lists
+      queryClient.invalidateQueries({ queryKey: contentQueryKeys.lists() });
+      
+      toast.success('Content duplicated successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const assignToCurriculum = useMutation({
+    mutationFn: async ({ 
+      contentId, 
+      assignmentData 
+    }: { 
+      contentId: string; 
+      assignmentData: CurriculumAssignmentData;
+    }) => {
+      const response = await contentApiService.assignToCurriculum(contentId, assignmentData);
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to assign content to curriculum');
+      }
+      return response.data;
+    },
+    onSuccess: (_, { contentId }) => {
+      // Invalidate usage info and content lists
+      queryClient.invalidateQueries({ queryKey: contentQueryKeys.usage(contentId) });
+      queryClient.invalidateQueries({ queryKey: contentQueryKeys.lists() });
+      
+      toast.success('Content assigned to curriculum successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const removeFromCurriculum = useMutation({
+    mutationFn: async ({ 
+      contentId, 
+      curriculumId 
+    }: { 
+      contentId: string; 
+      curriculumId: string;
+    }) => {
+      const response = await contentApiService.removeFromCurriculum(contentId, curriculumId);
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to remove content from curriculum');
+      }
+      return response.data;
+    },
+    onSuccess: (_, { contentId }) => {
+      // Invalidate usage info and content lists
+      queryClient.invalidateQueries({ queryKey: contentQueryKeys.usage(contentId) });
+      queryClient.invalidateQueries({ queryKey: contentQueryKeys.lists() });
+      
+      toast.success('Content removed from curriculum successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const bulkAction = useMutation({
+    mutationFn: async (actionData: BulkContentAction) => {
+      const response = await contentApiService.bulkAction(actionData);
+      if (!response.success) {
+        throw new Error(response.error || 'Bulk action failed');
+      }
+      return response.data;
+    },
+    onSuccess: (result, actionData) => {
+      // Invalidate all content queries
+      queryClient.invalidateQueries({ queryKey: contentQueryKeys.all });
+      
+      toast.success(
+        `Bulk action completed. ${result.success_count} items processed successfully.`
+      );
+      
+      if (result.error_count > 0) {
+        toast.warning(`${result.error_count} items failed to process.`);
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const exportContent = useMutation({
+    mutationFn: async ({ 
+      content_ids, 
+      format 
+    }: { 
+      content_ids: string[]; 
+      format?: 'json' | 'csv' | 'pdf';
+    }) => {
+      const response = await contentApiService.exportContent(content_ids, format);
+      if (!response.success) {
+        throw new Error(response.error || 'Export failed');
+      }
+      return response.data;
+    },
+    onSuccess: (result) => {
+      // Open download URL
+      if (result.download_url) {
+        window.open(result.download_url, '_blank');
+      }
+      toast.success('Export completed successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  // Edit lock mutations
+  const acquireEditLock = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await contentApiService.acquireEditLock(id);
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to acquire edit lock');
+      }
+      return response.data;
+    },
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: contentQueryKeys.lockStatus(id) });
+    },
+  });
+
+  const releaseEditLock = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await contentApiService.releaseEditLock(id);
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to release edit lock');
+      }
+      return response.data;
+    },
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: contentQueryKeys.lockStatus(id) });
+    },
+  });
+
+  return {
+    createContent,
+    updateContent,
+    deleteContent,
+    duplicateContent,
+    assignToCurriculum,
+    removeFromCurriculum,
+    bulkAction,
+    exportContent,
+    acquireEditLock,
+    releaseEditLock,
+  };
+}
+
+// Convenience hooks
+export function useContentSearch(initialParams: ContentSearchParams = {}) {
+  const [params, setParams] = useState<ContentSearchParams>(initialParams);
+  const contentQuery = useContent(params);
+  
+  return {
+    ...contentQuery,
+    searchParams: params,
+    updateSearch: setParams,
+  };
+}
