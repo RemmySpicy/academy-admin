@@ -4,11 +4,12 @@ Lesson model for curriculum management.
 
 from typing import List, Optional
 
-from sqlalchemy import ForeignKey, Index, String, Text, Integer
+from sqlalchemy import ForeignKey, Index, String, Text, Integer, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.dialects.postgresql import JSON
 
 from app.features.common.models.base import BaseModel
-from app.features.common.models.enums import CurriculumStatus, DifficultyLevel
+from app.features.common.models.enums import CurriculumStatus, DifficultyLevel, LessonType
 
 
 class Lesson(BaseModel):
@@ -144,6 +145,28 @@ class Lesson(BaseModel):
         Text,
         nullable=True,
         comment="Special notes and tips for instructors",
+    )
+    
+    # New fields for frontend form support
+    is_required: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        nullable=False,
+        comment="Whether this lesson is required for curriculum completion",
+    )
+    
+    resource_links: Mapped[Optional[List[dict]]] = mapped_column(
+        JSON,
+        default=list,
+        nullable=True,
+        comment="JSON array of resource links with title, url, and type",
+    )
+    
+    lesson_types: Mapped[Optional[List[str]]] = mapped_column(
+        JSON,
+        default=list,
+        nullable=True,
+        comment="JSON array of lesson types (video, text, interactive, practical)",
     )
     
     # Relationships

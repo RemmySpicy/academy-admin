@@ -36,13 +36,14 @@ Academy Management System with program-centric architecture, role-based access c
 
 **📖 For complete API reference, see: [`docs/api/API_ENDPOINTS.md`](docs/api/API_ENDPOINTS.md)**
 
-### 🔧 **Recent Updates (2025-07-23)**
-- **🆕 Curriculum Management Overhaul**: Complete restructuring from course-centric to curriculum-centric management
-- **🆕 Unified Tabbed Interface**: Edit pages now use Details + Builder tabs instead of separate pages
-- **🆕 Default Curriculum System**: Curricula can be set as default for age groups with conflict resolution
-- **🆕 Course-Grouped Display**: Curricula organized by course in collapsible sections with advanced search
-- **🆕 Age Range Management**: JSON-based flexible age group configuration and filtering
-- **🆕 Component Architecture Cleanup**: Renamed and restructured CurriculumBuilder component
+### 🔧 **Recent Updates (2025-07-25)**
+- **🆕 Enhanced Assignment System**: Comprehensive hierarchical assignment system for lessons and assessments
+- **🆕 Multi-Location Assignment**: Lessons can be assigned to multiple Course→Curriculum→Module→Section locations
+- **🆕 Assessment Level Assignment**: Assessments follow Course→Curriculum→Level assignment pattern
+- **🆕 Visual Assignment Management**: Assignment cards with breadcrumb navigation and easy removal
+- **🆕 Database Schema Updates**: Added missing fields for lesson/assessment forms (is_required, resource_links, assessment_items)
+- **🆕 Accessibility Compliance**: Fixed DialogTitle and DialogDescription warnings for screen readers
+- **🆕 Separated Content Forms**: Distinct lesson and assessment forms with specialized fields and workflows
 
 ### 🔧 **Previous Fixes (2025-07-21)**
 - **Database Migration Issues**: Fixed PostgreSQL ENUM type mismatches and explicit casting problems
@@ -89,6 +90,35 @@ Academy Management System with program-centric architecture, role-based access c
 - **Program Context Security**: All curriculum operations filtered by program assignments
 
 **📖 For complete curriculum documentation, see: [`docs/features/curriculum/README.md`](docs/features/curriculum/README.md)**
+
+### 📝 **Enhanced Content Creation System (2025-07-25)**
+- **🆕 Separate Lesson & Assessment Forms**: Distinct creation workflows with specialized fields
+- **🆕 Hierarchical Assignment System**: Multi-level assignment with visual breadcrumb navigation
+  - **Lessons**: Course → Curriculum → Level → Module → Section
+  - **Assessments**: Course → Curriculum → Level
+- **🆕 Multi-Location Assignment**: Assign single content to multiple curriculum locations
+- **🆕 Enhanced Lesson Fields**:
+  - Title-based naming (instead of generic "name")
+  - Instructor Guide (replaces Learning Objectives)
+  - Multiple resource links (video, document, link, other)
+  - Multiple lesson types selection (video, text, interactive, practical)
+  - Optional duration field
+- **🆕 Enhanced Assessment Fields**:
+  - Title-based naming with assessment codes
+  - Assessment Guide for instructors
+  - Collapsible/reorderable assessment items with drag-and-drop
+  - 3-star grading system integration
+  - Level-based assignment targeting
+- **🆕 Visual Assignment Management**:
+  - Assignment preview cards with location breadcrumbs
+  - Easy add/remove functionality
+  - Duplicate assignment prevention
+  - Clear hierarchical selection workflow
+- **🆕 Database Schema Updates**:
+  - Added `is_required`, `resource_links`, `lesson_types` to lessons table
+  - Added `difficulty_level`, `assessment_type`, `assessment_guide`, `is_required` to assessment_rubrics table
+  - New `LessonType` and `AssessmentType` enums
+- **🆕 Accessibility Compliance**: Fixed screen reader compatibility with proper DialogTitle/DialogDescription
 
 ## Development Commands
 

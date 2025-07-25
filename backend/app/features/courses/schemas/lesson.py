@@ -27,15 +27,33 @@ class ContentTypeEnum(str, Enum):
     DEMONSTRATION = "demonstration"
 
 
+class ResourceLink(BaseModel):
+    """Schema for lesson resource links."""
+    id: str = Field(..., description="Unique identifier for this resource")
+    title: str = Field(..., min_length=1, max_length=200, description="Resource title")
+    url: str = Field(..., min_length=1, description="Resource URL")
+    type: str = Field(..., description="Resource type: video, document, link, other")
+
+
 class LessonBase(BaseModel):
     """Base lesson schema with common fields."""
     
     lesson_id: str = Field(..., min_length=1, max_length=50, description="Unique lesson identifier")
     title: str = Field(..., min_length=1, max_length=200, description="Lesson title")
-    content: Optional[str] = Field(None, description="Main lesson content")
+    description: Optional[str] = Field(None, description="Lesson description")
     section_id: str = Field(..., description="Section ID this lesson belongs to")
     sequence: int = Field(..., ge=1, description="Sequence order within section")
-    content_type: ContentTypeEnum = Field(default=ContentTypeEnum.TEXT, description="Type of lesson content")
+    lesson_types: List[str] = Field(default=[], description="Types of lesson content (video, text, interactive, practical)")
+    duration_minutes: Optional[int] = Field(None, ge=1, description="Duration in minutes")
+    difficulty_level: Optional[str] = Field(None, description="Difficulty level")
+    instructor_guide: Optional[str] = Field(None, description="Guide for instructors")
+    resource_links: List[ResourceLink] = Field(default=[], description="Resource links for this lesson")
+    is_required: bool = Field(default=True, description="Whether this lesson is required")
+    status: CurriculumStatusEnum = Field(default=CurriculumStatusEnum.DRAFT, description="Lesson status")
+    
+    # Keep backward compatibility fields
+    content: Optional[str] = Field(None, description="Main lesson content")
+    content_type: Optional[ContentTypeEnum] = Field(None, description="Type of lesson content")
     estimated_duration_minutes: Optional[int] = Field(None, ge=1, description="Estimated duration in minutes")
     learning_objectives: Optional[str] = Field(None, description="Specific learning objectives")
     instructor_guidelines: Optional[str] = Field(None, description="Guidelines for instructors")
@@ -44,7 +62,6 @@ class LessonBase(BaseModel):
     safety_notes: Optional[str] = Field(None, description="Safety notes and precautions")
     homework_assignments: Optional[str] = Field(None, description="Homework or follow-up assignments")
     additional_resources: Optional[str] = Field(None, description="Additional learning resources")
-    status: CurriculumStatusEnum = Field(default=CurriculumStatusEnum.DRAFT, description="Lesson status")
     
     @validator('lesson_id')
     def validate_lesson_id(cls, v):

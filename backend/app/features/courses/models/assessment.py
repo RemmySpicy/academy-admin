@@ -4,11 +4,11 @@ Assessment models for curriculum management.
 
 from typing import List, Optional
 
-from sqlalchemy import ForeignKey, Index, String, Text, Integer, Numeric
+from sqlalchemy import ForeignKey, Index, String, Text, Integer, Numeric, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.features.common.models.base import BaseModel
-from app.features.common.models.enums import CurriculumStatus, RubricType
+from app.features.common.models.enums import CurriculumStatus, RubricType, DifficultyLevel, AssessmentType
 
 
 class AssessmentRubric(BaseModel):
@@ -91,6 +91,30 @@ class AssessmentRubric(BaseModel):
         Text,
         nullable=True,
         comment="Notes about scoring and interpretation",
+    )
+    
+    # New fields for frontend form support
+    difficulty_level: Mapped[Optional[DifficultyLevel]] = mapped_column(
+        nullable=True,
+        comment="Difficulty level of this assessment",
+    )
+    
+    assessment_type: Mapped[Optional[AssessmentType]] = mapped_column(
+        nullable=True,
+        comment="Type of assessment (quiz, assignment, practical, project)",
+    )
+    
+    assessment_guide: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Detailed guide for instructors on how to conduct this assessment",
+    )
+    
+    is_required: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        nullable=False,
+        comment="Whether this assessment is required for level completion",
     )
     
     # Relationships

@@ -157,6 +157,22 @@ class ContentType(str, enum.Enum):
     EQUIPMENT = "equipment"
 
 
+class LessonType(str, enum.Enum):
+    """Lesson type enumeration."""
+    VIDEO = "video"
+    TEXT = "text"
+    INTERACTIVE = "interactive"
+    PRACTICAL = "practical"
+
+
+class AssessmentType(str, enum.Enum):
+    """Assessment type enumeration."""
+    QUIZ = "quiz"
+    ASSIGNMENT = "assignment"
+    PRACTICAL = "practical"
+    PROJECT = "project"
+
+
 # Scheduling Management Enums
 
 class SessionStatus(str, enum.Enum):

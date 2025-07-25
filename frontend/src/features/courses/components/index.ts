@@ -19,6 +19,9 @@ export { LessonManager } from './LessonManager';
 // Content Management
 export { ContentCard } from './ContentCard';
 export { ContentFilter } from './ContentFilter';
+export { ContentCreateDialog } from './ContentCreateDialog';
+export { LessonCreateDialog } from './LessonCreateDialog';
+export { AssessmentCreateDialog } from './AssessmentCreateDialog';
 
 // Curriculum Management
 export { CurriculumCard } from './CurriculumCard';

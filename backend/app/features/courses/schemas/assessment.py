@@ -14,20 +14,37 @@ from .common import (
 )
 
 
+class AssessmentItem(BaseModel):
+    """Schema for individual assessment items."""
+    id: str = Field(..., description="Unique identifier for this assessment item")
+    title: str = Field(..., min_length=1, max_length=200, description="Assessment item title")
+    description: str = Field(..., min_length=1, description="Assessment item description")
+    order: int = Field(..., ge=1, description="Order of this item within the assessment")
+
+
 class AssessmentRubricBase(BaseModel):
     """Base assessment rubric schema with common fields."""
     
-    name: str = Field(..., min_length=1, max_length=200, description="Rubric name")
-    description: Optional[str] = Field(None, description="Rubric description")
+    title: str = Field(..., min_length=1, max_length=200, description="Assessment title")
+    code: str = Field(..., min_length=1, max_length=50, description="Assessment code")
+    description: Optional[str] = Field(None, description="Assessment description")
+    level_id: str = Field(..., description="Level ID this assessment belongs to")
+    assessment_type: Optional[str] = Field(None, description="Type of assessment (quiz, assignment, practical, project)")
+    difficulty_level: Optional[str] = Field(None, description="Difficulty level")
+    assessment_guide: Optional[str] = Field(None, description="Guide for instructors")
+    assessment_items: List[AssessmentItem] = Field(default=[], description="Individual assessment items")
+    is_required: bool = Field(default=True, description="Whether this assessment is required")
+    status: CurriculumStatusEnum = Field(default=CurriculumStatusEnum.DRAFT, description="Assessment status")
+    
+    # Keep backward compatibility fields
+    name: Optional[str] = Field(None, min_length=1, max_length=200, description="Rubric name")
     lesson_id: Optional[str] = Field(None, description="Lesson ID this rubric belongs to")
     section_id: Optional[str] = Field(None, description="Section ID this rubric belongs to")
     module_id: Optional[str] = Field(None, description="Module ID this rubric belongs to")
-    rubric_type: RubricTypeEnum = Field(..., description="Type of rubric")
-    total_possible_stars: int = Field(..., ge=1, le=5, description="Total possible stars (1-5)")
+    rubric_type: Optional[str] = Field(None, description="Type of rubric")
+    total_possible_stars: int = Field(default=3, ge=1, le=5, description="Total possible stars (1-5)")
     weight_percentage: Optional[float] = Field(None, ge=0, le=100, description="Weight in overall assessment")
     sequence: int = Field(default=1, ge=1, description="Sequence order in assessment")
-    is_required: bool = Field(default=True, description="Whether this assessment is required")
-    status: CurriculumStatusEnum = Field(default=CurriculumStatusEnum.DRAFT, description="Rubric status")
     
     @validator('weight_percentage')
     def validate_weight_percentage(cls, v):
