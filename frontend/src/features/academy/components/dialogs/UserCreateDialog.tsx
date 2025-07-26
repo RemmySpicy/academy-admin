@@ -27,7 +27,8 @@ export interface UserCreateData {
   username: string;
   email: string;
   password: string;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   role: 'super_admin' | 'program_admin' | 'program_coordinator' | 'instructor' | 'student' | 'parent';
   is_active: boolean;
 }
@@ -43,7 +44,8 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: UserCreateDi
     username: '',
     email: '',
     password: '',
-    full_name: '',
+    first_name: '',
+    last_name: '',
     role: 'program_admin',
     is_active: true,
   });
@@ -54,8 +56,12 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: UserCreateDi
   const validateForm = (): boolean => {
     const newErrors: Partial<UserCreateData> = {};
 
-    if (!formData.full_name.trim()) {
-      newErrors.full_name = 'Full name is required';
+    if (!formData.first_name.trim()) {
+      newErrors.first_name = 'First name is required';
+    }
+
+    if (!formData.last_name.trim()) {
+      newErrors.last_name = 'Last name is required';
     }
 
     if (!formData.username.trim()) {
@@ -95,7 +101,8 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: UserCreateDi
         username: '',
         email: '',
         password: '',
-        full_name: '',
+        first_name: '',
+        last_name: '',
         role: 'program_admin',
         is_active: true,
       });
@@ -124,7 +131,8 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: UserCreateDi
         username: '',
         email: '',
         password: '',
-        full_name: '',
+        first_name: '',
+        last_name: '',
         role: 'program_admin',
         is_active: true,
       });
@@ -163,20 +171,37 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: UserCreateDi
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Full Name */}
+            {/* First Name */}
             <div className="space-y-2">
-              <Label htmlFor="full_name">Full Name *</Label>
+              <Label htmlFor="first_name">First Name *</Label>
               <Input
-                id="full_name"
+                id="first_name"
                 type="text"
-                value={formData.full_name}
-                onChange={(e) => handleInputChange('full_name', e.target.value)}
-                placeholder="Enter full name"
-                className={errors.full_name ? 'border-red-500' : ''}
+                value={formData.first_name}
+                onChange={(e) => handleInputChange('first_name', e.target.value)}
+                placeholder="Enter first name"
+                className={errors.first_name ? 'border-red-500' : ''}
                 disabled={createUserMutation.isPending}
               />
-              {errors.full_name && (
-                <p className="text-sm text-red-600">{errors.full_name}</p>
+              {errors.first_name && (
+                <p className="text-sm text-red-600">{errors.first_name}</p>
+              )}
+            </div>
+
+            {/* Last Name */}
+            <div className="space-y-2">
+              <Label htmlFor="last_name">Last Name *</Label>
+              <Input
+                id="last_name"
+                type="text"
+                value={formData.last_name}
+                onChange={(e) => handleInputChange('last_name', e.target.value)}
+                placeholder="Enter last name"
+                className={errors.last_name ? 'border-red-500' : ''}
+                disabled={createUserMutation.isPending}
+              />
+              {errors.last_name && (
+                <p className="text-sm text-red-600">{errors.last_name}</p>
               )}
             </div>
 

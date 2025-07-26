@@ -261,8 +261,8 @@ class UserService(BaseService[User, dict, dict]):
         # Create student profile with user data
         student_data = {
             "student_id": student_id,
-            "first_name": user.full_name.split()[0] if user.full_name else "Unknown",
-            "last_name": " ".join(user.full_name.split()[1:]) if len(user.full_name.split()) > 1 else "User",
+            "first_name": user.first_name,
+            "last_name": user.last_name,
             "email": user.email,
             "phone": user.phone,
             "date_of_birth": user.date_of_birth.date() if user.date_of_birth else None,
@@ -321,7 +321,9 @@ class UserService(BaseService[User, dict, dict]):
             search_term = f"%{search_params['search']}%"
             query = query.filter(
                 or_(
-                    User.full_name.ilike(search_term),
+                    User.first_name.ilike(search_term),
+                    User.last_name.ilike(search_term),
+                    func.concat(User.first_name, ' ', User.last_name).ilike(search_term),
                     User.email.ilike(search_term),
                     User.username.ilike(search_term)
                 )

@@ -54,11 +54,22 @@ class User(BaseModel):
     )
     
     # Profile information
-    full_name: Mapped[str] = mapped_column(
-        String(200),
+    first_name: Mapped[str] = mapped_column(
+        String(100),
         nullable=False,
-        comment="User's full name",
+        comment="User's first name",
     )
+    
+    last_name: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+        comment="User's last name",
+    )
+    
+    @property
+    def full_name(self) -> str:
+        """Get user's full name by combining first and last name."""
+        return f"{self.first_name} {self.last_name}".strip()
     
     # Authorization - Support multiple roles
     roles: Mapped[List[str]] = mapped_column(
@@ -342,5 +353,5 @@ class User(BaseModel):
     def __repr__(self) -> str:
         """String representation of the user."""
         roles_str = ', '.join(self.roles)
-        username_display = self.username or self.email or self.full_name
+        username_display = self.username or self.email or f"{self.first_name} {self.last_name}"
         return f"<User(id={self.id}, username='{username_display}', roles=[{roles_str}], profile_type='{self.profile_type.value}')>"

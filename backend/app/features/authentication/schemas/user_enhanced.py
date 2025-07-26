@@ -15,11 +15,17 @@ class UserCreate(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr = Field(...)
     password: str = Field(..., min_length=8)
-    full_name: str = Field(..., min_length=1, max_length=200)
+    first_name: str = Field(..., min_length=1, max_length=100)
+    last_name: str = Field(..., min_length=1, max_length=100)
     phone: Optional[str] = Field(None, min_length=10, max_length=20)
     date_of_birth: Optional[datetime] = Field(None)
     roles: List[str] = Field(default=["student"])
     is_active: bool = Field(default=True)
+    
+    @property
+    def full_name(self) -> str:
+        """Get user's full name by combining first and last name."""
+        return f"{self.first_name} {self.last_name}".strip()
     
     @validator('roles')
     def validate_roles(cls, v):
@@ -36,11 +42,23 @@ class UserUpdate(BaseModel):
     
     username: Optional[str] = Field(None, min_length=3, max_length=50)
     email: Optional[EmailStr] = Field(None)
-    full_name: Optional[str] = Field(None, min_length=1, max_length=200)
+    first_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    last_name: Optional[str] = Field(None, min_length=1, max_length=100)
     phone: Optional[str] = Field(None, min_length=10, max_length=20)
     date_of_birth: Optional[datetime] = Field(None)
     profile_photo_url: Optional[str] = Field(None)
     is_active: Optional[bool] = Field(None)
+    
+    @property
+    def full_name(self) -> Optional[str]:
+        """Get user's full name by combining first and last name."""
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}".strip()
+        elif self.first_name:
+            return self.first_name
+        elif self.last_name:
+            return self.last_name
+        return None
 
 
 class UserRelationshipCreate(BaseModel):
@@ -130,7 +148,8 @@ class UserResponse(BaseModel):
     id: str
     username: str
     email: str
-    full_name: str
+    first_name: str
+    last_name: str
     phone: Optional[str]
     date_of_birth: Optional[datetime]
     profile_photo_url: Optional[str]
@@ -140,6 +159,11 @@ class UserResponse(BaseModel):
     last_login: Optional[datetime]
     created_at: datetime
     updated_at: datetime
+    
+    @property
+    def full_name(self) -> str:
+        """Get user's full name by combining first and last name."""
+        return f"{self.first_name} {self.last_name}".strip()
     
     # Family relationships
     children: List[Dict[str, Any]] = Field(default=[])
@@ -186,7 +210,8 @@ class StudentParentCreate(BaseModel):
     parent_username: str = Field(..., min_length=3, max_length=50)
     parent_email: EmailStr = Field(...)
     parent_password: str = Field(..., min_length=8)
-    parent_full_name: str = Field(..., min_length=1, max_length=200)
+    parent_first_name: str = Field(..., min_length=1, max_length=100)
+    parent_last_name: str = Field(..., min_length=1, max_length=100)
     parent_phone: Optional[str] = Field(None, min_length=10, max_length=20)
     parent_date_of_birth: Optional[datetime] = Field(None)
     
@@ -194,9 +219,20 @@ class StudentParentCreate(BaseModel):
     child_username: str = Field(..., min_length=3, max_length=50)
     child_email: EmailStr = Field(...)
     child_password: str = Field(..., min_length=8)
-    child_full_name: str = Field(..., min_length=1, max_length=200)
+    child_first_name: str = Field(..., min_length=1, max_length=100)
+    child_last_name: str = Field(..., min_length=1, max_length=100)
     child_phone: Optional[str] = Field(None, min_length=10, max_length=20)
     child_date_of_birth: Optional[datetime] = Field(None)
+    
+    @property
+    def parent_full_name(self) -> str:
+        """Get parent's full name by combining first and last name."""
+        return f"{self.parent_first_name} {self.parent_last_name}".strip()
+    
+    @property
+    def child_full_name(self) -> str:
+        """Get child's full name by combining first and last name."""
+        return f"{self.child_first_name} {self.child_last_name}".strip()
     
     # Relationship
     relationship_type: RelationshipType = Field(default=RelationshipType.GUARDIAN)

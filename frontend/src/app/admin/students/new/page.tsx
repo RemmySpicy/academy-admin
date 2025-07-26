@@ -17,7 +17,8 @@ import { useProgramContext } from '@/hooks/useProgramContext';
 
 // Types
 interface StudentData {
-  full_name: string;
+  first_name: string;
+  last_name: string;
   email?: string;
   phone?: string;
   date_of_birth?: string;
@@ -67,7 +68,8 @@ export default function NewStudentPage() {
   // Form data
   const [formData, setFormData] = useState<CreateStudentFormData>({
     student: {
-      full_name: '',
+      first_name: '',
+      last_name: '',
       email: '',
       phone: '',
       date_of_birth: '',
@@ -189,8 +191,12 @@ export default function NewStudentPage() {
     const newErrors: Record<string, string> = {};
 
     // Student validation
-    if (!formData.student.full_name.trim()) {
-      newErrors.full_name = 'Full name is required';
+    if (!formData.student.first_name.trim()) {
+      newErrors.first_name = 'First name is required';
+    }
+
+    if (!formData.student.last_name.trim()) {
+      newErrors.last_name = 'Last name is required';
     }
 
     // Parent validation (if with parent mode)
@@ -564,13 +570,23 @@ export default function NewStudentPage() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
-              label="Full Name"
+              label="First Name"
               type="text"
-              value={formData.student.full_name}
-              onChange={(value) => handleStudentDataChange('full_name', value)}
-              placeholder="Enter student's full name"
+              value={formData.student.first_name}
+              onChange={(value) => handleStudentDataChange('first_name', value)}
+              placeholder="Enter student's first name"
               required
-              error={errors.full_name}
+              error={errors.first_name}
+            />
+            
+            <FormField
+              label="Last Name"
+              type="text"
+              value={formData.student.last_name}
+              onChange={(value) => handleStudentDataChange('last_name', value)}
+              placeholder="Enter student's last name"
+              required
+              error={errors.last_name}
             />
             
             <FormField

@@ -30,7 +30,8 @@ export interface UserInfo {
   id: string;
   username: string;
   email: string;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   role: UserRole;
   is_active: boolean;
   last_login?: string;
@@ -113,7 +114,8 @@ export interface UserRegistration {
   email: string;
   password: string;
   confirm_password: string;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   role: 'student' | 'parent';
   program_id?: string;
 }

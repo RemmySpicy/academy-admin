@@ -13,6 +13,7 @@ Academy Management System with program-centric architecture, role-based access c
 - **Program Context Architecture**: HTTP header-based filtering with automatic security enforcement
 - **Course Management**: Full CRUD with program context integration
 - **🆕 Curriculum Management**: Complete curriculum-centric management system ✅ **IMPLEMENTED (2025-07-23)**
+- **🆕 Scheduling System**: Complete facility-centric scheduling with session management ✅ **IMPLEMENTED (2025-07-26)**
 - **Facility Management**: Complete facility management system
 - **User Management**: Enhanced role-based program assignments with profile types ✅ **VERIFIED**
 - **Teams Management**: Program-specific team member management with role-based access control
@@ -42,8 +43,12 @@ Academy Management System with program-centric architecture, role-based access c
 **📖 For organization management API, see: [`docs/api/ORGANIZATION_ENDPOINTS.md`](docs/api/ORGANIZATION_ENDPOINTS.md)**
 
 ### 🔧 **Latest Updates (2025-07-26)**
+- **🆕 Scheduling System**: Complete facility-centric scheduling with session management ✅ **IMPLEMENTED**
+- **🆕 Session Management**: Weekly/monthly views with session creation and participant management ✅ **IMPLEMENTED**
+- **🆕 Student & Instructor Selection**: Credit-aware and availability-aware assignment systems ✅ **IMPLEMENTED**
 - **🆕 Organization Management System**: Complete partner organization system with multi-tenant capabilities ✅ **IMPLEMENTED**
 - **🆕 Enhanced User Profiles**: Support for full users vs profile-only accounts (children) with proper authentication ✅ **IMPLEMENTED**
+- **🆕 Name Field Migration**: Complete migration from single `full_name` to separate `first_name` and `last_name` fields ✅ **IMPLEMENTED**
 - **🆕 Parent-Child Relationships**: Bidirectional family structure management with payment responsibility tracking ✅ **IMPLEMENTED**
 - **🆕 Payment Override System**: Organization-based payment calculations and access control overrides ✅ **IMPLEMENTED**
 - **🆕 Partner Admin Dashboard**: Dedicated interface for managing sponsored students and organizational settings ✅ **IMPLEMENTED**
@@ -82,9 +87,10 @@ Academy Management System with program-centric architecture, role-based access c
 **✅ Program Context Compliant Pages** (Auto-refresh on program switching):
 - **Courses Page**: Perfect implementation with `useCourses`, `useCurricula` hooks
 - **🆕 Curriculum Management**: Complete curriculum-centric system with tabbed interface
+- **🆕 Scheduling System**: Complete facility-centric scheduling with `useFacilitySessions` and program context
 - **Facilities Page**: Recently fixed - uses `useFacilities` hook with program context  
 - **Students & Parents Page**: Uses `useStudents`, `useParents` hooks with program context
-- **Teams, Payments, Scheduling Pages**: Use proper component delegation
+- **Teams, Payments Pages**: Use proper component delegation
 
 **✅ Academy Admin Pages** (Correctly bypass program context):
 - **Users Management** (`/admin/users/*`): Super Admin only, uses bypass headers
@@ -100,6 +106,20 @@ Academy Management System with program-centric architecture, role-based access c
 - **Program Context Security**: All curriculum operations filtered by program assignments
 
 **📖 For complete curriculum documentation, see: [`docs/features/curriculum/README.md`](docs/features/curriculum/README.md)**
+
+### 📅 **Scheduling System (NEW - 2025-07-26)**
+- **Facility-Centric Architecture**: Sessions organized by facility with program context security
+- **Weekly/Monthly Views**: Sunday-Saturday tabs with comprehensive monthly calendar overview
+- **Session Type Management**: Private (1-2), Group (3-5), School Group (unlimited) with automatic capacity validation
+- **Student Credit Integration**: Credit-aware selection with eligibility checking and deduction logic
+- **Instructor Availability**: Availability-aware assignment with capacity multipliers and conflict detection
+- **Complete Session Creation**: 3-tab comprehensive form with recurring pattern support
+- **Real-time API Integration**: Full backend integration with TanStack Query hooks
+- **Professional UI Components**: WeeklyScheduleManager, SessionCreateForm, StudentSelector, InstructorSelector, MonthlyCalendar
+- **Database Schema**: SessionType, SessionStatus, RecurringPattern, ParticipantStatus enums with proper migration
+- **Business Rule Enforcement**: Session type capacity validation, instructor requirements, and conflict prevention
+
+**📖 For complete scheduling documentation, see: [`docs/features/scheduling/IMPLEMENTATION_SUMMARY_2025.md`](docs/features/scheduling/IMPLEMENTATION_SUMMARY_2025.md)**
 
 ### 📝 **Enhanced Content Creation System (2025-07-25)**
 - **🆕 Separate Lesson & Assessment Forms**: Distinct creation workflows with specialized fields
@@ -227,6 +247,21 @@ Every new feature MUST include:
 
 **📖 For detailed standards, see: [`docs/development/PROGRAM_CONTEXT_STANDARDS.md`](docs/development/PROGRAM_CONTEXT_STANDARDS.md)**
 **📖 For development guidelines, see: [`docs/development/FUTURE_DEVELOPMENT_GUIDELINES.md`](docs/development/FUTURE_DEVELOPMENT_GUIDELINES.md)**
+
+### 🔗 **FEATURE INTEGRATION REQUIREMENTS**
+**📖 ALWAYS READ FIRST: [`docs/architecture/FEATURE_INTEGRATION_GUIDE.md`](docs/architecture/FEATURE_INTEGRATION_GUIDE.md)**
+
+Before implementing any feature that interacts with existing systems:
+1. **Check Integration Patterns**: Review existing feature relationships and data flows
+2. **Follow Established APIs**: Use documented integration points for student credits, user relationships, etc.
+3. **Update Integration Guide**: Add your feature's integration points for future developers
+4. **Mock Data Compliance**: Ensure mock data demonstrates real integration patterns
+
+**Key Integration Points**:
+- **Student Management** ↔ **Scheduling**: Credit deduction/refund system
+- **User Management** ↔ **Organizations**: Family relationships and payment overrides
+- **Facility Management** ↔ **Scheduling**: Instructor availability and capacity management
+- **Course Management** ↔ **Content**: Curriculum hierarchy and progression tracking
 
 ### 🎯 **Before Creating Features**
 Ask: "Is this Academy Administration (managing programs) or Program Management (within program)?"
@@ -486,9 +521,13 @@ academy-admin/                    # Main repository
 - API changes: Read `docs/api/API_ENDPOINTS.md`  
 - Architecture questions: Read `docs/architecture/PROGRAM_CONTEXT_ARCHITECTURE.md`
 - Setup issues: Read `docs/setup/PROJECT_SETUP.md`
+- **Feature Integration**: Read `docs/architecture/FEATURE_INTEGRATION_GUIDE.md` for cross-feature development patterns
 - **Curriculum work**: Read `docs/features/curriculum/README.md` for complete curriculum system documentation
+- **Scheduling work**: Read `docs/features/scheduling/IMPLEMENTATION_SUMMARY_2025.md` for complete scheduling system documentation
+- **Name field changes**: Read `docs/architecture/NAME_FIELD_MIGRATION.md` for details on the full_name to first_name/last_name migration
 - **Progression systems**: Read `docs/features/curriculum/CURRICULUM_PROGRESSION_SPECIFICATION.md` for star-based assessment details
 - **Content Management**: Read `docs/features/courses/CONTENT_MANAGEMENT.md` for lesson/assessment creation and assignment system
+- **Organization management**: Read `docs/features/organizations/README.md` for partner organization system documentation
 - Feature specifications: Read `docs/features/[feature-name]/README.md`
 
 **Remember: Documentation is your friend. When in doubt, check the docs first!**

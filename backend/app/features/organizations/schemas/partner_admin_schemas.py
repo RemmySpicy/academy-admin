@@ -23,7 +23,8 @@ class PartnerAdminCreate(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     email: str = Field(..., max_length=255)
     password: str = Field(..., min_length=8)
-    full_name: str = Field(..., min_length=1, max_length=200)
+    first_name: str = Field(..., min_length=1, max_length=100)
+    last_name: str = Field(..., min_length=1, max_length=100)
     phone: Optional[str] = Field(None, max_length=20)
     date_of_birth: Optional[date] = None
     profile_photo_url: Optional[str] = Field(None, max_length=500)
@@ -31,7 +32,8 @@ class PartnerAdminCreate(BaseModel):
 
 class PartnerAdminUpdate(BaseModel):
     """Schema for updating partner admin."""
-    full_name: Optional[str] = Field(None, min_length=1, max_length=200)
+    first_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    last_name: Optional[str] = Field(None, min_length=1, max_length=100)
     phone: Optional[str] = Field(None, max_length=20)
     email: Optional[str] = Field(None, max_length=255)
     profile_photo_url: Optional[str] = Field(None, max_length=500)
@@ -45,7 +47,8 @@ class PartnerAdminResponse(BaseModel):
     id: str
     username: str
     email: Optional[str] = None
-    full_name: str
+    first_name: str
+    last_name: str
     phone: Optional[str] = None
     date_of_birth: Optional[date] = None
     profile_photo_url: Optional[str] = None
@@ -110,7 +113,8 @@ class PartnerStudentInfo(BaseModel):
     user_id: str
     username: Optional[str] = None
     email: Optional[str] = None
-    full_name: str
+    first_name: str
+    last_name: str
     phone: Optional[str] = None
     profile_type: str
     roles: List[str]

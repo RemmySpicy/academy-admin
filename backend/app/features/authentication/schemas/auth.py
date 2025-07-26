@@ -41,7 +41,8 @@ class LoginResponse(BaseModel):
                     "id": "550e8400-e29b-41d4-a716-446655440000",
                     "username": "admin",
                     "email": "admin@academy.com",
-                    "full_name": "System Administrator",
+                    "first_name": "System",
+                    "last_name": "Administrator",
                     "role": "super_admin",
                     "is_active": True
                 }
@@ -62,11 +63,17 @@ class UserResponse(BaseModel):
     id: str = Field(..., description="User ID")
     username: str = Field(..., description="Username")
     email: str = Field(..., description="Email address")
-    full_name: str = Field(..., description="Full name")
+    first_name: str = Field(..., description="First name")
+    last_name: str = Field(..., description="Last name")
     role: str = Field(..., description="User role")
     is_active: bool = Field(..., description="Whether user is active")
     last_login: Optional[datetime] = Field(None, description="Last login time")
     created_at: datetime = Field(..., description="Account creation time")
+    
+    @property
+    def full_name(self) -> str:
+        """Get user's full name by combining first and last name."""
+        return f"{self.first_name} {self.last_name}".strip()
     
     class Config:
         from_attributes = True
@@ -75,7 +82,8 @@ class UserResponse(BaseModel):
                 "id": "550e8400-e29b-41d4-a716-446655440000",
                 "username": "admin",
                 "email": "admin@academy.com",
-                "full_name": "System Administrator",
+                "first_name": "System",
+                "last_name": "Administrator",
                 "role": "super_admin",
                 "is_active": True,
                 "last_login": "2025-01-08T18:00:00Z",
@@ -90,9 +98,15 @@ class UserCreate(BaseModel):
     username: str = Field(..., min_length=3, max_length=50, description="Username")
     email: EmailStr = Field(..., description="Email address")
     password: str = Field(..., min_length=8, max_length=255, description="Password")
-    full_name: str = Field(..., min_length=1, max_length=200, description="Full name")
+    first_name: str = Field(..., min_length=1, max_length=100, description="First name")
+    last_name: str = Field(..., min_length=1, max_length=100, description="Last name")
     role: str = Field(default="program_admin", description="User role")
     is_active: bool = Field(default=True, description="Whether user is active")
+    
+    @property
+    def full_name(self) -> str:
+        """Get user's full name by combining first and last name."""
+        return f"{self.first_name} {self.last_name}".strip()
     
     @validator("role")
     def validate_role(cls, v):
@@ -108,7 +122,8 @@ class UserCreate(BaseModel):
                 "username": "jdoe",
                 "email": "john.doe@academy.com",
                 "password": "securepassword123",
-                "full_name": "John Doe",
+                "first_name": "John",
+                "last_name": "Doe",
                 "role": "program_admin",
                 "is_active": True
             }
@@ -120,9 +135,21 @@ class UserUpdate(BaseModel):
     
     username: Optional[str] = Field(None, min_length=3, max_length=50, description="Username")
     email: Optional[EmailStr] = Field(None, description="Email address")
-    full_name: Optional[str] = Field(None, min_length=1, max_length=200, description="Full name")
+    first_name: Optional[str] = Field(None, min_length=1, max_length=100, description="First name")
+    last_name: Optional[str] = Field(None, min_length=1, max_length=100, description="Last name")
     role: Optional[str] = Field(None, description="User role")
     is_active: Optional[bool] = Field(None, description="Whether user is active")
+    
+    @property
+    def full_name(self) -> Optional[str]:
+        """Get user's full name by combining first and last name."""
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}".strip()
+        elif self.first_name:
+            return self.first_name
+        elif self.last_name:
+            return self.last_name
+        return None
     
     @validator("role")
     def validate_role(cls, v):
