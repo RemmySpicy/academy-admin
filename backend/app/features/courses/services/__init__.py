@@ -3,7 +3,6 @@ Curriculum services for business logic and database operations.
 """
 
 from .base_service import BaseService
-from .program_service import ProgramService, program_service
 from .course_service import CourseService, course_service
 from .curriculum_service import CurriculumService, curriculum_service
 from .level_service import LevelService, level_service
@@ -22,7 +21,6 @@ __all__ = [
     "BaseService",
     
     # Service classes
-    "ProgramService",
     "CourseService", 
     "CurriculumService",
     "LevelService",
@@ -30,7 +28,6 @@ __all__ = [
     "MediaService",
     
     # Service instances
-    "program_service",
     "course_service",
     "curriculum_service", 
     "level_service",

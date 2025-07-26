@@ -12,8 +12,7 @@ import { ProgramAssignment } from './auth';
 export interface User extends AuditFields {
   username: string;
   email: string;
-  first_name: string;
-  last_name: string;
+  full_name: string;
   role: UserRole;
   is_active: boolean;
   last_login?: string;
@@ -27,8 +26,7 @@ export interface CreateUserRequest {
   username: string;
   email: string;
   password: string;
-  first_name: string;
-  last_name: string;
+  full_name: string;
   role: UserRole;
   is_active?: boolean;
   program_ids?: string[];
@@ -40,8 +38,7 @@ export interface CreateUserRequest {
 export interface UpdateUserRequest {
   username?: string;
   email?: string;
-  first_name?: string;
-  last_name?: string;
+  full_name?: string;
   role?: UserRole;
   is_active?: boolean;
 }
@@ -50,8 +47,7 @@ export interface UpdateUserRequest {
  * User profile update (self-service)
  */
 export interface UpdateProfileRequest {
-  first_name?: string;
-  last_name?: string;
+  full_name?: string;
   email?: string;
 }
 

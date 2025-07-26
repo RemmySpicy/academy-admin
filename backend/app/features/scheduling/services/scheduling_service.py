@@ -68,6 +68,17 @@ class SchedulingService(BaseService[ScheduledSession, SessionCreate, SessionUpda
         session_dict = session_data.dict(exclude={'instructor_ids', 'student_ids'})
         session_dict['program_id'] = program_context
         
+        # Set default max_participants if not provided based on session type
+        if session_dict.get('max_participants') is None:
+            session_dict['max_participants'] = self.get_default_max_participants(session_data.session_type)
+        
+        # Validate capacity for session type
+        if not self.validate_session_capacity(session_data.session_type, session_dict.get('max_participants')):
+            session_type_name = session_data.session_type.replace('_', ' ').title()
+            min_cap, max_cap = self.get_session_capacity_range(session_data.session_type)
+            max_text = f"{max_cap}" if max_cap else "unlimited"
+            raise ValueError(f"{session_type_name} sessions require {min_cap}-{max_text} participants")
+        
         # Check for conflicts
         conflict_check = SessionConflictCheck(
             facility_id=session_data.facility_id,
@@ -882,3 +893,63 @@ class SchedulingService(BaseService[ScheduledSession, SessionCreate, SessionUpda
                 break
         
         return suggestions
+    
+    @staticmethod
+    def get_default_max_participants(session_type: str) -> Optional[int]:
+        """
+        Get default max participants based on session type.
+        
+        Based on updated requirements:
+        - Private: 1-2 participants (default: 2)
+        - Group: 3-5 participants (default: 5)
+        - School Group: Unlimited (default: None)
+        """
+        from app.features.common.models.enums import SessionType
+        
+        if session_type == SessionType.PRIVATE:
+            return 2
+        elif session_type == SessionType.GROUP:
+            return 5
+        elif session_type == SessionType.SCHOOL_GROUP:
+            return None  # Unlimited
+        else:
+            # Legacy session types
+            return 5  # Default fallback
+    
+    @staticmethod
+    def get_session_capacity_range(session_type: str) -> Tuple[int, Optional[int]]:
+        """
+        Get the valid capacity range for a session type.
+        
+        Returns:
+            Tuple of (min_participants, max_participants)
+        """
+        from app.features.common.models.enums import SessionType
+        
+        if session_type == SessionType.PRIVATE:
+            return (1, 2)
+        elif session_type == SessionType.GROUP:
+            return (3, 5)
+        elif session_type == SessionType.SCHOOL_GROUP:
+            return (1, None)  # Unlimited max
+        else:
+            # Legacy session types
+            return (1, None)
+    
+    def validate_session_capacity(self, session_type: str, max_participants: Optional[int]) -> bool:
+        """
+        Validate that max_participants is appropriate for the session type.
+        """
+        min_cap, max_cap = self.get_session_capacity_range(session_type)
+        
+        if max_participants is None:
+            # Only school groups can have unlimited capacity
+            return session_type == "school_group"
+        
+        if max_participants < min_cap:
+            return False
+            
+        if max_cap is not None and max_participants > max_cap:
+            return False
+            
+        return True

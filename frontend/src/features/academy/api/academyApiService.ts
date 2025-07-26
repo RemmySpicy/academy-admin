@@ -53,6 +53,38 @@ export class AcademyProgramsApiService {
   }
 
   /**
+   * Get comprehensive statistics for a specific program
+   */
+  static async getProgramStatistics(id: string): Promise<ApiResponse<{
+    program_id: string;
+    program_name: string;
+    courses: {
+      total: number;
+      active: number;
+      inactive: number;
+    };
+    students: {
+      total: number;
+      active: number;
+      inactive: number;
+    };
+    team: {
+      total_members: number;
+    };
+    facilities: {
+      total: number;
+    };
+    configuration: {
+      age_groups: number;
+      difficulty_levels: number;
+      session_types: number;
+      default_duration: number;
+    };
+  }>> {
+    return httpClient.get(`${this.BASE_PATH}/${id}/statistics?bypass_program_filter=true`);
+  }
+
+  /**
    * Create a new program
    */
   static async createProgram(data: ProgramCreate): Promise<ApiResponse<Program>> {

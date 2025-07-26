@@ -10,8 +10,9 @@ import json
 import time
 from collections import defaultdict
 
+from app.features.programs.models.program import Program
 from app.features.courses.models import (
-    Program, Course, Curriculum, Level, Module, Section, Lesson,
+    Course, Curriculum, Level, Module, Section, Lesson,
     AssessmentRubric, EquipmentRequirement, MediaLibrary, ContentVersion
 )
 from app.features.courses.schemas.advanced import (

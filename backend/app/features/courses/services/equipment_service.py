@@ -24,7 +24,7 @@ from .base_service import BaseService
 from app.features.courses.models.level import Level
 from app.features.courses.models.curriculum import Curriculum
 from app.features.courses.models.course import Course
-from app.features.courses.models.program import Program
+from app.features.programs.models.program import Program
 
 
 class EquipmentService(BaseService[EquipmentRequirement, EquipmentRequirementCreate, EquipmentRequirementUpdate]):

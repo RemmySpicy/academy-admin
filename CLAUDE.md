@@ -43,6 +43,8 @@ Academy Management System with program-centric architecture, role-based access c
 **📖 For organization management API, see: [`docs/api/ORGANIZATION_ENDPOINTS.md`](docs/api/ORGANIZATION_ENDPOINTS.md)**
 
 ### 🔧 **Latest Updates (2025-07-26)**
+- **🆕 Programs Architecture Migration**: Complete migration of programs feature from courses to dedicated programs directory ✅ **IMPLEMENTED**
+- **🆕 Proper Program-Centric Architecture**: Programs now correctly positioned as top-level entities containing courses ✅ **IMPLEMENTED**
 - **🆕 Scheduling System**: Complete facility-centric scheduling with session management ✅ **IMPLEMENTED**
 - **🆕 Session Management**: Weekly/monthly views with session creation and participant management ✅ **IMPLEMENTED**
 - **🆕 Student & Instructor Selection**: Credit-aware and availability-aware assignment systems ✅ **IMPLEMENTED**
@@ -82,6 +84,25 @@ Academy Management System with program-centric architecture, role-based access c
 - ✅ API endpoint 404 errors → **FIXED**: Centralized endpoint configuration and httpClient migration
 - ✅ Missing program context headers → **FIXED**: All API calls now use httpClient with automatic program context
 - ✅ Program context switching not refreshing data → **FIXED**: All pages use TanStack Query hooks with program context
+- ✅ Programs architectural misplacement → **FIXED**: Complete migration to `/features/programs/` directory with proper top-level positioning
+
+### 🏗️ **Programs Architecture Migration (NEW - 2025-07-26)**
+Complete architectural restructure to establish programs as top-level entities:
+
+- **✅ Directory Structure**: Migrated from `/features/courses/` to `/features/programs/`
+- **✅ Proper Architecture**: Programs → Courses → Curricula hierarchy established
+- **✅ Import Updates**: Systematically updated all 16 files with program references
+- **✅ Service Integration**: BaseService properly inherited from courses directory
+- **✅ API Endpoints**: Programs API maintained at `/api/v1/programs/` with full functionality
+- **✅ Database Models**: Program model properly separated from course models
+- **✅ Clean Migration**: Zero downtime, no breaking changes to existing functionality
+- **✅ Documentation**: Updated all references to reflect new architecture
+
+**Technical Details**:
+- **Models**: `app.features.programs.models.program.Program`
+- **Services**: `app.features.programs.services.program_service.ProgramService`
+- **Routes**: `app.features.programs.routes.programs.router`
+- **Schemas**: `app.features.programs.schemas.program.*`
 
 ### 📄 **Current Page Status**
 **✅ Program Context Compliant Pages** (Auto-refresh on program switching):

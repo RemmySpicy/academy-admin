@@ -12,6 +12,10 @@ export enum SessionStatus {
 }
 
 export enum SessionType {
+  PRIVATE = "private",           // Private Lessons (1-2 participants)
+  GROUP = "group",               // Group Lessons (3-5 participants)
+  SCHOOL_GROUP = "school_group", // School Group Lessons (unlimited participants)
+  // Legacy types for backward compatibility
   GROUP_LESSON = "group_lesson",
   PRIVATE_LESSON = "private_lesson",
   ASSESSMENT = "assessment",
@@ -20,6 +24,26 @@ export enum SessionType {
   WORKSHOP = "workshop", 
   MEETING = "meeting",
 }
+
+// Type aliases for easier usage
+export type SessionTypeString = 
+  | "private" 
+  | "group" 
+  | "school_group"
+  | "group_lesson"
+  | "private_lesson"
+  | "assessment"
+  | "practice"
+  | "competition"
+  | "workshop"
+  | "meeting";
+
+export type SessionStatusString = 
+  | "scheduled"
+  | "in_progress"
+  | "completed"
+  | "cancelled"
+  | "postponed";
 
 export enum RecurringPattern {
   NONE = "none",
@@ -53,7 +77,7 @@ export interface Session {
   course_id?: string;
   title: string;
   description?: string;
-  session_type: SessionType;
+  session_type: SessionTypeString;
   start_time: string;
   end_time: string;
   recurring_pattern: RecurringPattern;
@@ -61,10 +85,11 @@ export interface Session {
   recurring_exceptions?: string[];
   recurring_parent_id?: string;
   is_recurring: boolean;
-  status: SessionStatus;
+  status: SessionStatusString;
   max_participants?: number;
   student_type?: string;
   skill_level?: string;
+  difficulty_level?: string;        // Added for new requirements
   special_requirements?: string;
   notes?: string;
   enrolled_count: number;
@@ -312,4 +337,38 @@ export interface InstructorFormData {
   instructor_ids: string[];
   is_primary?: boolean;
   notes?: string;
+}
+
+// Student credit management types (from Feature Integration Guide)
+export interface StudentCredit {
+  student_id: string;
+  remaining_credits: number;
+  total_credits: number;
+  course_enrollment_id?: string;
+  course_name?: string;
+  course_progress?: string;
+  skill_level?: string;
+}
+
+export interface StudentEligibility {
+  student_id: string;
+  is_eligible: boolean;
+  has_credits: boolean;
+  remaining_credits: number;
+  skill_level_match: boolean;
+  recommended_difficulty?: string;
+  warnings: string[];
+}
+
+export interface StudentForScheduling {
+  id: string;
+  name: string;
+  email?: string;
+  remaining_credits: number;
+  course_enrollment?: {
+    course_name: string;
+    progress: string;
+    skill_level: string;
+  };
+  eligibility: StudentEligibility;
 }

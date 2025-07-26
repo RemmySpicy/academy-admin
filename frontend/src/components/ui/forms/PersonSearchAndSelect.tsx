@@ -17,7 +17,8 @@ import { useDebounce } from '@/hooks/useDebounce';
 // Types
 interface UserSearchResult {
   id: string;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   email?: string;
   phone?: string;
   profile_type: 'full_user' | 'profile_only';
@@ -145,7 +146,9 @@ export function PersonSearchAndSelect({
   };
 
   const getPersonDisplayName = (person: UserSearchResult): string => {
-    if (person.full_name) return person.full_name;
+    if (person.first_name || person.last_name) {
+      return `${person.first_name || ''} ${person.last_name || ''}`.trim();
+    }
     if (person.email) return person.email;
     if (person.phone) return person.phone;
     return 'Unknown User';

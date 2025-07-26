@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.features.common.models.database import get_db
 from app.features.authentication.routes.auth import get_current_active_user
-from app.features.courses.schemas.program import (
+from app.features.programs.schemas.program import (
     ProgramCreate,
     ProgramUpdate,
     ProgramResponse,
@@ -18,7 +18,7 @@ from app.features.courses.schemas.program import (
     ProgramTreeResponse,
 )
 from app.features.courses.schemas.common import BulkActionRequest, BulkActionResponse
-from app.features.courses.services.program_service import program_service
+from app.features.programs.services.program_service import program_service
 
 
 router = APIRouter()
@@ -270,6 +270,27 @@ async def get_program_tree(
     return tree
 
 
+@router.get("/{program_id}/statistics")
+async def get_program_statistics(
+    program_id: str,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[dict, Depends(get_current_active_user)]
+):
+    """
+    Get comprehensive statistics for a program.
+    
+    Returns detailed statistics including courses, students, team members, and facilities.
+    """
+    statistics = program_service.get_program_statistics(db, program_id)
+    if not statistics:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Program not found"
+        )
+    
+    return {"success": True, "data": statistics}
+
+
 @router.post("/bulk-status", response_model=BulkActionResponse)
 async def bulk_update_status(
     action_data: BulkActionRequest,
@@ -351,4 +372,31 @@ async def reorder_programs(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error reordering programs: {str(e)}"
+        )
+
+
+@router.post("/{program_id}/apply-defaults", response_model=ProgramResponse)
+async def apply_default_configuration(
+    program_id: str,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[dict, Depends(get_current_active_user)]
+):
+    """
+    Apply default configuration to an existing program.
+    
+    Fills in missing configuration fields with sensible defaults.
+    Useful for upgrading programs created before enhanced configuration was available.
+    """
+    try:
+        program = program_service.apply_default_configuration(db, program_id, current_user["id"])
+        if not program:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Program not found"
+            )
+        return program
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error applying default configuration: {str(e)}"
         )

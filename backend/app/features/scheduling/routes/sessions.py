@@ -4,7 +4,8 @@ Session management API routes for scheduling system.
 
 from typing import Annotated, Optional, List
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import status
 from sqlalchemy.orm import Session
 
 from app.features.common.models.database import get_db

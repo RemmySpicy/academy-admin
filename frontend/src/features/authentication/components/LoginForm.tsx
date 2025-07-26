@@ -35,6 +35,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors }
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -204,11 +205,23 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               <div className="mt-8 p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm font-medium text-gray-700 mb-3">Demo Credentials:</p>
                 <div className="space-y-2 text-xs">
-                  <div className="flex items-center justify-between p-2 bg-white rounded border">
+                  <div 
+                    className="flex items-center justify-between p-2 bg-white rounded border cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition-colors"
+                    onClick={() => {
+                      setValue('username', 'admin@academy.com');
+                      setValue('password', 'admin123');
+                    }}
+                  >
                     <span className="text-gray-600">Super Admin:</span>
                     <code className="text-blue-600 font-mono">admin@academy.com / admin123</code>
                   </div>
-                  <div className="flex items-center justify-between p-2 bg-white rounded border">
+                  <div 
+                    className="flex items-center justify-between p-2 bg-white rounded border cursor-pointer hover:bg-indigo-50 hover:border-indigo-200 transition-colors"
+                    onClick={() => {
+                      setValue('username', 'swim.admin@academy.com');
+                      setValue('password', 'swim123');
+                    }}
+                  >
                     <span className="text-gray-600">Program Admin:</span>
                     <code className="text-indigo-600 font-mono">swim.admin@academy.com / swim123</code>
                   </div>

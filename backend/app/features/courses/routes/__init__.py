@@ -2,7 +2,6 @@
 Curriculum API routes for the academy management system.
 """
 
-from .programs import router as programs_router
 from .courses import router as courses_router
 from .curricula import router as curricula_router
 from .levels import router as levels_router
@@ -17,7 +16,6 @@ from .advanced import router as advanced_router
 from .progression import router as progression_router
 
 __all__ = [
-    "programs_router",
     "courses_router",
     "curricula_router", 
     "levels_router",

@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
-from app.features.courses.models.program import Program
+from app.features.programs.models.program import Program
 from app.features.common.models.enums import CurriculumStatus
 
 

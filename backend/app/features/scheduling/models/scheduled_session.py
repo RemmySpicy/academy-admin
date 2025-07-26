@@ -74,9 +74,9 @@ class ScheduledSession(BaseModel):
     )
     
     session_type: Mapped[SessionType] = mapped_column(
-        default=SessionType.GROUP_LESSON,
+        default=SessionType.GROUP,
         nullable=False,
-        comment="Type of session (group_lesson, private_lesson, etc.)",
+        comment="Type of session (private: 1-2, group: 3-5, school_group: unlimited)",
     )
     
     # Scheduling details

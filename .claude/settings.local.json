@@ -61,7 +61,8 @@
       "Bash(git restore:*)",
       "Bash(/dev/null)",
       "Bash(./scripts/run-tests.sh:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }

@@ -185,7 +185,12 @@ class SessionStatus(str, enum.Enum):
 
 
 class SessionType(str, enum.Enum):
-    """Session type enumeration."""
+    """Session type enumeration based on updated requirements."""
+    PRIVATE = "private"  # 1-2 participants
+    GROUP = "group"  # 3-5 participants  
+    SCHOOL_GROUP = "school_group"  # Unlimited participants
+    
+    # Legacy support - keeping these for backward compatibility
     GROUP_LESSON = "group_lesson"
     PRIVATE_LESSON = "private_lesson"
     ASSESSMENT = "assessment"
@@ -202,7 +207,7 @@ class RecurringPattern(str, enum.Enum):
     WEEKLY = "weekly"
     BIWEEKLY = "biweekly"
     MONTHLY = "monthly"
-    CUSTOM = "custom"
+    CUSTOM = "custom"  # For custom day patterns from frontend
 
 
 class ParticipantStatus(str, enum.Enum):

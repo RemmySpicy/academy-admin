@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_, or_, desc, asc
 import json
 
-from app.features.courses.models.program import Program
+from app.features.programs.models.program import Program
 from app.features.courses.models.course import Course
 from app.features.courses.models.curriculum import Curriculum
 from app.features.courses.models.level import Level

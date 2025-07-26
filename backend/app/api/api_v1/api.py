@@ -2,8 +2,8 @@ from fastapi import APIRouter
 from app.api.api_v1.endpoints import health
 from app.features.authentication.routes import auth, parents, users
 from app.features.students.routes import students
+from app.features.programs.routes import programs
 from app.features.courses.routes import (
-    programs,
     courses,
     curricula,
     levels,

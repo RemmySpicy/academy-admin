@@ -19,8 +19,8 @@ class SessionBase(BaseModel):
     title: str = Field(..., description="Session title/name", max_length=255)
     description: Optional[str] = Field(None, description="Detailed session description")
     session_type: SessionType = Field(
-        default=SessionType.GROUP_LESSON,
-        description="Type of session"
+        default=SessionType.GROUP,
+        description="Type of session (private: 1-2, group: 3-5, school_group: unlimited)"
     )
     
     # Scheduling details
@@ -83,6 +83,21 @@ class SessionBase(BaseModel):
         if 'recurring_pattern' in values and values['recurring_pattern'] != RecurringPattern.NONE:
             if not v:
                 raise ValueError('Recurring configuration required for recurring sessions')
+        return v
+    
+    @validator('max_participants')
+    def validate_max_participants(cls, v, values):
+        """Validate max participants based on session type."""
+        if 'session_type' in values and v is not None:
+            session_type = values['session_type']
+            
+            if session_type == SessionType.PRIVATE and v > 2:
+                raise ValueError('Private sessions can have maximum 2 participants')
+            elif session_type == SessionType.GROUP and (v < 3 or v > 5):
+                raise ValueError('Group sessions must have 3-5 participants')
+            elif session_type == SessionType.SCHOOL_GROUP and v < 1:
+                raise ValueError('School group sessions must have at least 1 participant')
+                
         return v
 
 

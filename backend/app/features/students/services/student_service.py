@@ -19,7 +19,7 @@ from app.features.students.schemas.student import (
 from app.features.courses.services.base_service import BaseService
 
 # Import related models for program context filtering
-from app.features.courses.models.program import Program
+from app.features.programs.models.program import Program
 
 
 class StudentService(BaseService[Student, StudentCreate, StudentUpdate]):

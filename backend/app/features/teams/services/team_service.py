@@ -9,7 +9,7 @@ from sqlalchemy import func, and_, or_, desc, asc
 
 from app.features.authentication.models.user import User
 from app.features.authentication.models.user_program_assignment import UserProgramAssignment
-from app.features.courses.models.program import Program
+from app.features.programs.models.program import Program
 from app.features.common.models.enums import UserRole
 from app.features.teams.schemas.team_schemas import (
     TeamMemberResponse,

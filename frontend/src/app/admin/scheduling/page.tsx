@@ -2,16 +2,16 @@
 
 import { useState } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { FacilityScheduleManager } from '@/features/scheduling/components/FacilityScheduleManager';
+import { WeeklyScheduleManager } from '@/features/scheduling/components/WeeklyScheduleManager';
 
 export default function SchedulingPage() {
-  usePageTitle('Scheduling & Calendar', 'Facility-centric schedule management and calendar system');
+  usePageTitle('Scheduling & Calendar', 'Weekly schedule management with facility-based sessions');
   
   const [selectedFacilityId, setSelectedFacilityId] = useState<string>('');
 
   return (
     <div className="space-y-6">
-      <FacilityScheduleManager
+      <WeeklyScheduleManager
         selectedFacilityId={selectedFacilityId}
         onSelectFacility={setSelectedFacilityId}
       />

@@ -8,7 +8,7 @@ import os
 sys.path.append('/app')
 
 from app.features.common.models.database import get_db
-from app.features.courses.models.program import Program
+from app.features.programs.models.program import Program
 from app.features.courses.models.course import Course
 from app.features.courses.models.curriculum import Curriculum
 from app.features.courses.models.level import Level

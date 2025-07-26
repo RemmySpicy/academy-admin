@@ -665,7 +665,8 @@ POST /partner-auth/create-admin
   "admin_data": {
     "username": "techcorp.admin",
     "email": "admin@techcorp.com",
-    "full_name": "TechCorp Administrator",
+    "first_name": "TechCorp",
+    "last_name": "Administrator",
     "password": "secure_password123"
   },
   "permissions": [
@@ -719,7 +720,8 @@ POST /partner-auth/login
       "id": "user-789",
       "username": "techcorp.admin",
       "email": "admin@techcorp.com",
-      "full_name": "TechCorp Administrator",
+      "first_name": "TechCorp",
+      "last_name": "Administrator",
       "organization_id": "org-456",
       "permissions": ["manage_students", "view_payments", "generate_reports"]
     }
@@ -810,13 +812,15 @@ GET /users/{user_id}/family
   "data": {
     "user": {
       "id": "user-123",
-      "full_name": "John Smith",
+      "first_name": "John",
+      "last_name": "Smith",
       "profile_type": "FULL_USER"
     },
     "children": [
       {
         "id": "user-456",
-        "full_name": "Emily Smith",
+        "first_name": "Emily",
+        "last_name": "Smith",
         "profile_type": "PROFILE_ONLY",
         "relationship": {
           "id": "relationship-789",
@@ -849,12 +853,14 @@ POST /users/student-parent
   "parent_data": {
     "username": "john.smith",
     "email": "john.smith@email.com",
-    "full_name": "John Smith",
+    "first_name": "John",
+    "last_name": "Smith",
     "password": "secure_password",
     "phone": "+1-555-0123"
   },
   "child_data": {
-    "full_name": "Emily Smith",
+    "first_name": "Emily",
+    "last_name": "Smith",
     "date_of_birth": "2010-03-15",
     "phone": "+1-555-0123"
   },
@@ -878,12 +884,14 @@ POST /users/student-parent
       "id": "user-123",
       "username": "john.smith",
       "email": "john.smith@email.com",
-      "full_name": "John Smith",
+      "first_name": "John",
+      "last_name": "Smith",
       "profile_type": "FULL_USER"
     },
     "child": {
       "id": "user-456", 
-      "full_name": "Emily Smith",
+      "first_name": "Emily",
+    "last_name": "Smith",
       "profile_type": "PROFILE_ONLY"
     },
     "relationship": {
@@ -1056,7 +1064,8 @@ const admin = await fetch('/api/v1/partner-auth/create-admin', {
     admin_data: {
       username: 'techcorp.admin',
       email: 'admin@techcorp.com',
-      full_name: 'TechCorp Administrator',
+      first_name: 'TechCorp',
+      last_name: 'Administrator',
       password: 'secure_password'
     }
   })

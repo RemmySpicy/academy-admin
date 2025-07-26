@@ -4,16 +4,15 @@ import { useState } from 'react';
 import { Plus, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAcademyPrograms, useCreateAcademyProgram, useDeleteAcademyProgram, useAcademyProgramStats } from '../hooks';
+import { useAcademyPrograms, useDeleteAcademyProgram, useAcademyProgramStats } from '../hooks';
 import { AcademyProgramCard } from './AcademyProgramCard';
 import { AcademySearchAndFilter } from './AcademySearchAndFilter';
 import { AcademyPagination } from './AcademyPagination';
-import { CreateProgramDialog } from './CreateProgramDialog';
-import { EditProgramDialog } from './EditProgramDialog';
-import { ProgramDetailsDialog } from './ProgramDetailsDialog';
 import { SearchParams } from '@/lib/api/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Program } from '@/lib/api/types';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 /**
  * Academy Programs Management Component
@@ -21,20 +20,15 @@ import type { Program } from '@/lib/api/types';
  * Super admin-only component for managing all programs across the academy
  */
 export function AcademyPrograms() {
+  const router = useRouter();
   const [searchParams, setSearchParams] = useState<SearchParams>({
     page: 1,
     per_page: 12,
   });
 
-  // Dialog states
-  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
-  const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
 
   const { data: programsData, isLoading: programsLoading, refetch: refetchPrograms } = useAcademyPrograms(searchParams);
   const { data: programStats, isLoading: statsLoading, refetch: refetchStats } = useAcademyProgramStats();
-  const createProgram = useCreateAcademyProgram();
   const deleteProgram = useDeleteAcademyProgram();
 
   const handleSearch = (params: SearchParams) => {
@@ -52,24 +46,12 @@ export function AcademyPrograms() {
     });
   };
 
-  const handleProgramCreated = () => {
-    refetchPrograms();
-    refetchStats();
-  };
-
   const handleViewProgram = (program: Program) => {
-    setSelectedProgramId(program.id);
-    setDetailsDialogOpen(true);
+    router.push(`/admin/academy/programs/${program.id}`);
   };
 
   const handleEditProgram = (program: Program) => {
-    setSelectedProgram(program);
-    setEditDialogOpen(true);
-  };
-
-  const handleProgramUpdated = () => {
-    refetchPrograms();
-    refetchStats();
+    router.push(`/admin/academy/programs/${program.id}/edit`);
   };
 
   const handleDeleteProgram = async (program: Program) => {
@@ -94,7 +76,12 @@ export function AcademyPrograms() {
             Manage all academy programs, create new programs, and configure program settings
           </p>
         </div>
-        <CreateProgramDialog onProgramCreated={handleProgramCreated} />
+        <Link href="/admin/academy/programs/new">
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Program
+          </Button>
+        </Link>
       </div>
 
       {/* Stats Cards */}
@@ -237,26 +224,17 @@ export function AcademyPrograms() {
               <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No programs found</h3>
               <p className="text-gray-600 mb-4">Get started by creating your first program.</p>
-              <CreateProgramDialog onProgramCreated={handleProgramCreated} />
+              <Link href="/admin/academy/programs/new">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Program
+                </Button>
+              </Link>
             </div>
           )}
         </>
       )}
 
-      {/* Dialog Components */}
-      <EditProgramDialog
-        program={selectedProgram}
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        onProgramUpdated={handleProgramUpdated}
-      />
-
-      <ProgramDetailsDialog
-        programId={selectedProgramId}
-        open={detailsDialogOpen}
-        onOpenChange={setDetailsDialogOpen}
-        onEdit={handleEditProgram}
-      />
     </div>
   );
 }

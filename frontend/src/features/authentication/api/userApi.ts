@@ -10,33 +10,55 @@ export interface RealUser {
   id: string;
   username: string;
   email: string;
-  full_name: string;
-  role: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  profile_type: 'full_user' | 'profile_only';
+  roles: string[];
+  primary_role: string;
   is_active: boolean;
   last_login?: string;
   created_at: string;
+  updated_at: string;
 }
 
 export interface UserCreate {
   username: string;
   email: string;
   password: string;
-  full_name: string;
-  role: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  roles: string[];
   is_active: boolean;
 }
 
 export interface UserUpdate {
   username?: string;
   email?: string;
-  full_name?: string;
-  role?: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  roles?: string[];
   is_active?: boolean;
 }
 
+export interface UserSearchParams {
+  search?: string;
+  roles?: string[];
+  is_active?: boolean;
+  page?: number;
+  per_page?: number;
+  sort_by?: string;
+  sort_order?: 'asc' | 'desc';
+}
+
 export interface UserListResponse {
-  users: RealUser[];
+  items: RealUser[];
   total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
 }
 
 export interface PasswordChangeRequest {
@@ -47,10 +69,26 @@ export interface PasswordChangeRequest {
 export class UserApi {
 
   /**
-   * Get all users (admin only)
+   * Get all users with search and filtering (admin only)
    */
-  static async getUsers(): Promise<ApiResponse<RealUser[]>> {
-    return httpClient.get<RealUser[]>(API_ENDPOINTS.auth.users);
+  static async getUsers(params?: UserSearchParams): Promise<ApiResponse<UserListResponse>> {
+    const queryParams = new URLSearchParams();
+    
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.roles?.length) {
+      params.roles.forEach(role => queryParams.append('roles', role));
+    }
+    if (params?.is_active !== undefined) queryParams.append('is_active', params.is_active.toString());
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.per_page) queryParams.append('per_page', params.per_page.toString());
+    if (params?.sort_by) queryParams.append('sort_by', params.sort_by);
+    if (params?.sort_order) queryParams.append('sort_order', params.sort_order);
+    
+    const url = queryParams.toString() 
+      ? `${API_ENDPOINTS.auth.users}?${queryParams.toString()}`
+      : API_ENDPOINTS.auth.users;
+      
+    return httpClient.get<UserListResponse>(url);
   }
 
   /**
@@ -99,15 +137,34 @@ export class UserApi {
    * Update user role
    */
   static async updateUserRole(userId: string, role: string): Promise<ApiResponse<RealUser>> {
-    return this.updateUser(userId, { role });
+    return this.updateUser(userId, { roles: [role] });
+  }
+
+  /**
+   * Search users for team assignment (filters for assignable roles)
+   */
+  static async searchUsersForTeamAssignment(query: string): Promise<ApiResponse<UserListResponse>> {
+    const assignableRoles = ['program_admin', 'program_coordinator', 'instructor'];
+    return this.getUsers({
+      search: query,
+      roles: assignableRoles,
+      is_active: true,
+      per_page: 20
+    });
   }
 }
 
 // Helper functions for common operations
 export const userApi = {
   // Get all users
-  getAll: async () => {
-    const response = await UserApi.getUsers();
+  getAll: async (params?: UserSearchParams) => {
+    const response = await UserApi.getUsers(params);
+    return response;
+  },
+
+  // Search users for team assignment
+  searchForTeamAssignment: async (query: string) => {
+    const response = await UserApi.searchUsersForTeamAssignment(query);
     return response;
   },
 

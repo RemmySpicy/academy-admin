@@ -9,7 +9,7 @@ import uuid
 sys.path.append('/app')
 
 from app.features.common.models.database import get_db
-from app.features.courses.models.program import Program
+from app.features.programs.models.program import Program
 from app.features.common.models.enums import CurriculumStatus
 from sqlalchemy.orm import Session
 

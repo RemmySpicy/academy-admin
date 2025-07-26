@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.features.common.models.database import get_db
 from app.features.authentication.models.user_program_assignment import UserProgramAssignment
-from app.features.courses.models.program import Program
+from app.features.programs.models.program import Program
 
 
 class ProgramContextMiddleware:

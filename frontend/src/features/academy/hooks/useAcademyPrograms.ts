@@ -17,14 +17,15 @@ import type {
 
 // Query Keys
 export const ACADEMY_QUERY_KEYS = {
-  PROGRAMS: 'academy-programs',
-  PROGRAM: 'academy-program',
-  PROGRAM_STATS: 'academy-program-stats',
-  USERS: 'academy-users',
-  USER: 'academy-user',
-  USER_STATS: 'academy-user-stats',
-  SETTINGS: 'academy-settings',
-  SYSTEM_HEALTH: 'academy-system-health',
+  // Programs
+  PROGRAMS: 'academy-programs',                    // List of programs
+  PROGRAM: 'academy-program',                      // Single program
+  PROGRAM_OVERVIEW_STATS: 'academy-program-overview-stats',  // Academy-wide stats
+  PROGRAM_DETAILED_STATS: 'academy-program-detailed-stats',  // Individual program stats
+  
+  // Users  
+  USERS: 'academy-users',                          // List of users
+  USER: 'academy-user',                            // Single user
 } as const;
 
 /**
@@ -64,6 +65,7 @@ export const useAcademyProgram = (id: string) => {
   });
 };
 
+
 /**
  * Create a new academy program
  */
@@ -81,7 +83,7 @@ export const useCreateAcademyProgram = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [ACADEMY_QUERY_KEYS.PROGRAMS] });
-      queryClient.invalidateQueries({ queryKey: [ACADEMY_QUERY_KEYS.PROGRAM_STATS] });
+      queryClient.invalidateQueries({ queryKey: [ACADEMY_QUERY_KEYS.PROGRAM_OVERVIEW_STATS] });
       toast.success('Program created successfully');
     },
     onError: (error: Error) => {
@@ -108,7 +110,8 @@ export const useUpdateAcademyProgram = () => {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: [ACADEMY_QUERY_KEYS.PROGRAMS] });
       queryClient.invalidateQueries({ queryKey: [ACADEMY_QUERY_KEYS.PROGRAM, id] });
-      queryClient.invalidateQueries({ queryKey: [ACADEMY_QUERY_KEYS.PROGRAM_STATS] });
+      queryClient.invalidateQueries({ queryKey: [ACADEMY_QUERY_KEYS.PROGRAM_OVERVIEW_STATS] });
+      queryClient.invalidateQueries({ queryKey: [ACADEMY_QUERY_KEYS.PROGRAM_DETAILED_STATS, id] });
       toast.success('Program updated successfully');
     },
     onError: (error: Error) => {
@@ -134,7 +137,8 @@ export const useDeleteAcademyProgram = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [ACADEMY_QUERY_KEYS.PROGRAMS] });
-      queryClient.invalidateQueries({ queryKey: [ACADEMY_QUERY_KEYS.PROGRAM_STATS] });
+      queryClient.invalidateQueries({ queryKey: [ACADEMY_QUERY_KEYS.PROGRAM_OVERVIEW_STATS] });
+      // Note: Individual program stats will be automatically cleaned up since the program no longer exists
       toast.success('Program deleted successfully');
     },
     onError: (error: Error) => {
@@ -144,20 +148,42 @@ export const useDeleteAcademyProgram = () => {
 };
 
 /**
- * Get academy program statistics
+ * Get academy-wide program overview statistics
+ * Returns overall stats across all programs (total programs, active programs, etc.)
  */
 export const useAcademyProgramStats = () => {
   return useQuery({
-    queryKey: [ACADEMY_QUERY_KEYS.PROGRAM_STATS],
+    queryKey: [ACADEMY_QUERY_KEYS.PROGRAM_OVERVIEW_STATS],
     queryFn: async () => {
       const response = await academyProgramsApi.getProgramStats();
       
       if (response.success) {
         return response.data;
       }
-      throw new Error(response.error || 'Failed to fetch program statistics');
+      throw new Error(response.error || 'Failed to fetch academy program overview statistics');
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     refetchInterval: 30 * 60 * 1000, // 30 minutes
+  });
+};
+
+/**
+ * Get detailed statistics for a specific program
+ * Returns comprehensive stats for individual program (courses, students, team, facilities, etc.)
+ */
+export const useAcademyProgramStatistics = (id: string) => {
+  return useQuery({
+    queryKey: [ACADEMY_QUERY_KEYS.PROGRAM_DETAILED_STATS, id],
+    queryFn: async () => {
+      const response = await academyProgramsApi.getProgramStatistics(id);
+      
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.error || 'Failed to fetch detailed program statistics');
+    },
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 };

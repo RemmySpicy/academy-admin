@@ -14,7 +14,7 @@ from app.features.common.models.base import Base
 from app.features.authentication.models.user import User
 from app.features.students.models.course_enrollment import CourseEnrollment
 from app.features.students.models.student import Student
-from app.features.courses.models.program import Program
+from app.features.programs.models.program import Program
 
 # Create database engine
 engine = create_engine(settings.DATABASE_URL)

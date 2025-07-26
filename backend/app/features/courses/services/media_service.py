@@ -32,7 +32,7 @@ from app.features.courses.models.module import Module
 from app.features.courses.models.level import Level
 from app.features.courses.models.curriculum import Curriculum
 from app.features.courses.models.course import Course
-from app.features.courses.models.program import Program
+from app.features.programs.models.program import Program
 
 
 class MediaService(BaseService[MediaLibrary, MediaLibraryCreate, MediaLibraryUpdate]):
@@ -198,7 +198,7 @@ class MediaService(BaseService[MediaLibrary, MediaLibraryCreate, MediaLibraryUpd
             from app.features.courses.models.level import Level
             from app.features.courses.models.curriculum import Curriculum
             from app.features.courses.models.course import Course
-            from app.features.courses.models.program import Program
+            from app.features.programs.models.program import Program
             
             query = query.join(Lesson, MediaLibrary.lesson_id == Lesson.id)\
                         .join(Section, Lesson.section_id == Section.id)\
