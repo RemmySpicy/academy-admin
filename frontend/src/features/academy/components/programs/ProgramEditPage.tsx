@@ -12,7 +12,7 @@ import { Form } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Loader2, Save } from 'lucide-react';
 import Link from 'next/link';
-import { useAcademyProgramById, useUpdateAcademyProgram } from '../../hooks';
+import { useAcademyProgram, useUpdateAcademyProgram } from '../../hooks';
 import { BasicInformationTab } from './forms/BasicInformationTab';
 import { ConfigurationTab } from './forms/ConfigurationTab';
 import { TeamAssignmentTab } from './forms/TeamAssignmentTab';
@@ -67,7 +67,7 @@ export function ProgramEditPage({ programId }: ProgramEditPageProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("basic");
   
-  const { data: program, isLoading, error } = useAcademyProgramById(programId);
+  const { data: program, isLoading, error } = useAcademyProgram(programId);
   const updateProgram = useUpdateAcademyProgram();
 
   const form = useForm<UpdateProgramFormData>({
