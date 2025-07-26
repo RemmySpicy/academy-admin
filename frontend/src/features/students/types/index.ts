@@ -41,6 +41,15 @@ export interface Student {
   program_id: string;
   user_id?: string;
   
+  // New table fields
+  facility_name?: string;
+  course_name?: string;
+  current_level?: number;
+  current_module?: number;
+  completed_sessions?: number;
+  total_sessions?: number;
+  payment_status?: 'fully_paid' | 'partially_paid' | 'not_paid';
+  
   // For compatibility with existing code
   program?: string; // alias for program_name
 }
@@ -157,9 +166,53 @@ export interface StudentBulkActionResponse {
 }
 
 // Helper types for forms
-export interface StudentFormData extends Omit<StudentCreate, 'date_of_birth' | 'enrollment_date'> {
-  date_of_birth: Date;
-  enrollment_date: Date;
+// Enhanced form data interfaces for unified forms
+export interface StudentFormData {
+  // Basic info
+  username: string;
+  email: string;
+  password?: string; // Only for create mode
+  salutation?: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  date_of_birth: string;
+  gender?: string;
+  
+  // Program & enrollment
+  program_id: string;
+  course_id?: string;
+  referral_source?: string;
+  enrollment_date: string;
+  status: string;
+  
+  // Address
+  address: {
+    line1: string;
+    line2: string;
+    city: string;
+    state: string;
+    postal_code: string;
+    country: string;
+  };
+  
+  // Emergency contact
+  emergency_contact: {
+    name: string;
+    phone: string;
+    relationship: string;
+    email?: string;
+  };
+  
+  // Medical info
+  medical_info: {
+    conditions: string;
+    medications: string;
+    allergies: string;
+  };
+  
+  // Additional
+  notes: string;
 }
 
 export interface StudentFilters {

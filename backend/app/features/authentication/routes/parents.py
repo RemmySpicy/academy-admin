@@ -364,14 +364,8 @@ async def create_parent(
         
         # Create user with parent role
         user_dict = user_data.model_dump()
-        password = user_dict.pop("password")
         
-        # Hash password
-        from app.features.authentication.services.auth_service import AuthService
-        auth_service = AuthService()
-        user_dict["password_hash"] = auth_service.get_password_hash(password)
-        
-        # Create user with parent role
+        # Create user with parent role (password handling is done in the service)
         parent = user_service.create_user_with_roles(
             db=db,
             user_data=user_dict,

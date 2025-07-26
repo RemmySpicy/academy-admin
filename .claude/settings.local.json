@@ -58,7 +58,10 @@
       "Bash(npm run:*)",
       "Bash(awk:*)",
       "Bash(alembic upgrade:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(/dev/null)",
+      "Bash(./scripts/run-tests.sh:*)",
+      "Bash(echo:*)"
     ],
     "deny": []
   }

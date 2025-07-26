@@ -417,13 +417,13 @@ export default function StudentsParentsPage() {
                           className="rounded"
                         />
                       </th>
-                      <th className="text-left p-3 font-medium">Student ID</th>
                       <th className="text-left p-3 font-medium">Name</th>
-                      <th className="text-left p-3 font-medium">Email</th>
-                      <th className="text-left p-3 font-medium">Age</th>
+                      <th className="text-left p-3 font-medium">Facility</th>
+                      <th className="text-left p-3 font-medium">Course</th>
+                      <th className="text-left p-3 font-medium">Progress</th>
+                      <th className="text-left p-3 font-medium">Attendance</th>
                       <th className="text-left p-3 font-medium">Status</th>
-                      <th className="text-left p-3 font-medium">Program</th>
-                      <th className="text-left p-3 font-medium">Enrolled</th>
+                      <th className="text-left p-3 font-medium">Payment</th>
                       <th className="text-left p-3 font-medium">Actions</th>
                     </tr>
                   </thead>
@@ -455,14 +455,6 @@ export default function StudentsParentsPage() {
                           />
                         </td>
                         <td className="p-3">
-                          <Link 
-                            href={`/admin/students/${student.id}`}
-                            className="text-blue-600 hover:text-blue-800 font-medium"
-                          >
-                            {student.student_id}
-                          </Link>
-                        </td>
-                        <td className="p-3">
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                               <span className="text-sm font-medium text-blue-600">
@@ -470,22 +462,68 @@ export default function StudentsParentsPage() {
                               </span>
                             </div>
                             <div>
-                              <div className="font-medium">{student.first_name} {student.last_name}</div>
-                              <div className="text-sm text-gray-500">{student.phone}</div>
+                              <Link 
+                                href={`/admin/students/${student.id}`}
+                                className="font-medium text-blue-600 hover:text-blue-800"
+                              >
+                                {student.first_name} {student.last_name}
+                              </Link>
+                              {student.email && (
+                                <div className="text-sm text-gray-500">{student.email}</div>
+                              )}
                             </div>
                           </div>
                         </td>
-                        <td className="p-3">{student.email}</td>
-                        <td className="p-3">{student.age || calculateAge(student.date_of_birth)}</td>
+                        <td className="p-3 text-sm text-gray-600">
+                          {student.facility_name || 'Not assigned'}
+                        </td>
+                        <td className="p-3 text-sm text-gray-600">
+                          {student.course_name || 'Not enrolled'}
+                        </td>
+                        <td className="p-3">
+                          <div className="text-sm">
+                            {student.current_level && student.current_module ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-800 font-medium">
+                                Lvl {student.current_level} Mod {student.current_module}
+                              </span>
+                            ) : (
+                              <span className="text-gray-500">Not started</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <div className="text-sm">
+                            {student.completed_sessions !== undefined && student.total_sessions !== undefined ? (
+                              <>
+                                <span className="font-medium">{student.completed_sessions}/{student.total_sessions}</span>
+                                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                                  <div 
+                                    className="bg-green-600 h-1.5 rounded-full" 
+                                    style={{ width: `${Math.min(100, (student.completed_sessions / student.total_sessions) * 100)}%` }}
+                                  ></div>
+                                </div>
+                              </>
+                            ) : (
+                              <span className="text-gray-500">N/A</span>
+                            )}
+                          </div>
+                        </td>
                         <td className="p-3">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(student.status)}`}>
                             {getStatusIcon(student.status)}
                             <span className="ml-1 capitalize">{student.status}</span>
                           </span>
                         </td>
-                        <td className="p-3 text-sm text-gray-600">{student.program_name || student.program || 'Not assigned'}</td>
-                        <td className="p-3 text-sm text-gray-600">
-                          {new Date(student.enrollment_date).toLocaleDateString()}
+                        <td className="p-3">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            student.payment_status === 'fully_paid' ? 'bg-green-100 text-green-800' :
+                            student.payment_status === 'partially_paid' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {student.payment_status === 'fully_paid' ? 'Fully' :
+                             student.payment_status === 'partially_paid' ? 'Partial' :
+                             'Not Paid'}
+                          </span>
                         </td>
                         <td className="p-3">
                           <div className="flex items-center space-x-1">
@@ -721,10 +759,10 @@ export default function StudentsParentsPage() {
                         />
                       </th>
                       <th className="text-left p-3 font-medium">Name</th>
-                      <th className="text-left p-3 font-medium">Email</th>
                       <th className="text-left p-3 font-medium">Phone</th>
                       <th className="text-left p-3 font-medium">Children</th>
                       <th className="text-left p-3 font-medium">Status</th>
+                      <th className="text-left p-3 font-medium">Receivables</th>
                       <th className="text-left p-3 font-medium">Last Contact</th>
                       <th className="text-left p-3 font-medium">Actions</th>
                     </tr>
@@ -764,15 +802,17 @@ export default function StudentsParentsPage() {
                               </span>
                             </div>
                             <div>
-                              <div className="font-medium">{parent.full_name || parent.username}</div>
-                              <div className="text-sm text-gray-500">{parent.phone}</div>
+                              <Link 
+                                href={`/admin/parents/${parent.id}`}
+                                className="font-medium text-purple-600 hover:text-purple-800"
+                              >
+                                {parent.full_name || parent.username}
+                              </Link>
+                              <div className="text-sm text-gray-500 flex items-center">
+                                <Mail className="h-3 w-3 mr-1" />
+                                {parent.email}
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="p-3">
-                          <div className="flex items-center space-x-2">
-                            <Mail className="h-4 w-4 text-gray-400" />
-                            <span>{parent.email}</span>
                           </div>
                         </td>
                         <td className="p-3">
@@ -785,7 +825,9 @@ export default function StudentsParentsPage() {
                           <div className="flex items-center space-x-2">
                             <Baby className="h-4 w-4 text-blue-500" />
                             <span className="font-medium">{parent.children_count || 0}</span>
-                            <span className="text-sm text-gray-500">children</span>
+                            <span className="text-sm text-gray-500">
+                              {parent.children_count === 1 ? 'child' : 'children'}
+                            </span>
                           </div>
                         </td>
                         <td className="p-3">
@@ -799,8 +841,21 @@ export default function StudentsParentsPage() {
                             )}
                           </span>
                         </td>
+                        <td className="p-3">
+                          <div className="text-sm">
+                            {parent.outstanding_balance !== undefined && parent.outstanding_balance > 0 ? (
+                              <span className="font-medium text-red-600">
+                                ₦{parent.outstanding_balance.toLocaleString()}
+                              </span>
+                            ) : (
+                              <span className="text-green-600">₦0</span>
+                            )}
+                          </div>
+                        </td>
                         <td className="p-3 text-sm text-gray-600">
-                          {parent.last_login_at ? new Date(parent.last_login_at).toLocaleDateString() : 'Never'}
+                          {parent.last_contact_at ? new Date(parent.last_contact_at).toLocaleDateString() : 
+                           parent.last_login_at ? new Date(parent.last_login_at).toLocaleDateString() : 
+                           'Never'}
                         </td>
                         <td className="p-3">
                           <div className="flex items-center space-x-1">

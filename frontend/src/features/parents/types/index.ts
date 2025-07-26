@@ -7,6 +7,8 @@ import type { User } from '@/lib/api/types';
 export interface Parent extends User {
   children_count: number;
   has_children: boolean;
+  outstanding_balance?: number;
+  last_contact_at?: string;
 }
 
 export interface ParentRelationship {
@@ -49,30 +51,73 @@ export type RelationshipType =
   | 'spouse'
   | 'other';
 
+// Enhanced parent form data with separate name fields and improved structure
 export interface ParentFormData {
+  // Basic info
   username: string;
   email: string;
-  password: string;
-  full_name: string;
+  password?: string; // Only for create mode
+  first_name: string;
+  last_name: string;
+  full_name?: string; // Computed from first + last names
   phone?: string;
   date_of_birth?: string;
   profile_photo_url?: string;
-  emergency_contact_name?: string;
-  emergency_contact_phone?: string;
-  communication_preferences?: {
+  
+  // Emergency contact
+  emergency_contact: {
+    name: string;
+    phone: string;
+    relationship: string;
+    email?: string;
+  };
+  
+  // Communication preferences
+  communication_preferences: {
     email: boolean;
     sms: boolean;
     phone: boolean;
-    preferred_time?: string;
+    preferred_time: string;
+    newsletter: boolean;
+    progress_reports: boolean;
+    event_notifications: boolean;
   };
-  address?: {
+  
+  // Address
+  address: {
     line1: string;
-    line2?: string;
+    line2: string;
     city: string;
     state: string;
     postal_code: string;
     country: string;
   };
+  
+  // Financial preferences
+  financial_info: {
+    billing_contact_same: boolean;
+    billing_address: {
+      line1: string;
+      line2: string;
+      city: string;
+      state: string;
+      postal_code: string;
+      country: string;
+    };
+    payment_method_type: string;
+    auto_pay_enabled: boolean;
+  };
+  
+  // Additional preferences
+  preferences: {
+    pickup_authorized: boolean;
+    photo_consent: boolean;
+    marketing_consent: boolean;
+    data_sharing_consent: boolean;
+  };
+  
+  // Notes
+  notes: string;
 }
 
 export interface ParentUpdateFormData {
@@ -210,6 +255,33 @@ export interface ParentActionMenuItem {
   disabled?: (parent: Parent) => boolean;
   variant?: 'default' | 'destructive';
 }
+
+// Form options and constants
+export const COMMUNICATION_TIME_OPTIONS = [
+  { value: 'any', label: 'Any time' },
+  { value: 'morning', label: 'Morning (8AM - 12PM)' },
+  { value: 'afternoon', label: 'Afternoon (12PM - 6PM)' },
+  { value: 'evening', label: 'Evening (6PM - 9PM)' },
+  { value: 'weekends', label: 'Weekends only' },
+] as const;
+
+export const PAYMENT_METHOD_OPTIONS = [
+  { value: 'credit_card', label: 'Credit Card' },
+  { value: 'debit_card', label: 'Debit Card' },
+  { value: 'bank_transfer', label: 'Bank Transfer' },
+  { value: 'paypal', label: 'PayPal' },
+  { value: 'other', label: 'Other' },
+] as const;
+
+export const RELATIONSHIP_OPTIONS = [
+  { value: 'father', label: 'Father' },
+  { value: 'mother', label: 'Mother' },
+  { value: 'guardian', label: 'Guardian' },
+  { value: 'grandparent', label: 'Grandparent' },
+  { value: 'sibling', label: 'Sibling' },
+  { value: 'spouse', label: 'Spouse' },
+  { value: 'other', label: 'Other' },
+] as const;
 
 // Re-export commonly used types
 export type { User } from '@/lib/api/types';

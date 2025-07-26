@@ -1,541 +1,722 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, X, UserPlus } from 'lucide-react';
-import { useCreateParent } from '@/features/parents/hooks/useParents';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ArrowLeft, User, Users, Building2, AlertCircle, CheckCircle, Baby } from 'lucide-react';
+import { usePageTitle } from '@/hooks/usePageTitle';
+
+// Import reusable components
+import { PersonSearchAndSelect, OrganizationSelector, FormField } from '@/components/ui/forms';
+import { useProgramContext } from '@/hooks/useProgramContext';
+
+// Types
+interface ParentData {
+  full_name: string;
+  email: string;
+  phone?: string;
+  password?: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
+  occupation?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    postal_code?: string;
+    country?: string;
+  };
+  additional_notes?: string;
+}
+
+interface ChildRelationship {
+  child_id: string;
+  child: any; // Child user object
+  relationship_type: 'father' | 'mother' | 'guardian' | 'stepfather' | 'stepmother' | 'grandparent' | 'other';
+  is_primary_contact: boolean;
+  can_pickup: boolean;
+  emergency_contact: boolean;
+}
+
+interface OrganizationMembership {
+  organization_id: string;
+  membership_type: 'parent_member' | 'organization_admin';
+  payment_responsibility?: {
+    covers_children?: boolean;
+    payment_override?: any;
+  };
+}
+
+interface CreateParentFormData {
+  parent: ParentData;
+  child_relationships: ChildRelationship[];
+  organization_membership?: OrganizationMembership;
+  create_children_accounts: boolean;
+}
+
+type OrganizationMode = 'individual' | 'organization';
 
 export default function NewParentPage() {
+  usePageTitle('Create Parent', 'Add a new parent to the program');
+  
   const router = useRouter();
-  const createParentMutation = useCreateParent();
-
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    full_name: '',
-    phone: '',
-    date_of_birth: '',
-    emergency_contact_name: '',
-    emergency_contact_phone: '',
-    communication_preferences: {
-      email: true,
-      sms: true,
-      phone: true,
-      preferred_time: 'any'
+  const { currentProgram } = useProgramContext();
+  
+  // Toggle states
+  const [organizationMode, setOrganizationMode] = useState<OrganizationMode>('individual');
+  
+  // Form data
+  const [formData, setFormData] = useState<CreateParentFormData>({
+    parent: {
+      full_name: '',
+      email: '',
+      phone: '',
+      password: '',
+      emergency_contact_name: '',
+      emergency_contact_phone: '',
+      occupation: '',
+      address: {
+        street: '',
+        city: '',
+        state: '',
+        postal_code: '',
+        country: 'Nigeria'
+      },
+      additional_notes: ''
     },
-    address: {
-      line1: '',
-      line2: '',
-      city: '',
-      state: '',
-      postal_code: '',
-      country: 'US'
-    }
+    child_relationships: [],
+    create_children_accounts: false
   });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // UI state
+  const [selectedChildren, setSelectedChildren] = useState<any[]>([]);
+  const [selectedOrganization, setSelectedOrganization] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    
-    if (name.includes('.')) {
-      const [section, field] = name.split('.');
+  // Handlers
+  const handleParentDataChange = (field: string, value: string) => {
+    if (field.includes('.')) {
+      // Handle nested fields like address.street
+      const [parent, child] = field.split('.');
       setFormData(prev => ({
         ...prev,
-        [section]: {
-          ...prev[section as keyof typeof prev] as any,
-          [field]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+        parent: {
+          ...prev.parent,
+          [parent]: {
+            ...((prev.parent as any)[parent] || {}),
+            [child]: value
+          }
         }
       }));
     } else {
       setFormData(prev => ({
         ...prev,
-        [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+        parent: {
+          ...prev.parent,
+          [field]: value
+        }
       }));
     }
-
-    // Clear error for this field
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+    
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
 
-  const validateForm = () => {
+  const handleChildSelect = useCallback((child: any) => {
+    if (selectedChildren.find(c => c.id === child.id)) {
+      return; // Already selected
+    }
+
+    const newChild = {
+      child_id: child.id,
+      child: child,
+      relationship_type: 'father' as const, // Default, user can change
+      is_primary_contact: selectedChildren.length === 0, // First child becomes primary
+      can_pickup: true,
+      emergency_contact: selectedChildren.length === 0
+    };
+
+    setSelectedChildren(prev => [...prev, child]);
+    setFormData(prev => ({
+      ...prev,
+      child_relationships: [...prev.child_relationships, newChild]
+    }));
+  }, [selectedChildren]);
+
+  const handleChildRemove = useCallback((childId: string) => {
+    setSelectedChildren(prev => prev.filter(c => c.id !== childId));
+    setFormData(prev => ({
+      ...prev,
+      child_relationships: prev.child_relationships.filter(r => r.child_id !== childId)
+    }));
+  }, []);
+
+  const handleRelationshipUpdate = (childId: string, field: keyof ChildRelationship, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      child_relationships: prev.child_relationships.map(rel =>
+        rel.child_id === childId ? { ...rel, [field]: value } : rel
+      )
+    }));
+  };
+
+  const handleOrganizationSelect = useCallback((organization: any) => {
+    setSelectedOrganization(organization);
+    setFormData(prev => ({
+      ...prev,
+      organization_membership: {
+        organization_id: organization.id,
+        membership_type: 'parent_member',
+        payment_responsibility: {
+          covers_children: true // Default to covering children
+        }
+      }
+    }));
+    setErrors(prev => ({ ...prev, organization_id: '' }));
+  }, []);
+
+  const handleOrganizationRemove = useCallback(() => {
+    setSelectedOrganization(null);
+    setFormData(prev => {
+      const { organization_membership, ...rest } = prev;
+      return rest;
+    });
+  }, []);
+
+  const searchChildren = async (query: string) => {
+    // Search for existing student profiles that could be children
+    try {
+      const response = await fetch(`/api/v1/students/search?q=${encodeURIComponent(query)}&program_id=${currentProgram?.id}&without_parents=true`, {
+        headers: {
+          'X-Program-Context': currentProgram?.id || ''
+        }
+      });
+      
+      if (!response.ok) throw new Error('Search failed');
+      
+      const result = await response.json();
+      return result.data || [];
+    } catch (error) {
+      console.error('Children search error:', error);
+      return [];
+    }
+  };
+
+  const searchOrganizations = async (query: string) => {
+    try {
+      const response = await fetch(`/api/v1/organizations/search?q=${encodeURIComponent(query)}&program_id=${currentProgram?.id}`, {
+        headers: {
+          'X-Program-Context': currentProgram?.id || ''
+        }
+      });
+      
+      if (!response.ok) throw new Error('Search failed');
+      
+      const result = await response.json();
+      return result.data || [];
+    } catch (error) {
+      console.error('Organization search error:', error);
+      return [];
+    }
+  };
+
+  const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.username.trim()) {
-      newErrors.username = 'Username is required';
-    } else if (formData.username.length < 3) {
-      newErrors.username = 'Username must be at least 3 characters';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    if (!formData.full_name.trim()) {
+    // Parent validation
+    if (!formData.parent.full_name.trim()) {
       newErrors.full_name = 'Full name is required';
     }
 
-    if (formData.phone && !/^\+?[\d\s\-\(\)]+$/.test(formData.phone)) {
-      newErrors.phone = 'Please enter a valid phone number';
+    if (!formData.parent.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.parent.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!formData.parent.password || formData.parent.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    // Organization validation (if organization mode)
+    if (organizationMode === 'organization' && !selectedOrganization) {
+      newErrors.organization_id = 'Please select an organization';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
 
     setIsSubmitting(true);
-
+    
     try {
-      const createData = {
-        username: formData.username,
-        email: formData.email,
-        password: formData.password,
-        full_name: formData.full_name,
-        phone: formData.phone || undefined,
-        date_of_birth: formData.date_of_birth || undefined,
-        roles: ['parent'], // Ensure parent role is assigned
-        profile_photo_url: undefined,
-        emergency_contact_name: formData.emergency_contact_name || undefined,
-        emergency_contact_phone: formData.emergency_contact_phone || undefined,
-        communication_preferences: formData.communication_preferences,
-        address: {
-          line1: formData.address.line1 || '',
-          line2: formData.address.line2 || '',
-          city: formData.address.city || '',
-          state: formData.address.state || '',
-          postal_code: formData.address.postal_code || '',
-          country: formData.address.country || 'US'
-        }
+      // Prepare submission data
+      const submissionData = {
+        creation_mode: formData.child_relationships.length > 0 ? 'parent_with_children' : 'independent_parent',
+        organization_mode: organizationMode,
+        profile_data: {
+          parent: formData.parent,
+          ...(formData.child_relationships.length > 0 && {
+            child_relationships: formData.child_relationships.map(rel => ({
+              child_id: rel.child_id,
+              relationship_type: rel.relationship_type,
+              is_primary_contact: rel.is_primary_contact,
+              can_pickup: rel.can_pickup,
+              emergency_contact: rel.emergency_contact
+            }))
+          }),
+          ...(organizationMode === 'organization' && formData.organization_membership && {
+            organization_id: formData.organization_membership.organization_id,
+            membership_type: formData.organization_membership.membership_type,
+            payment_responsibility: formData.organization_membership.payment_responsibility
+          })
+        },
+        program_id: currentProgram?.id
       };
 
-      const result = await createParentMutation.mutateAsync(createData);
-
-      if (result?.data) {
-        router.push(`/admin/parents/${result.data.id}`);
-      } else {
-        router.push('/admin/students'); // Navigate back to unified page
-      }
-    } catch (error: any) {
-      setErrors({ 
-        submit: error?.message || 'Failed to create parent. Please try again.' 
+      const response = await fetch('/api/v1/profiles/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Program-Context': currentProgram?.id || ''
+        },
+        body: JSON.stringify(submissionData)
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create parent');
+      }
+
+      const result = await response.json();
+      
+      // Redirect to students management page or parent detail
+      router.push('/admin/students');
+      
+    } catch (error) {
+      console.error('Creation error:', error);
+      setErrors({ general: error instanceof Error ? error.message : 'Failed to create parent' });
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const handleCancel = () => {
+    router.push('/admin/students');
+  };
+
+  // Determine form state
+  const isIndividual = organizationMode === 'individual';
+  const isOrganizationMember = organizationMode === 'organization';
+  const hasChildren = formData.child_relationships.length > 0;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/admin/students">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Management
-            </Link>
+          <Button variant="outline" size="sm" onClick={handleCancel}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Add New Parent</h1>
-            <p className="text-gray-600">Create a new parent account and profile</p>
+            <h1 className="text-2xl font-bold text-gray-900">Create Parent</h1>
+            <p className="text-gray-600">Add a new parent to the program</p>
           </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Account Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <UserPlus className="h-5 w-5 mr-2" />
-                Account Information
-              </CardTitle>
-              <CardDescription>Basic account credentials and login information</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                  Username *
-                </label>
-                <input
-                  type="text"
-                  id="username"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
-                    errors.username ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter username"
-                />
-                {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address *
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
-                    errors.email ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter email address"
-                />
-                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Password *
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
-                    errors.password ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter password"
-                />
-                {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                  Confirm Password *
-                </label>
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
-                    errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Confirm password"
-                />
-                {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Personal Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-              <CardDescription>Parent's personal details and contact information</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  id="full_name"
-                  name="full_name"
-                  value={formData.full_name}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
-                    errors.full_name ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter full name"
-                />
-                {errors.full_name && <p className="text-red-500 text-sm mt-1">{errors.full_name}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
-                    errors.phone ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter phone number"
-                />
-                {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="date_of_birth" className="block text-sm font-medium text-gray-700 mb-1">
-                  Date of Birth
-                </label>
-                <input
-                  type="date"
-                  id="date_of_birth"
-                  name="date_of_birth"
-                  value={formData.date_of_birth}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="emergency_contact_name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Emergency Contact Name
-                </label>
-                <input
-                  type="text"
-                  id="emergency_contact_name"
-                  name="emergency_contact_name"
-                  value={formData.emergency_contact_name}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="Enter emergency contact name"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="emergency_contact_phone" className="block text-sm font-medium text-gray-700 mb-1">
-                  Emergency Contact Phone
-                </label>
-                <input
-                  type="tel"
-                  id="emergency_contact_phone"
-                  name="emergency_contact_phone"
-                  value={formData.emergency_contact_phone}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="Enter emergency contact phone"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Communication Preferences */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Communication Preferences</CardTitle>
-              <CardDescription>How this parent prefers to be contacted</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    name="communication_preferences.email"
-                    checked={formData.communication_preferences.email}
-                    onChange={handleInputChange}
-                    className="rounded"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Email Notifications</span>
-                </label>
-                
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    name="communication_preferences.sms"
-                    checked={formData.communication_preferences.sms}
-                    onChange={handleInputChange}
-                    className="rounded"
-                  />
-                  <span className="text-sm font-medium text-gray-700">SMS Notifications</span>
-                </label>
-                
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    name="communication_preferences.phone"
-                    checked={formData.communication_preferences.phone}
-                    onChange={handleInputChange}
-                    className="rounded"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Phone Calls</span>
-                </label>
-              </div>
-
-              <div>
-                <label htmlFor="communication_preferences.preferred_time" className="block text-sm font-medium text-gray-700 mb-1">
-                  Preferred Contact Time
-                </label>
-                <select
-                  id="communication_preferences.preferred_time"
-                  name="communication_preferences.preferred_time"
-                  value={formData.communication_preferences.preferred_time}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                >
-                  <option value="any">Any time</option>
-                  <option value="morning">Morning (8AM - 12PM)</option>
-                  <option value="afternoon">Afternoon (12PM - 6PM)</option>
-                  <option value="evening">Evening (6PM - 9PM)</option>
-                  <option value="weekends">Weekends only</option>
-                </select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Address Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Address Information</CardTitle>
-              <CardDescription>Parent's residential address</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label htmlFor="address.line1" className="block text-sm font-medium text-gray-700 mb-1">
-                  Address Line 1
-                </label>
-                <input
-                  type="text"
-                  id="address.line1"
-                  name="address.line1"
-                  value={formData.address.line1}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="Enter street address"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="address.line2" className="block text-sm font-medium text-gray-700 mb-1">
-                  Address Line 2
-                </label>
-                <input
-                  type="text"
-                  id="address.line2"
-                  name="address.line2"
-                  value={formData.address.line2}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="Apartment, suite, etc."
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="address.city" className="block text-sm font-medium text-gray-700 mb-1">
-                    City
-                  </label>
-                  <input
-                    type="text"
-                    id="address.city"
-                    name="address.city"
-                    value={formData.address.city}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    placeholder="Enter city"
-                  />
+      {/* Creation Mode Toggles */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <User className="h-5 w-5 mr-2" />
+            Parent Creation Options
+          </CardTitle>
+          <CardDescription>
+            Configure how you want to create this parent profile
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Individual vs Organization Toggle */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm font-medium">Membership Type</label>
+                  <Badge variant={isIndividual ? "outline" : "default"}>
+                    {isIndividual ? "Individual" : "Organization Member"}
+                  </Badge>
                 </div>
-
-                <div>
-                  <label htmlFor="address.state" className="block text-sm font-medium text-gray-700 mb-1">
-                    State
-                  </label>
-                  <input
-                    type="text"
-                    id="address.state"
-                    name="address.state"
-                    value={formData.address.state}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    placeholder="Enter state"
-                  />
-                </div>
+                <p className="text-xs text-gray-500">
+                  {isIndividual 
+                    ? "Parent pays individually for their children" 
+                    : "Parent is part of an organization with benefits"}
+                </p>
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="address.postal_code" className="block text-sm font-medium text-gray-700 mb-1">
-                    Postal Code
-                  </label>
-                  <input
-                    type="text"
-                    id="address.postal_code"
-                    name="address.postal_code"
-                    value={formData.address.postal_code}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    placeholder="Enter postal code"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="address.country" className="block text-sm font-medium text-gray-700 mb-1">
-                    Country
-                  </label>
-                  <select
-                    id="address.country"
-                    name="address.country"
-                    value={formData.address.country}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  >
-                    <option value="US">United States</option>
-                    <option value="CA">Canada</option>
-                    <option value="MX">Mexico</option>
-                    <option value="GB">United Kingdom</option>
-                    <option value="AU">Australia</option>
-                  </select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Error Message */}
-        {errors.submit && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <p className="text-red-600 text-sm">{errors.submit}</p>
+              <Switch
+                checked={isOrganizationMember}
+                onCheckedChange={(checked) => {
+                  setOrganizationMode(checked ? 'organization' : 'individual');
+                  if (!checked) {
+                    handleOrganizationRemove();
+                  }
+                }}
+              />
+            </div>
+            
+            {isOrganizationMember && (
+              <Alert>
+                <Building2 className="h-4 w-4" />
+                <AlertDescription>
+                  Select an organization this parent will be a member of for group benefits and payment coordination.
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
-        )}
 
-        {/* Action Buttons */}
-        <div className="flex justify-end space-x-4">
-          <Button type="button" variant="outline" asChild>
-            <Link href="/admin/students">
-              <X className="h-4 w-4 mr-2" />
-              Cancel
-            </Link>
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            <Save className="h-4 w-4 mr-2" />
-            {isSubmitting ? 'Creating...' : 'Create Parent'}
-          </Button>
-        </div>
-      </form>
+          {hasChildren && (
+            <>
+              <Separator />
+              <div className="flex items-center space-x-2">
+                <Baby className="h-4 w-4 text-green-600" />
+                <span className="text-sm font-medium text-green-700">
+                  {formData.child_relationships.length} child{formData.child_relationships.length !== 1 ? 'ren' : ''} will be linked to this parent
+                </span>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Organization Selection (conditional) */}
+      {isOrganizationMember && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Building2 className="h-5 w-5 mr-2" />
+              Organization Membership
+            </CardTitle>
+            <CardDescription>
+              Select the organization this parent will belong to
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <OrganizationSelector
+              searchLabel="Select Organization"
+              placeholder="Search for organizations..."
+              selectedOrganization={selectedOrganization}
+              onOrganizationSelect={handleOrganizationSelect}
+              onOrganizationRemove={handleOrganizationRemove}
+              onSearchFunction={searchOrganizations}
+              required
+              error={errors.organization_id}
+            />
+            
+            {selectedOrganization && formData.organization_membership && (
+              <div className="mt-4 space-y-4">
+                <h4 className="text-sm font-medium">Membership Details</h4>
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={formData.organization_membership.payment_responsibility?.covers_children || false}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        organization_membership: prev.organization_membership ? {
+                          ...prev.organization_membership,
+                          payment_responsibility: {
+                            ...prev.organization_membership.payment_responsibility,
+                            covers_children: e.target.checked
+                          }
+                        } : undefined
+                      }))}
+                      className="rounded border-gray-300"
+                    />
+                    <span>Organization covers children's fees</span>
+                  </label>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Children Assignment */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Baby className="h-5 w-5 mr-2" />
+            Children Assignment
+          </CardTitle>
+          <CardDescription>
+            Link existing children to this parent (optional)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PersonSearchAndSelect
+            searchLabel="Add Children"
+            placeholder="Search for children by name, email, or phone..."
+            selectedPersons={selectedChildren}
+            onPersonSelect={handleChildSelect}
+            onPersonRemove={handleChildRemove}
+            onSearchFunction={searchChildren}
+            allowMultiple={true}
+            filterRoles={['student']}
+          />
+          
+          {/* Relationship Details for Each Child */}
+          {formData.child_relationships.length > 0 && (
+            <div className="mt-6 space-y-4">
+              <h4 className="text-sm font-medium">Relationship Details</h4>
+              {formData.child_relationships.map((relationship, index) => (
+                <Card key={relationship.child_id} className="border-l-4 border-l-blue-500">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h5 className="font-medium">{relationship.child.full_name}</h5>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleChildRemove(relationship.child_id)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        label="Relationship Type"
+                        type="select"
+                        value={relationship.relationship_type}
+                        onChange={(value) => handleRelationshipUpdate(relationship.child_id, 'relationship_type', value)}
+                        options={[
+                          { value: 'father', label: 'Father' },
+                          { value: 'mother', label: 'Mother' },
+                          { value: 'guardian', label: 'Guardian' },
+                          { value: 'stepfather', label: 'Stepfather' },
+                          { value: 'stepmother', label: 'Stepmother' },
+                          { value: 'grandparent', label: 'Grandparent' },
+                          { value: 'other', label: 'Other' }
+                        ]}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="mt-3 space-y-2">
+                      <label className="text-sm font-medium">Permissions</label>
+                      <div className="space-y-2">
+                        <label className="flex items-center space-x-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={relationship.is_primary_contact}
+                            onChange={(e) => handleRelationshipUpdate(relationship.child_id, 'is_primary_contact', e.target.checked)}
+                            className="rounded border-gray-300"
+                          />
+                          <span>Primary Contact</span>
+                        </label>
+                        <label className="flex items-center space-x-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={relationship.can_pickup}
+                            onChange={(e) => handleRelationshipUpdate(relationship.child_id, 'can_pickup', e.target.checked)}
+                            className="rounded border-gray-300"
+                          />
+                          <span>Can Pick Up Child</span>
+                        </label>
+                        <label className="flex items-center space-x-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={relationship.emergency_contact}
+                            onChange={(e) => handleRelationshipUpdate(relationship.child_id, 'emergency_contact', e.target.checked)}
+                            className="rounded border-gray-300"
+                          />
+                          <span>Emergency Contact</span>
+                        </label>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Parent Details Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <User className="h-5 w-5 mr-2" />
+            Parent Information
+          </CardTitle>
+          <CardDescription>
+            Basic information and login credentials for the parent
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              label="Full Name"
+              type="text"
+              value={formData.parent.full_name}
+              onChange={(value) => handleParentDataChange('full_name', value)}
+              placeholder="Enter parent's full name"
+              required
+              error={errors.full_name}
+            />
+            
+            <FormField
+              label="Email"
+              type="email"
+              value={formData.parent.email}
+              onChange={(value) => handleParentDataChange('email', value)}
+              placeholder="parent@example.com"
+              required
+              error={errors.email}
+              note="Used for login and communications"
+            />
+            
+            <FormField
+              label="Phone"
+              type="tel"
+              value={formData.parent.phone || ''}
+              onChange={(value) => handleParentDataChange('phone', value)}
+              placeholder="+234 xxx xxx xxxx"
+            />
+            
+            <FormField
+              label="Password"
+              type="password"
+              value={formData.parent.password || ''}
+              onChange={(value) => handleParentDataChange('password', value)}
+              placeholder="Enter secure password"
+              required
+              error={errors.password}
+              note="Minimum 6 characters"
+            />
+          </div>
+          
+          <FormField
+            label="Occupation"
+            type="text"
+            value={formData.parent.occupation || ''}
+            onChange={(value) => handleParentDataChange('occupation', value)}
+            placeholder="Parent's occupation"
+          />
+          
+          <Separator />
+          
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium">Address Information</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                label="Street Address"
+                type="text"
+                value={formData.parent.address?.street || ''}
+                onChange={(value) => handleParentDataChange('address.street', value)}
+                placeholder="Street address"
+              />
+              
+              <FormField
+                label="City"
+                type="text"
+                value={formData.parent.address?.city || ''}
+                onChange={(value) => handleParentDataChange('address.city', value)}
+                placeholder="City"
+              />
+              
+              <FormField
+                label="State"
+                type="text"
+                value={formData.parent.address?.state || ''}
+                onChange={(value) => handleParentDataChange('address.state', value)}
+                placeholder="State"
+              />
+              
+              <FormField
+                label="Postal Code"
+                type="text"
+                value={formData.parent.address?.postal_code || ''}
+                onChange={(value) => handleParentDataChange('address.postal_code', value)}
+                placeholder="Postal code"
+              />
+            </div>
+          </div>
+          
+          <Separator />
+          
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium">Emergency Contact</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                label="Emergency Contact Name"
+                type="text"
+                value={formData.parent.emergency_contact_name || ''}
+                onChange={(value) => handleParentDataChange('emergency_contact_name', value)}
+                placeholder="Emergency contact person"
+              />
+              
+              <FormField
+                label="Emergency Contact Phone"
+                type="tel"
+                value={formData.parent.emergency_contact_phone || ''}
+                onChange={(value) => handleParentDataChange('emergency_contact_phone', value)}
+                placeholder="+234 xxx xxx xxxx"
+              />
+            </div>
+          </div>
+          
+          <FormField
+            label="Additional Notes"
+            type="textarea"
+            value={formData.parent.additional_notes || ''}
+            onChange={(value) => handleParentDataChange('additional_notes', value)}
+            placeholder="Any other relevant information..."
+            rows={3}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Error Display */}
+      {errors.general && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{errors.general}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Action Buttons */}
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={handleCancel}>
+          Cancel
+        </Button>
+        <Button 
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="min-w-32"
+        >
+          {isSubmitting ? (
+            <>Creating...</>
+          ) : (
+            <>
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Create Parent
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

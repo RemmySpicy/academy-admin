@@ -10,9 +10,9 @@ import { userApi, RealUser, UserUpdate } from '@/features/authentication/api/use
 import { isApiSuccess, getApiErrorMessage } from '@/lib/api';
 
 interface EditUserPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function EditUserPage({ params }: EditUserPageProps) {
@@ -34,7 +34,8 @@ export default function EditUserPage({ params }: EditUserPageProps) {
     const loadUser = async () => {
       try {
         setIsLoading(true);
-        const response = await userApi.getById(params.id);
+        const resolvedParams = await params;
+        const response = await userApi.getById(resolvedParams.id);
         if (isApiSuccess(response)) {
           setUser(response.data);
           setFormData({
@@ -55,7 +56,7 @@ export default function EditUserPage({ params }: EditUserPageProps) {
     };
 
     loadUser();
-  }, [params.id]);
+  }, [params]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +64,8 @@ export default function EditUserPage({ params }: EditUserPageProps) {
     setError(null);
 
     try {
-      const response = await userApi.update(params.id, formData);
+      const resolvedParams = await params;
+      const response = await userApi.update(resolvedParams.id, formData);
       if (isApiSuccess(response)) {
         router.push('/admin/users');
       } else {

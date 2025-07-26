@@ -220,3 +220,26 @@ class NotificationStatus(str, enum.Enum):
     SENT = "sent"
     FAILED = "failed"
     SCHEDULED = "scheduled"
+
+
+# Organization Management Enums
+
+class OrganizationStatus(str, enum.Enum):
+    """Organization status enumeration."""
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    SUSPENDED = "suspended"
+    PENDING = "pending"
+
+
+class MembershipType(str, enum.Enum):
+    """Organization membership type enumeration."""
+    SPONSORED = "sponsored"
+    AFFILIATE = "affiliate"
+    PARTNER = "partner"
+
+
+class ProfileType(str, enum.Enum):
+    """User profile type enumeration."""
+    FULL_USER = "full_user"
+    PROFILE_ONLY = "profile_only"

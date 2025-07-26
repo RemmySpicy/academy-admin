@@ -5,17 +5,21 @@ Academy Management System with program-centric architecture, role-based access c
 
 **📖 For detailed setup instructions, see: [`docs/setup/PROJECT_SETUP.md`](docs/setup/PROJECT_SETUP.md)**
 
-## Current Status (2025-07-23)
+## Current Status (2025-07-26)
 
 ### ✅ **Fully Implemented Features**
 - **Database Schema**: PostgreSQL with program-centric design ✅ **FIXED (2025-07-21)**
-- **Authentication System**: JWT with 4-role system (Super Admin, Program Admin, Program Coordinator, Instructor) ✅ **TESTED**
+- **Authentication System**: JWT with enhanced multi-profile support (Super Admin, Program Admin, Program Coordinator, Instructor, Student, Parent) ✅ **TESTED**
 - **Program Context Architecture**: HTTP header-based filtering with automatic security enforcement
 - **Course Management**: Full CRUD with program context integration
 - **🆕 Curriculum Management**: Complete curriculum-centric management system ✅ **IMPLEMENTED (2025-07-23)**
 - **Facility Management**: Complete facility management system
-- **User Management**: Role-based program assignments ✅ **VERIFIED**
+- **User Management**: Enhanced role-based program assignments with profile types ✅ **VERIFIED**
 - **Teams Management**: Program-specific team member management with role-based access control
+- **🆕 Organization Management**: Complete partner organization system with multi-tenant support ✅ **IMPLEMENTED (2025-07-26)**
+- **🆕 Parent-Child Relationships**: Family structure management with payment responsibility tracking ✅ **IMPLEMENTED (2025-07-26)**
+- **🆕 Payment Override System**: Organization-based payment overrides and access control ✅ **IMPLEMENTED (2025-07-26)**
+- **🆕 Partner Admin Dashboard**: Dedicated interface for partner organization management ✅ **IMPLEMENTED (2025-07-26)**
 - **Quality Assurance**: Automated program context compliance checking
 - **Layout Architecture**: Context-based page header system with clean component separation
 - **Multi-App Development Infrastructure**: Complete setup for instructor/coordinator and student/parent mobile apps
@@ -34,16 +38,22 @@ Academy Management System with program-centric architecture, role-based access c
 - **Frontend App**: http://localhost:3000 ✅ **RUNNING**
 - **Academy Programs**: 6 programs available (Swimming, Football, Basketball, Music, Robotics Engineering, Test program) ✅ **VERIFIED**
 
-**📖 For complete API reference, see: [`docs/api/API_ENDPOINTS.md`](docs/api/API_ENDPOINTS.md)**
+**📖 For complete API reference, see: [`docs/api/API_ENDPOINTS.md`](docs/api/API_ENDPOINTS.md)**  
+**📖 For organization management API, see: [`docs/api/ORGANIZATION_ENDPOINTS.md`](docs/api/ORGANIZATION_ENDPOINTS.md)**
 
-### 🔧 **Recent Updates (2025-07-25)**
-- **🆕 Enhanced Assignment System**: Comprehensive hierarchical assignment system for lessons and assessments
-- **🆕 Multi-Location Assignment**: Lessons can be assigned to multiple Course→Curriculum→Module→Section locations
-- **🆕 Assessment Level Assignment**: Assessments follow Course→Curriculum→Level assignment pattern
-- **🆕 Visual Assignment Management**: Assignment cards with breadcrumb navigation and easy removal
-- **🆕 Database Schema Updates**: Added missing fields for lesson/assessment forms (is_required, resource_links, assessment_items)
-- **🆕 Accessibility Compliance**: Fixed DialogTitle and DialogDescription warnings for screen readers
-- **🆕 Separated Content Forms**: Distinct lesson and assessment forms with specialized fields and workflows
+### 🔧 **Latest Updates (2025-07-26)**
+- **🆕 Organization Management System**: Complete partner organization system with multi-tenant capabilities ✅ **IMPLEMENTED**
+- **🆕 Enhanced User Profiles**: Support for full users vs profile-only accounts (children) with proper authentication ✅ **IMPLEMENTED**
+- **🆕 Parent-Child Relationships**: Bidirectional family structure management with payment responsibility tracking ✅ **IMPLEMENTED**
+- **🆕 Payment Override System**: Organization-based payment calculations and access control overrides ✅ **IMPLEMENTED**
+- **🆕 Partner Admin Dashboard**: Dedicated interface for managing sponsored students and organizational settings ✅ **IMPLEMENTED**
+- **🆕 Reusable Form Components**: PersonSearchAndSelect, OrganizationSelector, and RelationshipManager components ✅ **IMPLEMENTED**
+- **🆕 Atomic Creation Services**: Multi-profile creation with organization inheritance and conflict resolution ✅ **IMPLEMENTED**
+
+### 🔧 **Previous Updates (2025-07-25)**
+- **🆕 Content Management System**: Enhanced lesson and assessment creation with hierarchical assignment system ✅ **IMPLEMENTED**
+- **🆕 Separated Content Forms**: Distinct specialized forms for lessons and assessments with multi-location assignment
+- **🆕 Database Schema Updates**: Added fields for lesson types, resource links, and assessment items
 
 ### 🔧 **Previous Fixes (2025-07-21)**
 - **Database Migration Issues**: Fixed PostgreSQL ENUM type mismatches and explicit casting problems
@@ -127,6 +137,9 @@ Academy Management System with program-centric architecture, role-based access c
 # RECOMMENDED: Full Docker development
 docker compose up
 
+# 🆕 Auto-restart development (restarts frontend on changes)
+npm run dev:auto:watch
+
 # Alternative: Local development 
 ./start-dev.sh
 
@@ -135,7 +148,34 @@ npm run dev:all
 
 # 🆕 Mobile apps only
 npm run mobile:dev
+
+# Manual frontend restart
+npm run restart:frontend
 ```
+
+### 🔄 **Auto-Restart Development (NEW)**
+```bash
+# Start with file watching (automatically restarts frontend on changes)
+npm run dev:auto:watch
+
+# Manual restart options
+npm run restart:frontend          # Quick frontend restart
+./scripts/restart-frontend.sh     # Direct script access
+
+# Watch-only mode (no automatic restart)
+npm run dev:watch
+
+# Auto-restart specific services
+npm run dev:auto-restart          # Frontend only
+npm run dev:auto-restart:all      # All services
+```
+
+**📋 Auto-Restart Features:**
+- **Automatic Detection**: Monitors `frontend/src/`, `frontend/public/`, config files, and `shared/`
+- **Smart Restart**: Only restarts when necessary changes are detected
+- **WSL Optimized**: Special handling for Windows Subsystem for Linux
+- **Health Checks**: Waits for services to be ready before reporting success
+- **Manual Override**: Quick manual restart commands available
 
 ### 🛡️ **Quality Assurance (MANDATORY)**
 ```bash
@@ -448,6 +488,7 @@ academy-admin/                    # Main repository
 - Setup issues: Read `docs/setup/PROJECT_SETUP.md`
 - **Curriculum work**: Read `docs/features/curriculum/README.md` for complete curriculum system documentation
 - **Progression systems**: Read `docs/features/curriculum/CURRICULUM_PROGRESSION_SPECIFICATION.md` for star-based assessment details
+- **Content Management**: Read `docs/features/courses/CONTENT_MANAGEMENT.md` for lesson/assessment creation and assignment system
 - Feature specifications: Read `docs/features/[feature-name]/README.md`
 
 **Remember: Documentation is your friend. When in doubt, check the docs first!**
@@ -473,3 +514,34 @@ academy-admin/                    # Main repository
 - **Mobile Repositories**: `RemmySpicy/academy-instructors-app`, `RemmySpicy/academy-students-app` (deployment)
 - **Shared Resources**: Unified across all applications
 - **Documentation**: Consolidated, organized, and up-to-date with proper feature separation
+
+## 🏢 **Organization Management System (NEW)**
+
+### 📋 **Complete Documentation**
+- **🆕 Organization Management Overview**: [`docs/features/organizations/README.md`](docs/features/organizations/README.md) - Complete system documentation with architecture, features, and usage examples
+- **🆕 Payment Override Specification**: [`docs/features/organizations/PAYMENT_OVERRIDE_SPECIFICATION.md`](docs/features/organizations/PAYMENT_OVERRIDE_SPECIFICATION.md) - Detailed payment calculation rules and override logic
+- **🆕 Partner Admin Guide**: [`docs/features/organizations/PARTNER_ADMIN_GUIDE.md`](docs/features/organizations/PARTNER_ADMIN_GUIDE.md) - Complete guide for partner organization administrators
+- **🆕 Organization API Reference**: [`docs/api/ORGANIZATION_ENDPOINTS.md`](docs/api/ORGANIZATION_ENDPOINTS.md) - Comprehensive API documentation for organization endpoints
+
+### 🎯 **Key Features Implemented**
+- **Partner Organization Management**: Complete CRUD operations with multi-tenant support
+- **Payment Override System**: Flexible payment calculations with organization sponsorship
+- **Family Structure Management**: Parent-child relationships with payment responsibility tracking
+- **Partner Admin Dashboard**: Dedicated interface for organization administrators
+- **Enhanced User Profiles**: Support for full users vs profile-only accounts (children)
+- **Atomic Creation Services**: Multi-profile creation with organization inheritance
+- **Reusable Form Components**: PersonSearchAndSelect, OrganizationSelector, RelationshipManager
+
+### 🔧 **Technical Implementation**
+- **Database Schema**: Organizations, OrganizationMembership, and UserRelationship tables with proper constraints
+- **Service Layer**: PaymentOverrideService, PartnerAdminService, and AtomicCreationService
+- **API Endpoints**: Complete REST API with authentication and program context integration
+- **Frontend Components**: Enhanced creation forms and partner management interface
+- **Authentication**: Extended JWT system with organization context and partner admin roles
+
+### 📊 **Business Value**
+- **Multi-tenant Capabilities**: Organizations can manage their own sponsored students
+- **Flexible Payment Models**: Support for full, partial, and custom sponsorship arrangements
+- **Family Management**: Complete parent-child relationship tracking with payment responsibilities
+- **Partner Autonomy**: Organizations can self-manage their academy engagement
+- **Program Context Security**: All operations respect program boundaries and access control

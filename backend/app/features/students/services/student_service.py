@@ -69,9 +69,29 @@ class StudentService(BaseService[Student, StudentCreate, StudentUpdate]):
         student_id = self._generate_student_id(db)
         
         # Create student
-        student_dict = student_data.dict()
+        student_dict = student_data.model_dump()
         student_dict['student_id'] = student_id
         student_dict['created_by'] = created_by
+        
+        # Transform nested objects to individual fields for the model
+        if 'emergency_contact' in student_dict and student_dict['emergency_contact']:
+            emergency_contact = student_dict.pop('emergency_contact')
+            student_dict['emergency_contact_name'] = emergency_contact.get('name')
+            student_dict['emergency_contact_phone'] = emergency_contact.get('phone')
+            student_dict['emergency_contact_relationship'] = emergency_contact.get('relationship')
+        
+        if 'medical_info' in student_dict and student_dict['medical_info']:
+            medical_info = student_dict.pop('medical_info')
+            student_dict['medical_conditions'] = medical_info.get('conditions')
+            student_dict['medications'] = medical_info.get('medications')
+            student_dict['allergies'] = medical_info.get('allergies')
+        
+        # Remove id field if it exists and generate a new UUID
+        student_dict.pop('id', None)
+        
+        # Explicitly generate UUID for the student
+        import uuid
+        student_dict['id'] = str(uuid.uuid4())
         
         student = Student(**student_dict)
         db.add(student)

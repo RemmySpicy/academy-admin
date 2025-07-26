@@ -20,6 +20,11 @@ from app.features.courses.routes import (
 from app.features.facilities.routes import facilities
 from app.features.scheduling.routes import sessions_router, integration_router
 from app.features.teams.routes import teams
+from app.features.organizations.routes import (
+    organizations_router,
+    partner_auth_router,
+    payment_overrides_router
+)
 
 api_router = APIRouter()
 
@@ -55,3 +60,8 @@ api_router.include_router(integration_router, prefix="/scheduling/integration", 
 
 # Teams management routes (separate top-level)
 api_router.include_router(teams.router, prefix="/teams", tags=["teams"])
+
+# Organization management routes (separate top-level)  
+api_router.include_router(organizations_router, prefix="/organizations", tags=["organizations"])
+api_router.include_router(partner_auth_router, prefix="/organizations/auth", tags=["partner-auth"])
+api_router.include_router(payment_overrides_router, prefix="/organizations", tags=["payment-overrides"])

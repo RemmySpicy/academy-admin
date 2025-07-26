@@ -15,6 +15,7 @@ import {
   UserCheck,
   CreditCard,
   Building,
+  Building2,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -75,6 +76,12 @@ const navigationSections: NavSection[] = [
         icon: UserCheck
       },
       {
+        title: 'Partners',
+        href: '/admin/partners',
+        icon: Building2,
+        roles: ['super_admin', 'program_admin']
+      },
+      {
         title: 'Payments',
         href: '/admin/payments',
         icon: CreditCard
@@ -123,11 +130,24 @@ export function Sidebar({ className }: SidebarProps) {
   const { user } = useAuth();
   const { currentProgram } = useProgramContextHooks();
 
-  // Filter sections based on user role
-  const filteredSections = navigationSections.filter(section => {
-    if (!section.roles) return true;
-    return section.roles.includes(user?.role as any);
-  });
+  // Filter sections and items based on user role
+  const filteredSections = navigationSections.map(section => {
+    // Filter section level
+    if (section.roles && !section.roles.includes(user?.role as any)) {
+      return null;
+    }
+    
+    // Filter items within section
+    const filteredItems = section.items.filter(item => {
+      if (!item.roles) return true;
+      return item.roles.includes(user?.role as any);
+    });
+    
+    return {
+      ...section,
+      items: filteredItems
+    };
+  }).filter(Boolean) as NavSection[];
 
   const { logout } = useAuth();
 

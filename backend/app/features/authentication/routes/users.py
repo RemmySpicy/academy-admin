@@ -226,7 +226,7 @@ async def get_user(
     
     Returns detailed user information including family structure.
     """
-    user = user_service.get_by_id(db, user_id)
+    user = user_service.get(db, user_id)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

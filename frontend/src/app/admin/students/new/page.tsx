@@ -1,1112 +1,694 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  ArrowLeft,
-  Save,
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  AlertCircle,
-  FileText,
-  Users,
-  UserPlus,
-  Baby
-} from 'lucide-react';
-import { programsApi } from '@/features/programs/api';
-import { courseApiService } from '@/features/courses/api/courseApiService';
-import { studentApi } from '@/features/students/api/studentApi';
-import { isApiSuccess, getApiErrorMessage } from '@/lib/api';
-import { useAuth } from '@/features/authentication/hooks';
-import { RELATIONSHIP_OPTIONS } from '@/features/students/types';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ArrowLeft, User, Users, Building2, AlertCircle, CheckCircle } from 'lucide-react';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
-type CreationMode = 'student' | 'parent_child';
+// Import reusable components
+import { PersonSearchAndSelect, OrganizationSelector, FormField } from '@/components/ui/forms';
+import { useProgramContext } from '@/hooks/useProgramContext';
 
-interface StudentFormData {
-  // Student information
-  student_username: string;
-  student_email: string;
-  student_password: string;
-  student_salutation: string;
-  student_first_name: string;
-  student_last_name: string;
-  student_phone: string;
-  student_date_of_birth: string;
-  student_gender: string;
-  referral_source: string;
-  enrollment_date: string;
-  status: string;
-  program_id: string;
-  course_id: string;
-  address: {
-    line1: string;
-    line2: string;
-    city: string;
-    state: string;
-    postal_code: string;
-    country: string;
-  };
-  emergency_contact: {
-    name: string;
-    phone: string;
-    relationship: string;
-  };
-  medical_info: {
-    conditions: string;
-    medications: string;
-    allergies: string;
-  };
-  notes: string;
+// Types
+interface StudentData {
+  full_name: string;
+  email?: string;
+  phone?: string;
+  date_of_birth?: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
+  medical_notes?: string;
+  additional_notes?: string;
 }
 
-interface ParentChildFormData {
-  // Parent information
-  parent_username: string;
-  parent_email: string;
-  parent_password: string;
-  parent_full_name: string;
-  parent_phone: string;
-  parent_date_of_birth: string;
-  
-  // Child information
-  child_username: string;
-  child_email: string;
-  child_password: string;
-  child_full_name: string;
-  child_phone: string;
-  child_date_of_birth: string;
-  
-  // Relationship
-  relationship_type: string;
-  
-  // Course enrollment
-  course_id: string;
-  program_id: string;
+interface ParentRelationship {
+  parent_id: string;
+  relationship_type: 'father' | 'mother' | 'guardian' | 'stepfather' | 'stepmother' | 'grandparent' | 'other';
+  is_primary_contact: boolean;
+  can_pickup: boolean;
+  emergency_contact: boolean;
 }
 
-const initialStudentFormData: StudentFormData = {
-  student_username: '',
-  student_email: '',
-  student_password: '',
-  student_salutation: '',
-  student_first_name: '',
-  student_last_name: '',
-  student_phone: '',
-  student_date_of_birth: '',
-  student_gender: '',
-  referral_source: '',
-  enrollment_date: new Date().toISOString().split('T')[0],
-  status: 'active',
-  program_id: '',
-  course_id: '',
-  address: {
-    line1: '',
-    line2: '',
-    city: '',
-    state: '',
-    postal_code: 'NG'
-  },
-  emergency_contact: {
-    name: '',
-    phone: '',
-    relationship: ''
-  },
-  medical_info: {
-    conditions: '',
-    medications: '',
-    allergies: ''
-  },
-  notes: ''
-};
+interface OrganizationSponsorship {
+  organization_id: string;
+  payment_override?: {
+    full_sponsorship?: boolean;
+    partial_sponsorship?: number;
+    discount_percentage?: number;
+  };
+}
 
-const initialParentChildFormData: ParentChildFormData = {
-  parent_username: '',
-  parent_email: '',
-  parent_password: '',
-  parent_full_name: '',
-  parent_phone: '',
-  parent_date_of_birth: '',
-  child_username: '',
-  child_email: '',
-  child_password: '',
-  child_full_name: '',
-  child_phone: '',
-  child_date_of_birth: '',
-  relationship_type: 'guardian',
-  course_id: '',
-  program_id: ''
-};
+interface CreateStudentFormData {
+  student: StudentData;
+  parent_relationship?: ParentRelationship;
+  organization_sponsorship?: OrganizationSponsorship;
+  create_login_credentials: boolean;
+}
+
+type CreationMode = 'independent' | 'with_parent';
+type OrganizationMode = 'individual' | 'organization';
 
 export default function NewStudentPage() {
+  usePageTitle('Create Student', 'Add a new student to the program');
+  
   const router = useRouter();
-  const { user } = useAuth();
-  const [creationMode, setCreationMode] = useState<CreationMode>('student');
-  const [studentFormData, setStudentFormData] = useState<StudentFormData>(initialStudentFormData);
-  const [parentChildFormData, setParentChildFormData] = useState<ParentChildFormData>(initialParentChildFormData);
+  const { currentProgram } = useProgramContext();
+  
+  // Toggle states
+  const [creationMode, setCreationMode] = useState<CreationMode>('independent');
+  const [organizationMode, setOrganizationMode] = useState<OrganizationMode>('individual');
+  
+  // Form data
+  const [formData, setFormData] = useState<CreateStudentFormData>({
+    student: {
+      full_name: '',
+      email: '',
+      phone: '',
+      date_of_birth: '',
+      emergency_contact_name: '',
+      emergency_contact_phone: '',
+      medical_notes: '',
+      additional_notes: ''
+    },
+    create_login_credentials: false
+  });
+  
+  // UI state
+  const [selectedParent, setSelectedParent] = useState<any>(null);
+  const [selectedOrganization, setSelectedOrganization] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [programs, setPrograms] = useState<any[]>([]);
-  const [courses, setCourses] = useState<any[]>([]);
-  const [selectedProgram, setSelectedProgram] = useState<string>('');
 
-  // Load programs and courses
-  useEffect(() => {
-    loadPrograms();
+  // Handlers
+  const handleStudentDataChange = (field: keyof StudentData, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      student: {
+        ...prev.student,
+        [field]: value
+      }
+    }));
+    
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const handleParentSelect = useCallback((parent: any) => {
+    setSelectedParent(parent);
+    setFormData(prev => ({
+      ...prev,
+      parent_relationship: {
+        parent_id: parent.id,
+        relationship_type: 'father', // Default, user can change
+        is_primary_contact: true,
+        can_pickup: true,
+        emergency_contact: true
+      }
+    }));
+    setErrors(prev => ({ ...prev, parent_id: '' }));
   }, []);
 
-  useEffect(() => {
-    if (selectedProgram) {
-      loadCourses(selectedProgram);
-    }
-  }, [selectedProgram]);
+  const handleParentRemove = useCallback(() => {
+    setSelectedParent(null);
+    setFormData(prev => {
+      const { parent_relationship, ...rest } = prev;
+      return rest;
+    });
+  }, []);
 
-  const loadPrograms = async () => {
-    try {
-      const response = await programsApi.getPrograms();
-      setPrograms(response.programs);
-    } catch (error) {
-      console.error('Failed to load programs:', error);
-    }
-  };
-
-  const loadCourses = async (programId: string) => {
-    try {
-      const response = await courseApiService.getCourses({ program_id: programId });
-      setCourses(response.items);
-    } catch (error) {
-      console.error('Failed to load courses:', error);
-    }
-  };
-
-  const handleStudentInputChange = (field: string, value: string) => {
-    setStudentFormData(prev => ({
+  const handleOrganizationSelect = useCallback((organization: any) => {
+    setSelectedOrganization(organization);
+    setFormData(prev => ({
       ...prev,
-      [field]: value
-    }));
-    
-    // Handle program selection
-    if (field === 'program_id') {
-      setSelectedProgram(value);
-      setStudentFormData(prev => ({ ...prev, course_id: '' })); // Reset course when program changes
-    }
-    
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: ''
-      }));
-    }
-  };
-
-  const handleParentChildInputChange = (field: string, value: string) => {
-    setParentChildFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    
-    // Handle program selection
-    if (field === 'program_id') {
-      setSelectedProgram(value);
-      setParentChildFormData(prev => ({ ...prev, course_id: '' })); // Reset course when program changes
-    }
-    
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: ''
-      }));
-    }
-  };
-
-  const handleNestedInputChange = (section: string, field: string, value: string) => {
-    if (creationMode === 'student') {
-      setStudentFormData(prev => ({
-        ...prev,
-        [section]: {
-          ...prev[section as keyof StudentFormData],
-          [field]: value
+      organization_sponsorship: {
+        organization_id: organization.id,
+        payment_override: {
+          full_sponsorship: true // Default to full sponsorship
         }
-      }));
+      }
+    }));
+    setErrors(prev => ({ ...prev, organization_id: '' }));
+  }, []);
+
+  const handleOrganizationRemove = useCallback(() => {
+    setSelectedOrganization(null);
+    setFormData(prev => {
+      const { organization_sponsorship, ...rest } = prev;
+      return rest;
+    });
+  }, []);
+
+  const searchParents = async (query: string) => {
+    // Implement API call to search parents
+    // This would use the existing parent search endpoint
+    try {
+      const response = await fetch(`/api/v1/parents/search?q=${encodeURIComponent(query)}&program_id=${currentProgram?.id}`, {
+        headers: {
+          'X-Program-Context': currentProgram?.id || ''
+        }
+      });
+      
+      if (!response.ok) throw new Error('Search failed');
+      
+      const result = await response.json();
+      return result.data || [];
+    } catch (error) {
+      console.error('Parent search error:', error);
+      return [];
     }
   };
 
-  const validateStudentForm = (): boolean => {
+  const searchOrganizations = async (query: string) => {
+    // Implement API call to search partner organizations
+    try {
+      const response = await fetch(`/api/v1/organizations/search?q=${encodeURIComponent(query)}&program_id=${currentProgram?.id}&partners_only=true`, {
+        headers: {
+          'X-Program-Context': currentProgram?.id || ''
+        }
+      });
+      
+      if (!response.ok) throw new Error('Search failed');
+      
+      const result = await response.json();
+      return result.data || [];
+    } catch (error) {
+      console.error('Organization search error:', error);
+      return [];
+    }
+  };
+
+  const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // Required fields
-    if (!studentFormData.student_username.trim()) {
-      newErrors.student_username = 'Username is required';
-    }
-    if (!studentFormData.student_first_name.trim()) {
-      newErrors.student_first_name = 'First name is required';
-    }
-    if (!studentFormData.student_last_name.trim()) {
-      newErrors.student_last_name = 'Last name is required';
-    }
-    if (!studentFormData.student_email.trim()) {
-      newErrors.student_email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(studentFormData.student_email)) {
-      newErrors.student_email = 'Please enter a valid email address';
-    }
-    if (!studentFormData.student_password.trim()) {
-      newErrors.student_password = 'Password is required';
-    } else if (studentFormData.student_password.length < 8) {
-      newErrors.student_password = 'Password must be at least 8 characters';
-    }
-    if (!studentFormData.student_date_of_birth) {
-      newErrors.student_date_of_birth = 'Date of birth is required';
-    }
-    if (!studentFormData.program_id) {
-      newErrors.program_id = 'Program is required';
+    // Student validation
+    if (!formData.student.full_name.trim()) {
+      newErrors.full_name = 'Full name is required';
     }
 
-    // Phone validation
-    if (studentFormData.student_phone && !/^\d{10}$/.test(studentFormData.student_phone.replace(/\D/g, ''))) {
-      newErrors.student_phone = 'Please enter a valid phone number';
+    // Parent validation (if with parent mode)
+    if (creationMode === 'with_parent' && !selectedParent) {
+      newErrors.parent_id = 'Please select a parent';
+    }
+
+    // Organization validation (if organization mode)
+    if (organizationMode === 'organization' && !selectedOrganization) {
+      newErrors.organization_id = 'Please select an organization';
+    }
+
+    // Login credentials validation
+    if (formData.create_login_credentials && !formData.student.email) {
+      newErrors.email = 'Email is required for login credentials';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const validateParentChildForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    // Parent validation
-    if (!parentChildFormData.parent_username.trim()) {
-      newErrors.parent_username = 'Parent username is required';
-    }
-    if (!parentChildFormData.parent_email.trim()) {
-      newErrors.parent_email = 'Parent email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentChildFormData.parent_email)) {
-      newErrors.parent_email = 'Please enter a valid parent email address';
-    }
-    if (!parentChildFormData.parent_password.trim()) {
-      newErrors.parent_password = 'Parent password is required';
-    } else if (parentChildFormData.parent_password.length < 8) {
-      newErrors.parent_password = 'Parent password must be at least 8 characters';
-    }
-    if (!parentChildFormData.parent_full_name.trim()) {
-      newErrors.parent_full_name = 'Parent full name is required';
-    }
-
-    // Child validation
-    if (!parentChildFormData.child_username.trim()) {
-      newErrors.child_username = 'Child username is required';
-    }
-    if (!parentChildFormData.child_email.trim()) {
-      newErrors.child_email = 'Child email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentChildFormData.child_email)) {
-      newErrors.child_email = 'Please enter a valid child email address';
-    }
-    if (!parentChildFormData.child_password.trim()) {
-      newErrors.child_password = 'Child password is required';
-    } else if (parentChildFormData.child_password.length < 8) {
-      newErrors.child_password = 'Child password must be at least 8 characters';
-    }
-    if (!parentChildFormData.child_full_name.trim()) {
-      newErrors.child_full_name = 'Child full name is required';
-    }
-    if (!parentChildFormData.child_date_of_birth) {
-      newErrors.child_date_of_birth = 'Child date of birth is required';
-    }
-    if (!parentChildFormData.program_id) {
-      newErrors.program_id = 'Program is required';
-    }
-    if (!parentChildFormData.relationship_type) {
-      newErrors.relationship_type = 'Relationship type is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const isValid = creationMode === 'student' ? validateStudentForm() : validateParentChildForm();
-    if (!isValid) {
-      return;
-    }
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
 
     setIsSubmitting(true);
     
     try {
-      if (creationMode === 'student') {
-        // Create single student
-        const response = await studentApi.create({
-          first_name: studentFormData.student_first_name,
-          last_name: studentFormData.student_last_name,
-          email: studentFormData.student_email,
-          phone: studentFormData.student_phone,
-          date_of_birth: studentFormData.student_date_of_birth,
-          gender: studentFormData.student_gender,
-          salutation: studentFormData.student_salutation,
-          program_id: studentFormData.program_id,
-          referral_source: studentFormData.referral_source,
-          enrollment_date: studentFormData.enrollment_date,
-          status: studentFormData.status,
-          address: studentFormData.address,
-          emergency_contact: studentFormData.emergency_contact,
-          medical_info: studentFormData.medical_info,
-          notes: studentFormData.notes
-        });
-        
-        if (isApiSuccess(response)) {
-          router.push(`/admin/students/${response.data.id}`);
-        } else {
-          throw new Error(getApiErrorMessage(response));
-        }
-      } else {
-        // Create parent-child profile
-        const response = await fetch('/api/v1/users/student-parent', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}`,
-          },
-          body: JSON.stringify(parentChildFormData)
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
-          router.push('/admin/students');
-        } else {
-          const error = await response.json();
-          throw new Error(error.detail || 'Failed to create parent-child profile');
-        }
+      // Prepare submission data based on toggles
+      const submissionData = {
+        creation_mode: creationMode === 'independent' ? 'independent_student' : 'student_with_parent',
+        organization_mode: organizationMode,
+        profile_data: {
+          student: formData.student,
+          create_login_credentials: formData.create_login_credentials,
+          ...(creationMode === 'with_parent' && formData.parent_relationship && {
+            parent_id: formData.parent_relationship.parent_id,
+            relationship: {
+              relationship_type: formData.parent_relationship.relationship_type,
+              is_primary_contact: formData.parent_relationship.is_primary_contact,
+              can_pickup: formData.parent_relationship.can_pickup,
+              emergency_contact: formData.parent_relationship.emergency_contact
+            }
+          }),
+          ...(organizationMode === 'organization' && formData.organization_sponsorship && {
+            organization_id: formData.organization_sponsorship.organization_id,
+            payment_override: formData.organization_sponsorship.payment_override
+          })
+        },
+        program_id: currentProgram?.id
+      };
+
+      const response = await fetch('/api/v1/profiles/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Program-Context': currentProgram?.id || ''
+        },
+        body: JSON.stringify(submissionData)
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create student');
       }
+
+      const result = await response.json();
+      
+      // Redirect to student detail page
+      router.push(`/admin/students/${result.data.student.id}`);
+      
     } catch (error) {
-      console.error('Error creating profile:', error);
-      // Handle error - show toast or error message
-      alert(error instanceof Error ? error.message : 'Failed to create profile');
+      console.error('Creation error:', error);
+      setErrors({ general: error instanceof Error ? error.message : 'Failed to create student' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const InputField = ({ 
-    label, 
-    field, 
-    type = 'text', 
-    required = false, 
-    section = null,
-    mode = null
-  }: {
-    label: string;
-    field: string;
-    type?: string;
-    required?: boolean;
-    section?: string | null;
-    mode?: 'student' | 'parent_child' | null;
-  }) => {
-    const currentMode = mode || creationMode;
-    const formData = currentMode === 'student' ? studentFormData : parentChildFormData;
-    
-    const value = section 
-      ? (formData[section as keyof (StudentFormData | ParentChildFormData)] as any)[field]
-      : formData[field as keyof (StudentFormData | ParentChildFormData)];
-    
-    const error = errors[section ? `${section}.${field}` : field];
-    
-    return (
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {label} {required && <span className="text-red-500">*</span>}
-        </label>
-        <input
-          type={type}
-          value={value || ''}
-          onChange={(e) => {
-            if (section) {
-              handleNestedInputChange(section, field, e.target.value);
-            } else {
-              if (currentMode === 'student') {
-                handleStudentInputChange(field, e.target.value);
-              } else {
-                handleParentChildInputChange(field, e.target.value);
-              }
-            }
-          }}
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            error ? 'border-red-500' : 'border-gray-300'
-          }`}
-          required={required}
-        />
-        {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
-      </div>
-    );
+  const handleCancel = () => {
+    router.push('/admin/students');
   };
 
-  const SelectField = ({ 
-    label, 
-    field, 
-    options, 
-    required = false, 
-    section = null,
-    mode = null
-  }: {
-    label: string;
-    field: string;
-    options: { value: string; label: string }[];
-    required?: boolean;
-    section?: string | null;
-    mode?: 'student' | 'parent_child' | null;
-  }) => {
-    const currentMode = mode || creationMode;
-    const formData = currentMode === 'student' ? studentFormData : parentChildFormData;
-    
-    const value = section 
-      ? (formData[section as keyof (StudentFormData | ParentChildFormData)] as any)[field]
-      : formData[field as keyof (StudentFormData | ParentChildFormData)];
-    
-    const error = errors[section ? `${section}.${field}` : field];
-    
-    return (
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {label} {required && <span className="text-red-500">*</span>}
-        </label>
-        <select
-          value={value || ''}
-          onChange={(e) => {
-            if (section) {
-              handleNestedInputChange(section, field, e.target.value);
-            } else {
-              if (currentMode === 'student') {
-                handleStudentInputChange(field, e.target.value);
-              } else {
-                handleParentChildInputChange(field, e.target.value);
-              }
-            }
-          }}
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            error ? 'border-red-500' : 'border-gray-300'
-          }`}
-          required={required}
-        >
-          <option value="">Select {label}</option>
-          {options.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
-      </div>
-    );
-  };
-
-  const TextareaField = ({ 
-    label, 
-    field, 
-    required = false, 
-    section = null,
-    mode = null
-  }: {
-    label: string;
-    field: string;
-    required?: boolean;
-    section?: string | null;
-    mode?: 'student' | 'parent_child' | null;
-  }) => {
-    const currentMode = mode || creationMode;
-    const formData = currentMode === 'student' ? studentFormData : parentChildFormData;
-    
-    const value = section 
-      ? (formData[section as keyof (StudentFormData | ParentChildFormData)] as any)[field]
-      : formData[field as keyof (StudentFormData | ParentChildFormData)];
-    
-    const error = errors[section ? `${section}.${field}` : field];
-    
-    return (
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {label} {required && <span className="text-red-500">*</span>}
-        </label>
-        <textarea
-          value={value || ''}
-          onChange={(e) => {
-            if (section) {
-              handleNestedInputChange(section, field, e.target.value);
-            } else {
-              if (currentMode === 'student') {
-                handleStudentInputChange(field, e.target.value);
-              } else {
-                handleParentChildInputChange(field, e.target.value);
-              }
-            }
-          }}
-          rows={3}
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            error ? 'border-red-500' : 'border-gray-300'
-          }`}
-          required={required}
-        />
-        {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
-      </div>
-    );
-  };
+  // Determine form state for display
+  const isIndependent = creationMode === 'independent';
+  const isWithParent = creationMode === 'with_parent';
+  const isIndividual = organizationMode === 'individual';
+  const isOrganizationSponsored = organizationMode === 'organization';
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/admin/students">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Students
-            </Link>
+          <Button variant="outline" size="sm" onClick={handleCancel}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {creationMode === 'student' ? 'Add New Student' : 'Add Parent & Child'}
-            </h1>
-            <p className="text-gray-600">
-              {creationMode === 'student' 
-                ? 'Create a new student profile' 
-                : 'Create parent account with associated child'
-              }
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900">Create Student</h1>
+            <p className="text-gray-600">Add a new student to the program</p>
           </div>
         </div>
       </div>
 
-      {/* Creation Mode Toggle */}
+      {/* Creation Mode Toggles */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <Users className="h-5 w-5 mr-2" />
-            Creation Mode
+            <User className="h-5 w-5 mr-2" />
+            Student Creation Options
           </CardTitle>
           <CardDescription>
-            Choose how you want to create the student profile
+            Configure how you want to create this student profile
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button
-              type="button"
-              onClick={() => setCreationMode('student')}
-              className={`p-4 border-2 rounded-lg text-left transition-colors ${
-                creationMode === 'student'
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <div className="flex items-center mb-2">
-                <User className="h-5 w-5 mr-2 text-blue-600" />
-                <h3 className="font-semibold">Student Only</h3>
+        <CardContent className="space-y-6">
+          {/* Independent vs With Parent Toggle */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm font-medium">Student Type</label>
+                  <Badge variant={isIndependent ? "default" : "secondary"}>
+                    {isIndependent ? "Independent" : "With Parent"}
+                  </Badge>
+                </div>
+                <p className="text-xs text-gray-500">
+                  {isIndependent 
+                    ? "Create a standalone student profile" 
+                    : "Link student to an existing parent"}
+                </p>
               </div>
-              <p className="text-sm text-gray-600">
-                Create a single student profile. Parent information can be added later.
-              </p>
-            </button>
+              <Switch
+                checked={isWithParent}
+                onCheckedChange={(checked) => {
+                  setCreationMode(checked ? 'with_parent' : 'independent');
+                  if (!checked) {
+                    handleParentRemove();
+                  }
+                }}
+              />
+            </div>
             
-            <button
-              type="button"
-              onClick={() => setCreationMode('parent_child')}
-              className={`p-4 border-2 rounded-lg text-left transition-colors ${
-                creationMode === 'parent_child'
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <div className="flex items-center mb-2">
-                <Baby className="h-5 w-5 mr-2 text-green-600" />
-                <h3 className="font-semibold">Parent & Child</h3>
+            {isWithParent && (
+              <Alert>
+                <Users className="h-4 w-4" />
+                <AlertDescription>
+                  You'll need to select an existing parent to link this student to.
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Individual vs Organization Toggle */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm font-medium">Payment & Sponsorship</label>
+                  <Badge variant={isIndividual ? "outline" : "default"}>
+                    {isIndividual ? "Individual" : "Organization Sponsored"}
+                  </Badge>
+                </div>
+                <p className="text-xs text-gray-500">
+                  {isIndividual 
+                    ? "Student pays individually or through parent" 
+                    : "Student is sponsored by a partner organization"}
+                </p>
               </div>
-              <p className="text-sm text-gray-600">
-                Create both parent and child accounts with family relationship.
-              </p>
-            </button>
+              <Switch
+                checked={isOrganizationSponsored}
+                onCheckedChange={(checked) => {
+                  setOrganizationMode(checked ? 'organization' : 'individual');
+                  if (!checked) {
+                    handleOrganizationRemove();
+                  }
+                }}
+              />
+            </div>
+            
+            {isOrganizationSponsored && (
+              <Alert>
+                <Building2 className="h-4 w-4" />
+                <AlertDescription>
+                  Select a partner organization that will sponsor this student's tuition and fees.
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {creationMode === 'student' ? (
-          // Single Student Form
-          <Tabs defaultValue="personal" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="personal">Personal Info</TabsTrigger>
-              <TabsTrigger value="contact">Contact & Address</TabsTrigger>
-              <TabsTrigger value="enrollment">Program & Enrollment</TabsTrigger>
-              <TabsTrigger value="emergency">Emergency Contact</TabsTrigger>
-              <TabsTrigger value="medical">Medical Info</TabsTrigger>
-              <TabsTrigger value="additional">Additional Info</TabsTrigger>
-            </TabsList>
-
-            {/* Personal Information Tab */}
-            <TabsContent value="personal">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <User className="h-5 w-5 mr-2" />
-                    Student Information
-                  </CardTitle>
-                  <CardDescription>
-                    Basic student details and account information
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <InputField
-                      label="Username"
-                      field="student_username"
-                      required
-                    />
-                    <InputField
-                      label="Email"
-                      field="student_email"
-                      type="email"
-                      required
-                    />
-                  </div>
-                  
-                  <InputField
-                    label="Password"
-                    field="student_password"
-                    type="password"
-                    required
-                  />
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <SelectField
-                      label="Salutation"
-                      field="student_salutation"
-                      options={[
-                        { value: 'Mr', label: 'Mr' },
-                        { value: 'Mrs', label: 'Mrs' },
-                        { value: 'Ms', label: 'Ms' },
-                        { value: 'Dr', label: 'Dr' },
-                        { value: 'Prof', label: 'Prof' }
-                      ]}
-                    />
-                    <InputField
-                      label="First Name"
-                      field="student_first_name"
-                      required
-                    />
-                    <InputField
-                      label="Last Name"
-                      field="student_last_name"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <InputField
-                      label="Date of Birth"
-                      field="student_date_of_birth"
-                      type="date"
-                      required
-                    />
-                    <SelectField
-                      label="Gender"
-                      field="student_gender"
-                      options={[
-                        { value: 'male', label: 'Male' },
-                        { value: 'female', label: 'Female' },
-                        { value: 'other', label: 'Other' },
-                        { value: 'prefer_not_to_say', label: 'Prefer not to say' }
-                      ]}
-                    />
-                    <InputField
-                      label="Phone"
-                      field="student_phone"
-                      type="tel"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Contact & Address Tab */}
-            <TabsContent value="contact">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <MapPin className="h-5 w-5 mr-2" />
-                    Address Information
-                  </CardTitle>
-                  <CardDescription>
-                    Student address and location details
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <InputField
-                    label="Address Line 1"
-                    field="line1"
-                    section="address"
-                  />
-                  <InputField
-                    label="Address Line 2"
-                    field="line2"
-                    section="address"
-                  />
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <InputField
-                      label="City"
-                      field="city"
-                      section="address"
-                    />
-                    <InputField
-                      label="State"
-                      field="state"
-                      section="address"
-                    />
-                    <InputField
-                      label="Postal Code"
-                      field="postal_code"
-                      section="address"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Program & Enrollment Tab */}
-            <TabsContent value="enrollment">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <FileText className="h-5 w-5 mr-2" />
-                    Program & Enrollment
-                  </CardTitle>
-                  <CardDescription>
-                    Program selection and enrollment details
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <SelectField
-                      label="Program"
-                      field="program_id"
-                      options={programs.map(program => ({
-                        value: program.id,
-                        label: program.name
-                      }))}
-                      required
-                    />
-                    <SelectField
-                      label="Course"
-                      field="course_id"
-                      options={courses.map(course => ({
-                        value: course.id,
-                        label: course.name
-                      }))}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <InputField
-                      label="Enrollment Date"
-                      field="enrollment_date"
-                      type="date"
-                      required
-                    />
-                    <SelectField
-                      label="Status"
-                      field="status"
-                      options={[
-                        { value: 'active', label: 'Active' },
-                        { value: 'inactive', label: 'Inactive' },
-                        { value: 'pending', label: 'Pending' },
-                        { value: 'suspended', label: 'Suspended' }
-                      ]}
-                      required
-                    />
-                  </div>
-                  
-                  <InputField
-                    label="Referral Source"
-                    field="referral_source"
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Emergency Contact Tab */}
-            <TabsContent value="emergency">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Phone className="h-5 w-5 mr-2" />
-                    Emergency Contact
-                  </CardTitle>
-                  <CardDescription>
-                    Emergency contact information
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <InputField
-                    label="Contact Name"
-                    field="name"
-                    section="emergency_contact"
-                  />
-                  <InputField
-                    label="Contact Phone"
-                    field="phone"
-                    type="tel"
-                    section="emergency_contact"
-                  />
-                  <SelectField
-                    label="Relationship"
-                    field="relationship"
-                    section="emergency_contact"
-                    options={RELATIONSHIP_OPTIONS}
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Medical Info Tab */}
-            <TabsContent value="medical">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <AlertCircle className="h-5 w-5 mr-2" />
-                    Medical Information
-                  </CardTitle>
-                  <CardDescription>
-                    Medical conditions, medications, and allergies
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <TextareaField
-                    label="Medical Conditions"
-                    field="conditions"
-                    section="medical_info"
-                  />
-                  <TextareaField
-                    label="Current Medications"
-                    field="medications"
-                    section="medical_info"
-                  />
-                  <TextareaField
-                    label="Allergies"
-                    field="allergies"
-                    section="medical_info"
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Additional Info Tab */}
-            <TabsContent value="additional">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <FileText className="h-5 w-5 mr-2" />
-                    Additional Information
-                  </CardTitle>
-                  <CardDescription>
-                    Additional notes and observations
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <TextareaField
-                    label="Notes"
-                    field="notes"
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        ) : (
-          // Parent-Child Form
-          <div className="space-y-6">
-            {/* Parent Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <User className="h-5 w-5 mr-2" />
-                  Parent Information
-                </CardTitle>
-                <CardDescription>
-                  Parent account details and contact information
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+      {/* Parent Selection (conditional) */}
+      {isWithParent && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Users className="h-5 w-5 mr-2" />
+              Parent Selection
+            </CardTitle>
+            <CardDescription>
+              Select the parent this student will be linked to
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PersonSearchAndSelect
+              searchLabel="Select Parent"
+              placeholder="Search for parent by name, email, or phone..."
+              selectedPersons={selectedParent ? [selectedParent] : []}
+              onPersonSelect={handleParentSelect}
+              onPersonRemove={handleParentRemove}
+              onSearchFunction={searchParents}
+              allowMultiple={false}
+              filterRoles={['parent']}
+              required
+              error={errors.parent_id}
+            />
+            
+            {selectedParent && formData.parent_relationship && (
+              <div className="mt-4 space-y-4">
+                <h4 className="text-sm font-medium">Relationship Details</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InputField
-                    label="Parent Username"
-                    field="parent_username"
-                    mode="parent_child"
-                    required
-                  />
-                  <InputField
-                    label="Parent Email"
-                    field="parent_email"
-                    type="email"
-                    mode="parent_child"
-                    required
-                  />
-                </div>
-                
-                <InputField
-                  label="Parent Password"
-                  field="parent_password"
-                  type="password"
-                  mode="parent_child"
-                  required
-                />
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <InputField
-                    label="Parent Full Name"
-                    field="parent_full_name"
-                    mode="parent_child"
-                    required
-                  />
-                  <InputField
-                    label="Parent Phone"
-                    field="parent_phone"
-                    type="tel"
-                    mode="parent_child"
-                  />
-                  <InputField
-                    label="Parent Date of Birth"
-                    field="parent_date_of_birth"
-                    type="date"
-                    mode="parent_child"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Child Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Baby className="h-5 w-5 mr-2" />
-                  Child Information
-                </CardTitle>
-                <CardDescription>
-                  Child account details and enrollment information
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InputField
-                    label="Child Username"
-                    field="child_username"
-                    mode="parent_child"
-                    required
-                  />
-                  <InputField
-                    label="Child Email"
-                    field="child_email"
-                    type="email"
-                    mode="parent_child"
-                    required
-                  />
-                </div>
-                
-                <InputField
-                  label="Child Password"
-                  field="child_password"
-                  type="password"
-                  mode="parent_child"
-                  required
-                />
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <InputField
-                    label="Child Full Name"
-                    field="child_full_name"
-                    mode="parent_child"
-                    required
-                  />
-                  <InputField
-                    label="Child Phone"
-                    field="child_phone"
-                    type="tel"
-                    mode="parent_child"
-                  />
-                  <InputField
-                    label="Child Date of Birth"
-                    field="child_date_of_birth"
-                    type="date"
-                    mode="parent_child"
-                    required
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Relationship & Enrollment */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Users className="h-5 w-5 mr-2" />
-                  Relationship & Enrollment
-                </CardTitle>
-                <CardDescription>
-                  Family relationship and course enrollment details
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <SelectField
-                  label="Relationship Type"
-                  field="relationship_type"
-                  mode="parent_child"
-                  options={RELATIONSHIP_OPTIONS}
-                  required
-                />
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <SelectField
-                    label="Program"
-                    field="program_id"
-                    mode="parent_child"
-                    options={programs.map(program => ({
-                      value: program.id,
-                      label: program.name
+                  <FormField
+                    label="Relationship Type"
+                    type="select"
+                    value={formData.parent_relationship.relationship_type}
+                    onChange={(value) => setFormData(prev => ({
+                      ...prev,
+                      parent_relationship: prev.parent_relationship ? {
+                        ...prev.parent_relationship,
+                        relationship_type: value as any
+                      } : undefined
                     }))}
+                    options={[
+                      { value: 'father', label: 'Father' },
+                      { value: 'mother', label: 'Mother' },
+                      { value: 'guardian', label: 'Guardian' },
+                      { value: 'stepfather', label: 'Stepfather' },
+                      { value: 'stepmother', label: 'Stepmother' },
+                      { value: 'grandparent', label: 'Grandparent' },
+                      { value: 'other', label: 'Other' }
+                    ]}
                     required
                   />
-                  <SelectField
-                    label="Course (Optional)"
-                    field="course_id"
-                    mode="parent_child"
-                    options={courses.map(course => ({
-                      value: course.id,
-                      label: course.name
-                    }))}
-                  />
                 </div>
-              </CardContent>
-            </Card>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Permissions</label>
+                  <div className="space-y-2">
+                    <label className="flex items-center space-x-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={formData.parent_relationship.is_primary_contact}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          parent_relationship: prev.parent_relationship ? {
+                            ...prev.parent_relationship,
+                            is_primary_contact: e.target.checked
+                          } : undefined
+                        }))}
+                        className="rounded border-gray-300"
+                      />
+                      <span>Primary Contact</span>
+                    </label>
+                    <label className="flex items-center space-x-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={formData.parent_relationship.can_pickup}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          parent_relationship: prev.parent_relationship ? {
+                            ...prev.parent_relationship,
+                            can_pickup: e.target.checked
+                          } : undefined
+                        }))}
+                        className="rounded border-gray-300"
+                      />
+                      <span>Can Pick Up Student</span>
+                    </label>
+                    <label className="flex items-center space-x-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={formData.parent_relationship.emergency_contact}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          parent_relationship: prev.parent_relationship ? {
+                            ...prev.parent_relationship,
+                            emergency_contact: e.target.checked
+                          } : undefined
+                        }))}
+                        className="rounded border-gray-300"
+                      />
+                      <span>Emergency Contact</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Organization Selection (conditional) */}
+      {isOrganizationSponsored && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Building2 className="h-5 w-5 mr-2" />
+              Organization Sponsorship
+            </CardTitle>
+            <CardDescription>
+              Select the partner organization that will sponsor this student
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <OrganizationSelector
+              searchLabel="Select Sponsoring Organization"
+              placeholder="Search for partner organizations..."
+              selectedOrganization={selectedOrganization}
+              onOrganizationSelect={handleOrganizationSelect}
+              onOrganizationRemove={handleOrganizationRemove}
+              onSearchFunction={searchOrganizations}
+              partnersOnly={true}
+              required
+              error={errors.organization_id}
+            />
+            
+            {selectedOrganization && formData.organization_sponsorship && (
+              <div className="mt-4 space-y-4">
+                <h4 className="text-sm font-medium">Sponsorship Details</h4>
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={formData.organization_sponsorship.payment_override?.full_sponsorship || false}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        organization_sponsorship: prev.organization_sponsorship ? {
+                          ...prev.organization_sponsorship,
+                          payment_override: {
+                            ...prev.organization_sponsorship.payment_override,
+                            full_sponsorship: e.target.checked,
+                            ...(e.target.checked && { partial_sponsorship: undefined, discount_percentage: undefined })
+                          }
+                        } : undefined
+                      }))}
+                      className="rounded border-gray-300"
+                    />
+                    <span>Full Sponsorship (Organization pays all fees)</span>
+                  </label>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Student Details Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <User className="h-5 w-5 mr-2" />
+            Student Information
+          </CardTitle>
+          <CardDescription>
+            Basic information about the student
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              label="Full Name"
+              type="text"
+              value={formData.student.full_name}
+              onChange={(value) => handleStudentDataChange('full_name', value)}
+              placeholder="Enter student's full name"
+              required
+              error={errors.full_name}
+            />
+            
+            <FormField
+              label="Date of Birth"
+              type="date"
+              value={formData.student.date_of_birth || ''}
+              onChange={(value) => handleStudentDataChange('date_of_birth', value)}
+            />
+            
+            <FormField
+              label="Email"
+              type="email"
+              value={formData.student.email || ''}
+              onChange={(value) => handleStudentDataChange('email', value)}
+              placeholder="student@example.com"
+              error={errors.email}
+              note={formData.create_login_credentials ? "Required for login access" : "Optional"}
+            />
+            
+            <FormField
+              label="Phone"
+              type="tel"
+              value={formData.student.phone || ''}
+              onChange={(value) => handleStudentDataChange('phone', value)}
+              placeholder="+234 xxx xxx xxxx"
+            />
           </div>
-        )}
+          
+          {/* Login Credentials Toggle */}
+          <div className="flex items-center justify-between py-2">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Create Login Credentials</label>
+              <p className="text-xs text-gray-500">
+                Allow student to access their own dashboard
+              </p>
+            </div>
+            <Switch
+              checked={formData.create_login_credentials}
+              onCheckedChange={(checked) => setFormData(prev => ({
+                ...prev,
+                create_login_credentials: checked
+              }))}
+            />
+          </div>
+          
+          <Separator />
+          
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium">Emergency Contact</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                label="Emergency Contact Name"
+                type="text"
+                value={formData.student.emergency_contact_name || ''}
+                onChange={(value) => handleStudentDataChange('emergency_contact_name', value)}
+                placeholder="Contact person name"
+              />
+              
+              <FormField
+                label="Emergency Contact Phone"
+                type="tel"
+                value={formData.student.emergency_contact_phone || ''}
+                onChange={(value) => handleStudentDataChange('emergency_contact_phone', value)}
+                placeholder="+234 xxx xxx xxxx"
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <FormField
+              label="Medical Notes"
+              type="textarea"
+              value={formData.student.medical_notes || ''}
+              onChange={(value) => handleStudentDataChange('medical_notes', value)}
+              placeholder="Any medical conditions, allergies, or special requirements..."
+              rows={3}
+            />
+            
+            <FormField
+              label="Additional Notes"
+              type="textarea"
+              value={formData.student.additional_notes || ''}
+              onChange={(value) => handleStudentDataChange('additional_notes', value)}
+              placeholder="Any other relevant information..."
+              rows={2}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Submit Buttons */}
-        <div className="flex justify-end space-x-4">
-          <Button type="button" variant="outline" asChild>
-            <Link href="/admin/students">Cancel</Link>
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            <Save className="h-4 w-4 mr-2" />
-            {isSubmitting 
-              ? 'Creating...' 
-              : creationMode === 'student'
-                ? 'Create Student'
-                : 'Create Parent & Child'
-            }
-          </Button>
-        </div>
-      </form>
+      {/* Error Display */}
+      {errors.general && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{errors.general}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Action Buttons */}
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={handleCancel}>
+          Cancel
+        </Button>
+        <Button 
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="min-w-32"
+        >
+          {isSubmitting ? (
+            <>Creating...</>
+          ) : (
+            <>
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Create Student
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

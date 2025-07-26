@@ -29,7 +29,9 @@ router = APIRouter()
 @router.post("/", response_model=StudentResponse, status_code=status.HTTP_201_CREATED)
 async def create_student(
     student_data: StudentCreate,
-    current_user: Annotated[dict, Depends(get_current_active_user)]
+    current_user: Annotated[dict, Depends(get_current_active_user)],
+    db: Session = Depends(get_db),
+    program_context: Optional[str] = Depends(get_program_context)
 ):
     """
     Create a new student.
@@ -44,7 +46,7 @@ async def create_student(
         )
     
     try:
-        student = student_service.create_student(student_data, current_user["id"])
+        student = student_service.create_student(db, student_data, current_user["id"], program_context)
         return student
     except ValueError as e:
         raise HTTPException(
