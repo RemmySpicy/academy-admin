@@ -32,7 +32,7 @@ class PartnerAdminService(BaseService[User]):
         
         Args:
             organization_id: The organization this admin will manage
-            admin_data: Admin user data (username, email, password, full_name, etc.)
+            admin_data: Admin user data (username, email, password, first_name, last_name, etc.)
             programs: List of program IDs this admin can manage
             created_by: ID of user creating this admin
         
@@ -59,8 +59,8 @@ class PartnerAdminService(BaseService[User]):
             raise ValueError("Email is required") 
         if not admin_data.get("password"):
             raise ValueError("Password is required")
-        if not admin_data.get("full_name"):
-            raise ValueError("Full name is required")
+        if not admin_data.get("first_name") or not admin_data.get("last_name"):
+            raise ValueError("First name and last name are required")
         
         # Check if username/email already exists
         existing_user = self.db.query(User)\
@@ -82,7 +82,8 @@ class PartnerAdminService(BaseService[User]):
             "username": admin_data["username"],
             "email": admin_data["email"], 
             "password_hash": password_hash,
-            "full_name": admin_data["full_name"],
+            "first_name": admin_data["first_name"],
+            "last_name": admin_data["last_name"],
             "phone": admin_data.get("phone"),
             "date_of_birth": admin_data.get("date_of_birth"),
             "profile_photo_url": admin_data.get("profile_photo_url"),

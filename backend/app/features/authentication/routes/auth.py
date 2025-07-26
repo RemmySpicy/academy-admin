@@ -41,14 +41,13 @@ async def get_current_user(
     if user is None:
         raise credentials_exception
     
-    # Convert User object to dict for backward compatibility
+    # Convert User object to dict
     return {
         "id": str(user.id),
         "username": user.username,
         "email": user.email,
         "first_name": user.first_name,
         "last_name": user.last_name,
-        "full_name": user.full_name,  # Keep for backward compatibility
         "role": user.primary_role,
         "is_active": user.is_active,
         "last_login": user.last_login.isoformat() if user.last_login else None,

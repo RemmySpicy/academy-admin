@@ -78,7 +78,8 @@ def setup_users_and_programs():
                 program_admin.username = "swim.admin"
                 program_admin.email = "swim.admin@academy.com"
                 program_admin.password_hash = hash_password("swim123")
-                program_admin.full_name = "Swimming Program Administrator"
+                program_admin.first_name = "Swimming Program"
+                program_admin.last_name = "Administrator"
                 program_admin.role = "program_admin"
                 program_admin.is_active = True
                 program_admin.created_by = existing_admin.id

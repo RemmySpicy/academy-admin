@@ -46,7 +46,8 @@ def create_admin_user():
         username="admin",
         email="admin@academy.com",
         password_hash=password_hash,
-        full_name="System Administrator",
+        first_name="System",
+        last_name="Administrator",
         role="super_admin",
         is_active=True
     )

@@ -527,8 +527,8 @@ class RelationshipManagementService:
         """Validate student data."""
         errors = []
         
-        if not student_data.get('full_name'):
-            errors.append('Full name is required')
+        if not student_data.get('first_name') or not student_data.get('last_name'):
+            errors.append('First name and last name are required')
         
         # Add other student validation rules as needed
         
@@ -538,8 +538,8 @@ class RelationshipManagementService:
         """Validate parent data."""
         errors = []
         
-        if not parent_data.get('full_name'):
-            errors.append('Full name is required')
+        if not parent_data.get('first_name') or not parent_data.get('last_name'):
+            errors.append('First name and last name are required')
         
         if not parent_data.get('email'):
             errors.append('Email is required for parents')

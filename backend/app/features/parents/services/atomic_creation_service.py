@@ -70,7 +70,8 @@ class ParentAtomicCreationService:
                 # Create all parent accounts
                 for parent_data in parents_data:
                     user_data = {
-                        'full_name': parent_data['full_name'],
+                        'first_name': parent_data['first_name'],
+                        'last_name': parent_data['last_name'],
                         'email': parent_data['email'],
                         'phone': parent_data.get('phone'),
                         'profile_type': ProfileType.FULL_USER,
@@ -100,7 +101,8 @@ class ParentAtomicCreationService:
                 # Create all child accounts
                 for child_data in children_data:
                     user_data = {
-                        'full_name': child_data['full_name'],
+                        'first_name': child_data['first_name'],
+                        'last_name': child_data['last_name'],
                         'email': child_data.get('email'),  # Can be None
                         'phone': child_data.get('phone'),
                         'profile_type': ProfileType.PROFILE_ONLY,
@@ -210,7 +212,8 @@ class ParentAtomicCreationService:
             with self.db.begin():
                 # Create parent user account
                 parent_user_data = {
-                    'full_name': parent_data['full_name'],
+                    'first_name': parent_data['first_name'],
+                    'last_name': parent_data['last_name'],
                     'email': parent_data['email'],
                     'phone': parent_data.get('phone'),
                     'profile_type': ProfileType.FULL_USER,
@@ -242,7 +245,8 @@ class ParentAtomicCreationService:
                 for i, child_data in enumerate(children_data):
                     # Create child user account
                     child_user_data = {
-                        'full_name': child_data['full_name'],
+                        'first_name': child_data['first_name'],
+                        'last_name': child_data['last_name'],
                         'email': child_data.get('email'),
                         'phone': child_data.get('phone'),
                         'profile_type': ProfileType.PROFILE_ONLY,
