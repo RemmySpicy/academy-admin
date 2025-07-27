@@ -121,6 +121,39 @@ export class AcademyProgramsApiService {
       total_courses: number;
     }>(`${this.BASE_PATH}/stats?bypass_program_filter=true`);
   }
+
+  /**
+   * Get program configuration (age groups, difficulty levels, session types)
+   */
+  static async getProgramConfiguration(id: string): Promise<ApiResponse<{
+    age_groups: Array<{id: string; name: string; from_age: number; to_age: number}>;
+    difficulty_levels: Array<{id: string; name: string; weight: number}>;
+    session_types: Array<{id: string; name: string; capacity: number}>;
+    default_session_duration: number;
+  }>> {
+    return httpClient.get(`${this.BASE_PATH}/${id}/configuration?bypass_program_filter=true`);
+  }
+
+  /**
+   * Get program age groups
+   */
+  static async getProgramAgeGroups(id: string): Promise<ApiResponse<Array<{id: string; name: string; from_age: number; to_age: number}>>> {
+    return httpClient.get(`${this.BASE_PATH}/${id}/age-groups?bypass_program_filter=true`);
+  }
+
+  /**
+   * Get program difficulty levels
+   */
+  static async getProgramDifficultyLevels(id: string): Promise<ApiResponse<Array<{id: string; name: string; weight: number}>>> {
+    return httpClient.get(`${this.BASE_PATH}/${id}/difficulty-levels?bypass_program_filter=true`);
+  }
+
+  /**
+   * Get program session types
+   */
+  static async getProgramSessionTypes(id: string): Promise<ApiResponse<Array<{id: string; name: string; capacity: number}>>> {
+    return httpClient.get(`${this.BASE_PATH}/${id}/session-types?bypass_program_filter=true`);
+  }
 }
 
 /**
@@ -251,3 +284,30 @@ export class AcademySettingsApiService {
 export const academyProgramsApi = AcademyProgramsApiService;
 export const academyUsersApi = AcademyUsersApiService;
 export const academySettingsApi = AcademySettingsApiService;
+
+// Program configuration types
+export interface ProgramAgeGroup {
+  id: string;
+  name: string;
+  from_age: number;
+  to_age: number;
+}
+
+export interface ProgramDifficultyLevel {
+  id: string;
+  name: string;
+  weight: number;
+}
+
+export interface ProgramSessionType {
+  id: string;
+  name: string;
+  capacity: number;
+}
+
+export interface ProgramConfiguration {
+  age_groups: ProgramAgeGroup[];
+  difficulty_levels: ProgramDifficultyLevel[];
+  session_types: ProgramSessionType[];
+  default_session_duration: number;
+}

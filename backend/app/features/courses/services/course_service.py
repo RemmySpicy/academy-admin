@@ -23,6 +23,7 @@ from app.features.courses.schemas.course import (
     CourseBulkStatusUpdateRequest
 )
 from .base_service import BaseService
+from app.features.programs.services.program_service import program_service
 
 
 class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
@@ -31,12 +32,41 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
     def __init__(self):
         super().__init__(Course)
     
+    def _validate_course_against_program_config(self, db: Session, course_data: CourseCreate, program: Program) -> None:
+        """Validate course data against program configuration."""
+        # Validate difficulty levels against program configuration
+        if course_data.difficulty_level and program.difficulty_levels:
+            valid_difficulty_ids = [dl["id"] for dl in program.difficulty_levels]
+            if course_data.difficulty_level not in valid_difficulty_ids:
+                raise ValueError(f"Difficulty level '{course_data.difficulty_level}' is not valid for this program. Valid levels: {', '.join(valid_difficulty_ids)}")
+        
+        # Validate age groups against program configuration
+        if course_data.age_groups and program.age_groups:
+            valid_age_group_ids = [ag["id"] for ag in program.age_groups]
+            invalid_age_groups = [ag for ag in course_data.age_groups if ag not in valid_age_group_ids]
+            if invalid_age_groups:
+                raise ValueError(f"Age groups {invalid_age_groups} are not valid for this program. Valid age groups: {', '.join(valid_age_group_ids)}")
+        
+        # Validate session types against program configuration
+        if course_data.session_types and program.session_types:
+            valid_session_type_ids = [st["id"] for st in program.session_types]
+            invalid_session_types = [st for st in course_data.session_types if st not in valid_session_type_ids]
+            if invalid_session_types:
+                raise ValueError(f"Session types {invalid_session_types} are not valid for this program. Valid session types: {', '.join(valid_session_type_ids)}")
+    
+    def _get_next_sequence_for_program(self, db: Session, program_id: str) -> int:
+        """Get the next sequence number for a course in the program."""
+        max_sequence = db.query(func.max(Course.sequence)).filter(
+            Course.program_id == program_id
+        ).scalar() or 0
+        return max_sequence + 1
+    
     def create_course(self, 
                      db: Session, 
                      course_data: CourseCreate, 
                      created_by: Optional[str] = None,
                      program_context: Optional[str] = None) -> CourseResponse:
-        """Create a new course."""
+        """Create a new course with program configuration validation and automatic sequencing."""
         # Verify program exists and is accessible within program context
         program_query = db.query(Program).filter(Program.id == course_data.program_id)
         if program_context:
@@ -48,6 +78,13 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
                 raise ValueError(f"Program with ID '{course_data.program_id}' not found or not accessible in current program context")
             else:
                 raise ValueError(f"Program with ID '{course_data.program_id}' not found")
+        
+        # Validate course data against program configuration
+        self._validate_course_against_program_config(db, course_data, program)
+        
+        # Auto-assign sequence if not provided
+        if not course_data.sequence:
+            course_data.sequence = self._get_next_sequence_for_program(db, course_data.program_id)
         
         # Create course
         course = self.create(db, course_data, created_by)
@@ -96,11 +133,31 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
         
         return self._to_course_response(db, updated_course)
     
+    def _fix_sequence_gaps(self, db: Session, program_id: str, deleted_sequence: int) -> None:
+        """Fix sequence gaps after course deletion by moving subsequent courses down."""
+        # Get all courses with sequence greater than the deleted course's sequence
+        courses_to_update = db.query(Course).filter(
+            Course.program_id == program_id,
+            Course.sequence > deleted_sequence
+        ).order_by(Course.sequence).all()
+        
+        # Update their sequences to fill the gap
+        for course in courses_to_update:
+            course.sequence = course.sequence - 1
+            db.add(course)
+        
+        db.commit()
+    
     def delete_course(self, db: Session, course_id: str, program_context: Optional[str] = None) -> bool:
-        """Delete a course."""
+        """Delete a course and fix sequence gaps."""
         # First validate course exists and is accessible via program context
         course_response = self.get_course(db, course_id, program_context)
         if not course_response:
+            return False
+        
+        # Get the course to access its sequence and program_id
+        course = self.get(db, course_id)
+        if not course:
             return False
         
         # Check if course has curricula
@@ -111,7 +168,18 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
         if curriculum_count > 0:
             raise ValueError(f"Cannot delete course with {curriculum_count} curricula. Delete curricula first.")
         
-        return self.delete(db, course_id)
+        # Store sequence and program_id before deletion
+        deleted_sequence = course.sequence
+        program_id = course.program_id
+        
+        # Delete the course
+        success = self.delete(db, course_id)
+        
+        if success:
+            # Fix sequence gaps
+            self._fix_sequence_gaps(db, program_id, deleted_sequence)
+        
+        return success
     
     def list_courses(self, 
                     db: Session,
@@ -296,7 +364,7 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
                 level_data = {
                     "id": level.id,
                     "name": level.name,
-                    "sequence": level.sequence,
+                    "sequence": level.sequence_order,
                     "status": level.status
                 }
                 curriculum_data["levels"].append(level_data)
@@ -540,7 +608,7 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
             duration_weeks=course.duration_weeks,
             sessions_per_payment=course.sessions_per_payment,
             completion_deadline_weeks=course.completion_deadline_weeks,
-            age_ranges=course.age_ranges or [],
+            age_groups=course.age_groups or [],
             location_types=course.location_types or [],
             session_types=course.session_types or [],
             pricing_matrix=course.pricing_matrix or [],

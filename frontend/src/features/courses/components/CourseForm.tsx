@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useProgramContext } from '@/store/programContext';
+import { useProgramConfiguration, useProgramAgeGroups, useProgramDifficultyLevels, useProgramSessionTypes } from '@/features/academy/hooks/useAcademyPrograms';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -62,7 +63,7 @@ const courseFormSchema = z.object({
   duration_weeks: z.coerce.number().min(1, 'Duration must be at least 1 week').max(104, 'Duration cannot exceed 2 years').optional(),
   sessions_per_payment: z.coerce.number().min(1, 'Must have at least 1 session').max(100, 'Cannot exceed 100 sessions'),
   completion_deadline_weeks: z.coerce.number().min(1, 'Must have at least 1 week').max(52, 'Cannot exceed 1 year'),
-  age_ranges: z.array(z.string()).min(1, 'At least one age group is required'),
+  age_groups: z.array(z.string()).min(1, 'At least one age group is required'),
   location_types: z.array(z.string()).min(1, 'At least one location type is required'),
   session_types: z.array(z.string()).min(1, 'At least one session type is required'),
   pricing_matrix: z.array(z.object({
@@ -78,7 +79,7 @@ const courseFormSchema = z.object({
   image_url: z.string().url().optional().or(z.literal('')),
   video_url: z.string().url().optional().or(z.literal('')),
   sequence: z.coerce.number().optional(),
-  difficulty_level: z.enum(['beginner', 'intermediate', 'advanced', 'expert']).optional().or(z.literal('')),
+  difficulty_level: z.string().optional().or(z.literal('')), // Dynamic validation based on program config
   status: z.enum(['draft', 'under_review', 'approved', 'published', 'archived']).default('draft'),
   is_featured: z.boolean().default(false),
   is_certification_course: z.boolean().default(false),
@@ -86,13 +87,12 @@ const courseFormSchema = z.object({
 
 type CourseFormData = z.infer<typeof courseFormSchema>;
 
-const ageRangeOptions = [
-  { value: '1-2-years', label: '1 - 2 years' },
-  { value: '2-5-years', label: '2 - 5 years' },
-  { value: '6-12-years', label: '6 - 12 years' },
-  { value: '6-18-years', label: '6 - 18 years' },
-  { value: '13-18-years', label: '13 - 18 years' },
-  { value: '18-30-years', label: '18 - 30 years' },
+// Fallback static options for when program configuration is loading
+const fallbackAgeRangeOptions = [
+  { value: '6-8', label: '6-8 years' },
+  { value: '9-12', label: '9-12 years' },
+  { value: '13-17', label: '13-17 years' },
+  { value: '18+', label: '18+ years' },
 ];
 
 const locationTypeOptions = [
@@ -101,9 +101,16 @@ const locationTypeOptions = [
   { value: 'virtual', label: 'Virtual (Online)' },
 ];
 
-const sessionTypeOptions = [
-  { value: 'group', label: 'Group Session' },
-  { value: 'private', label: 'Private Session' },
+const fallbackSessionTypeOptions = [
+  { value: 'private', label: 'Private' },
+  { value: 'group', label: 'Group' },
+  { value: 'school-group', label: 'School Group' },
+];
+
+const fallbackDifficultyOptions = [
+  { value: 'beginner', label: 'Beginner' },
+  { value: 'intermediate', label: 'Intermediate' },
+  { value: 'advanced', label: 'Advanced' },
 ];
 
 export function CourseForm({
@@ -114,15 +121,26 @@ export function CourseForm({
   className,
 }: CourseFormProps) {
   const { currentProgram } = useProgramContext();
+  
+  // Get program configuration
+  const { data: programConfig, isLoading: configLoading } = useProgramConfiguration(currentProgram?.id || '');
+  const { data: ageGroups, isLoading: ageGroupsLoading } = useProgramAgeGroups(currentProgram?.id || '');
+  const { data: difficultyLevels, isLoading: difficultyLoading } = useProgramDifficultyLevels(currentProgram?.id || '');
+  const { data: sessionTypes, isLoading: sessionTypesLoading } = useProgramSessionTypes(currentProgram?.id || '');
   const [objectives, setObjectives] = useState<string[]>(course?.objectives || ['']);
   const [prerequisites, setPrerequisites] = useState<string[]>(course?.prerequisites || ['']);
   const [tags, setTags] = useState<string[]>(course?.tags || []);
   const [newTag, setNewTag] = useState('');
-  const [selectedAgeRanges, setSelectedAgeRanges] = useState<string[]>(course?.age_ranges || []);
+  const [selectedAgeGroups, setSelectedAgeGroups] = useState<string[]>(course?.age_groups || []);
   const [selectedLocationTypes, setSelectedLocationTypes] = useState<string[]>(course?.location_types || []);
   const [selectedSessionTypes, setSelectedSessionTypes] = useState<string[]>(course?.session_types || []);
   const [pricingMatrix, setPricingMatrix] = useState<any[]>(course?.pricing_matrix || []);
 
+  // Prepare options from program configuration
+  const ageGroupOptions = ageGroups?.map(ag => ({ value: ag.id, label: ag.name })) || fallbackAgeRangeOptions;
+  const difficultyOptions = difficultyLevels?.map(dl => ({ value: dl.id, label: dl.name })) || fallbackDifficultyOptions;
+  const sessionTypeOptions = sessionTypes?.map(st => ({ value: st.id, label: st.name })) || fallbackSessionTypeOptions;
+  
   const form = useForm<CourseFormData>({
     resolver: zodResolver(courseFormSchema),
     defaultValues: {
@@ -135,7 +153,7 @@ export function CourseForm({
       duration_weeks: course?.duration_weeks || undefined,
       sessions_per_payment: course?.sessions_per_payment || 8,
       completion_deadline_weeks: course?.completion_deadline_weeks || 6,
-      age_ranges: course?.age_ranges || [],
+      age_groups: course?.age_groups || [],
       location_types: course?.location_types || [],
       session_types: course?.session_types || [],
       pricing_matrix: course?.pricing_matrix || [],
@@ -145,7 +163,7 @@ export function CourseForm({
       tags: course?.tags || [],
       image_url: course?.image_url || '',
       video_url: course?.video_url || '',
-      sequence: course?.sequence || 1,
+      sequence: course?.sequence, // Let backend auto-assign if not provided
       difficulty_level: course?.difficulty_level || undefined,
       status: course?.status || 'draft',
       is_featured: course?.is_featured || false,
@@ -160,7 +178,7 @@ export function CourseForm({
         objectives: objectives.filter(obj => obj.trim() !== ''),
         prerequisites: prerequisites.filter(prereq => prereq.trim() !== ''),
         tags: tags,
-        age_ranges: selectedAgeRanges,
+        age_groups: selectedAgeGroups,
         location_types: selectedLocationTypes,
         session_types: selectedSessionTypes,
         pricing_matrix: pricingMatrix,
@@ -228,20 +246,20 @@ export function CourseForm({
 
   // Generate pricing matrix when age groups, locations, or session types change
   useEffect(() => {
-    if (selectedAgeRanges.length > 0 && selectedLocationTypes.length > 0 && selectedSessionTypes.length > 0) {
+    if (selectedAgeGroups.length > 0 && selectedLocationTypes.length > 0 && selectedSessionTypes.length > 0) {
       const newPricingMatrix = [];
-      for (const ageRange of selectedAgeRanges) {
+      for (const ageGroup of selectedAgeGroups) {
         for (const locationType of selectedLocationTypes) {
           for (const sessionType of selectedSessionTypes) {
             // Check if this combination already exists in the current matrix
             const existingEntry = pricingMatrix.find(
-              entry => entry.age_range === ageRange && 
+              entry => entry.age_group === ageGroup && 
                        entry.location_type === locationType && 
                        entry.session_type === sessionType
             );
             
             newPricingMatrix.push({
-              age_range: ageRange,
+              age_group: ageGroup,
               location_type: locationType,
               session_type: sessionType,
               price: existingEntry ? existingEntry.price : 0
@@ -255,7 +273,7 @@ export function CourseForm({
       setPricingMatrix([]);
       form.setValue('pricing_matrix', []);
     }
-  }, [selectedAgeRanges, selectedLocationTypes, selectedSessionTypes, form]);
+  }, [selectedAgeGroups, selectedLocationTypes, selectedSessionTypes, form]);
 
   // Update program_id when current program changes
   useEffect(() => {
@@ -361,10 +379,11 @@ export function CourseForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="beginner">Beginner</SelectItem>
-                          <SelectItem value="intermediate">Intermediate</SelectItem>
-                          <SelectItem value="advanced">Advanced</SelectItem>
-                          <SelectItem value="expert">Expert</SelectItem>
+                          {difficultyOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormDescription>
@@ -613,20 +632,23 @@ export function CourseForm({
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-xs font-medium text-muted-foreground">1.</span>
                   <Label className="text-sm font-medium">Age Groups *</Label>
+                  {(ageGroupsLoading || configLoading) && (
+                    <span className="text-xs text-muted-foreground">(Loading from program...)</span>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  {ageRangeOptions.map((option) => (
+                  {ageGroupOptions.map((option) => (
                     <div key={option.value} className="flex items-center space-x-2 p-1 rounded hover:bg-muted/30 transition-colors">
                       <input
                         type="checkbox"
                         id={`age-${option.value}`}
-                        checked={selectedAgeRanges.includes(option.value)}
+                        checked={selectedAgeGroups.includes(option.value)}
                         onChange={(e) => {
-                          const updatedRanges = e.target.checked
-                            ? [...selectedAgeRanges, option.value]
-                            : selectedAgeRanges.filter(range => range !== option.value);
-                          setSelectedAgeRanges(updatedRanges);
-                          form.setValue('age_ranges', updatedRanges);
+                          const updatedGroups = e.target.checked
+                            ? [...selectedAgeGroups, option.value]
+                            : selectedAgeGroups.filter(group => group !== option.value);
+                          setSelectedAgeGroups(updatedGroups);
+                          form.setValue('age_groups', updatedGroups);
                         }}
                         className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-2 focus:ring-primary"
                       />
@@ -639,8 +661,8 @@ export function CourseForm({
                     </div>
                   ))}
                 </div>
-                {form.formState.errors.age_ranges && (
-                  <p className="text-sm text-destructive mt-1">{form.formState.errors.age_ranges.message}</p>
+                {form.formState.errors.age_groups && (
+                  <p className="text-sm text-destructive mt-1">{form.formState.errors.age_groups.message}</p>
                 )}
                 </div>
 
@@ -685,6 +707,9 @@ export function CourseForm({
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-xs font-medium text-muted-foreground">3.</span>
                   <Label className="text-sm font-medium">Session Types *</Label>
+                  {(sessionTypesLoading || configLoading) && (
+                    <span className="text-xs text-muted-foreground">(Loading from program...)</span>
+                  )}
                 </div>
                 <div className="space-y-2">
                   {sessionTypeOptions.map((option) => (
@@ -722,7 +747,7 @@ export function CourseForm({
                 <div className="text-sm">
                   <span className="font-medium">Progress: </span>
                   <span className="text-muted-foreground">
-                    {selectedAgeRanges.length} age groups, {selectedLocationTypes.length} locations, {selectedSessionTypes.length} session types
+                    {selectedAgeGroups.length} age groups, {selectedLocationTypes.length} locations, {selectedSessionTypes.length} session types
                   </span>
                 </div>
               </div>
@@ -742,31 +767,31 @@ export function CourseForm({
             <CardContent>
               {pricingMatrix.length > 0 ? (
                 <div className="space-y-4">
-                  {selectedAgeRanges.map(ageRange => (
-                    <div key={ageRange} className="border rounded-lg p-4">
+                  {selectedAgeGroups.map(ageGroup => (
+                    <div key={ageGroup} className="border rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-3">
                         <div className="w-3 h-3 bg-primary rounded-full"></div>
                         <h4 className="font-semibold text-gray-900">
-                          {ageRangeOptions.find(opt => opt.value === ageRange)?.label || ageRange}
+                          {ageGroupOptions.find(opt => opt.value === ageGroup)?.label || ageGroup}
                         </h4>
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {selectedLocationTypes.map(locationType => (
-                          <div key={`${ageRange}-${locationType}`} className="space-y-2">
+                          <div key={`${ageGroup}-${locationType}`} className="space-y-2">
                             <h5 className="text-sm font-medium text-gray-700 border-b pb-1">
                               {locationTypeOptions.find(opt => opt.value === locationType)?.label || locationType}
                             </h5>
                             {selectedSessionTypes.map(sessionType => {
                               const entryIndex = pricingMatrix.findIndex(
-                                entry => entry.age_range === ageRange && 
+                                entry => entry.age_group === ageGroup && 
                                         entry.location_type === locationType && 
                                         entry.session_type === sessionType
                               );
                               const entry = pricingMatrix[entryIndex];
                               
                               return (
-                                <div key={`${ageRange}-${locationType}-${sessionType}`} 
+                                <div key={`${ageGroup}-${locationType}-${sessionType}`} 
                                      className="flex items-center justify-between bg-muted/50 rounded px-3 py-2">
                                   <span className="text-sm text-gray-600">
                                     {sessionTypeOptions.find(opt => opt.value === sessionType)?.label || sessionType}
@@ -869,11 +894,12 @@ export function CourseForm({
                         {...field} 
                         type="number" 
                         min="0" 
-                        placeholder="Course order in program" 
+                        placeholder={course ? "Current order" : "Auto-assigned"}
+                        disabled={!course} // Only allow editing for existing courses
                       />
                     </FormControl>
                     <FormDescription>
-                      Order of this course in the program
+                      {course ? "Order of this course in the program" : "Will be automatically assigned as the next sequence"}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

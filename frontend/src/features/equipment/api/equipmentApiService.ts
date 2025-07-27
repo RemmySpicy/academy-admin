@@ -184,17 +184,17 @@ export interface LessonEquipmentSummary {
 // API endpoints
 const API_ENDPOINTS = {
   equipment: {
-    list: '/api/v1/courses/equipment',
-    create: '/api/v1/courses/equipment',
-    get: (id: string) => `/api/v1/courses/equipment/${id}`,
-    update: (id: string) => `/api/v1/courses/equipment/${id}`,
-    delete: (id: string) => `/api/v1/courses/equipment/${id}`,
-    stats: '/api/v1/courses/equipment/stats',
-    byLesson: (lessonId: string) => `/api/v1/courses/equipment/by-lesson/${lessonId}`,
-    usage: (equipmentName: string) => `/api/v1/courses/equipment/usage/${equipmentName}`,
-    bulkUpdate: '/api/v1/courses/equipment/bulk-update',
-    inventorySummary: '/api/v1/courses/equipment/inventory/summary',
-    lessonSummary: (lessonId: string) => `/api/v1/courses/equipment/requirements/lesson/${lessonId}`,
+    list: '/api/v1/equipment',
+    create: '/api/v1/equipment',
+    get: (id: string) => `/api/v1/equipment/${id}`,
+    update: (id: string) => `/api/v1/equipment/${id}`,
+    delete: (id: string) => `/api/v1/equipment/${id}`,
+    stats: '/api/v1/equipment/stats',
+    byLesson: (lessonId: string) => `/api/v1/equipment/by-lesson/${lessonId}`,
+    usage: (equipmentName: string) => `/api/v1/equipment/usage/${equipmentName}`,
+    bulkUpdate: '/api/v1/equipment/bulk-update',
+    inventorySummary: '/api/v1/equipment/inventory/summary',
+    lessonSummary: (lessonId: string) => `/api/v1/equipment/requirements/lesson/${lessonId}`,
   },
 };
 

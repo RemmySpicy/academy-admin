@@ -164,7 +164,7 @@ const mockContentApiService = {
     ).toString();
     
     const response = await httpClient.get<PaginatedResponse<Lesson>>(
-      `${API_ENDPOINTS.courses.lessons.list}${queryString ? `?${queryString}` : ''}`
+      `${API_ENDPOINTS.content.lessons.list}${queryString ? `?${queryString}` : ''}`
     );
     
     if (response.success && response.data) {
@@ -174,7 +174,7 @@ const mockContentApiService = {
   },
 
   getLesson: async (id: string): Promise<Lesson> => {
-    const response = await httpClient.get<Lesson>(API_ENDPOINTS.courses.lessons.get(id));
+    const response = await httpClient.get<Lesson>(API_ENDPOINTS.content.lessons.get(id));
     
     if (response.success && response.data) {
       return response.data;
@@ -183,7 +183,7 @@ const mockContentApiService = {
   },
 
   createLesson: async (data: LessonCreate): Promise<Lesson> => {
-    const response = await httpClient.post<Lesson>(API_ENDPOINTS.courses.lessons.create, data);
+    const response = await httpClient.post<Lesson>(API_ENDPOINTS.content.lessons.create, data);
     
     if (response.success && response.data) {
       return response.data;
@@ -192,7 +192,7 @@ const mockContentApiService = {
   },
 
   updateLesson: async (id: string, data: LessonUpdate): Promise<Lesson> => {
-    const response = await httpClient.put<Lesson>(API_ENDPOINTS.courses.lessons.update(id), data);
+    const response = await httpClient.put<Lesson>(API_ENDPOINTS.content.lessons.update(id), data);
     
     if (response.success && response.data) {
       return response.data;
@@ -201,7 +201,7 @@ const mockContentApiService = {
   },
 
   deleteLesson: async (id: string): Promise<void> => {
-    const response = await httpClient.delete(API_ENDPOINTS.courses.lessons.delete(id));
+    const response = await httpClient.delete(API_ENDPOINTS.content.lessons.delete(id));
     
     if (!response.success) {
       throw new Error(response.error || 'Failed to delete lesson');
@@ -215,7 +215,7 @@ const mockContentApiService = {
     ).toString();
     
     const response = await httpClient.get<PaginatedResponse<Assessment>>(
-      `${API_ENDPOINTS.courses.assessments.list}${queryString ? `?${queryString}` : ''}`
+      `${API_ENDPOINTS.content.assessments.list}${queryString ? `?${queryString}` : ''}`
     );
     
     if (response.success && response.data) {
@@ -225,7 +225,7 @@ const mockContentApiService = {
   },
 
   getAssessment: async (id: string): Promise<Assessment> => {
-    const response = await httpClient.get<Assessment>(API_ENDPOINTS.courses.assessments.get(id));
+    const response = await httpClient.get<Assessment>(API_ENDPOINTS.content.assessments.get(id));
     
     if (response.success && response.data) {
       return response.data;
@@ -234,7 +234,7 @@ const mockContentApiService = {
   },
 
   createAssessment: async (data: AssessmentCreate): Promise<Assessment> => {
-    const response = await httpClient.post<Assessment>(API_ENDPOINTS.courses.assessments.create, data);
+    const response = await httpClient.post<Assessment>(API_ENDPOINTS.content.assessments.create, data);
     
     if (response.success && response.data) {
       return response.data;
@@ -243,7 +243,7 @@ const mockContentApiService = {
   },
 
   updateAssessment: async (id: string, data: AssessmentUpdate): Promise<Assessment> => {
-    const response = await httpClient.put<Assessment>(API_ENDPOINTS.courses.assessments.update(id), data);
+    const response = await httpClient.put<Assessment>(API_ENDPOINTS.content.assessments.update(id), data);
     
     if (response.success && response.data) {
       return response.data;
@@ -252,7 +252,7 @@ const mockContentApiService = {
   },
 
   deleteAssessment: async (id: string): Promise<void> => {
-    const response = await httpClient.delete(API_ENDPOINTS.courses.assessments.delete(id));
+    const response = await httpClient.delete(API_ENDPOINTS.content.assessments.delete(id));
     
     if (!response.success) {
       throw new Error(response.error || 'Failed to delete assessment');
@@ -260,7 +260,7 @@ const mockContentApiService = {
   },
 
   getAssessmentCriteria: async (assessmentId: string): Promise<AssessmentCriteria[]> => {
-    const response = await httpClient.get<AssessmentCriteria[]>(API_ENDPOINTS.courses.assessments.criteria.list(assessmentId));
+    const response = await httpClient.get<AssessmentCriteria[]>(API_ENDPOINTS.content.assessments.criteria.list(assessmentId));
     
     if (response.success && response.data) {
       return response.data;
@@ -269,7 +269,7 @@ const mockContentApiService = {
   },
 
   createAssessmentCriteria: async (data: AssessmentCriteriaCreate): Promise<AssessmentCriteria> => {
-    const response = await httpClient.post<AssessmentCriteria>(API_ENDPOINTS.courses.assessments.criteria.create(data.assessment_id), data);
+    const response = await httpClient.post<AssessmentCriteria>(API_ENDPOINTS.content.assessments.criteria.create(data.assessment_id), data);
     
     if (response.success && response.data) {
       return response.data;
@@ -278,7 +278,7 @@ const mockContentApiService = {
   },
 
   updateAssessmentCriteria: async (id: string, data: AssessmentCriteriaUpdate): Promise<AssessmentCriteria> => {
-    const response = await httpClient.put<AssessmentCriteria>(API_ENDPOINTS.courses.assessments.criteria.update(id), data);
+    const response = await httpClient.put<AssessmentCriteria>(API_ENDPOINTS.content.assessments.criteria.update(id), data);
     
     if (response.success && response.data) {
       return response.data;
@@ -287,7 +287,7 @@ const mockContentApiService = {
   },
 
   deleteAssessmentCriteria: async (id: string): Promise<void> => {
-    const response = await httpClient.delete(API_ENDPOINTS.courses.assessments.criteria.delete(id));
+    const response = await httpClient.delete(API_ENDPOINTS.content.assessments.criteria.delete(id));
     
     if (!response.success) {
       throw new Error(response.error || 'Failed to delete assessment criteria');
@@ -295,7 +295,7 @@ const mockContentApiService = {
   },
 
   reorderAssessmentCriteria: async (assessmentId: string, reorderData: Array<{ id: string; sequence: number }>): Promise<void> => {
-    const response = await httpClient.post(API_ENDPOINTS.courses.assessments.criteria.reorder(assessmentId), reorderData);
+    const response = await httpClient.post(API_ENDPOINTS.content.assessments.criteria.reorder(assessmentId), reorderData);
     
     if (!response.success) {
       throw new Error(response.error || 'Failed to reorder assessment criteria');

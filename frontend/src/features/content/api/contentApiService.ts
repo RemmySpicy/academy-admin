@@ -202,7 +202,7 @@ class ContentApiService {
   async createContent(data: ContentCreateData): Promise<ApiResponse<ContentItem>> {
     // Route to the appropriate endpoint based on content type
     const isAssessment = data.assessment_type !== undefined;
-    const endpoint = isAssessment ? API_ENDPOINTS.courses.assessments.create : API_ENDPOINTS.courses.lessons.create;
+    const endpoint = isAssessment ? API_ENDPOINTS.content.assessments.create : API_ENDPOINTS.content.lessons.create;
     
     // Transform data for the specific endpoint
     const transformedData = isAssessment 

@@ -8,8 +8,19 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, BookOpen, Users, Target, BarChart3, GraduationCap } from 'lucide-react';
 import Link from 'next/link';
-import { useCourses } from '@/lib/hooks/useCourses';
+import { toast } from 'sonner';
+import { useCourses, useCourseManagement } from '@/features/courses';
 import { CourseCard } from '@/components/courses/CourseCard';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { CourseGroupedCurriculaList } from '@/features/curricula';
 import type { CurriculumSearchParams } from '@/features/curricula';
 import { 
@@ -34,7 +45,6 @@ import { SearchAndFilter } from '@/components/courses/SearchAndFilter';
 import { Pagination } from '@/components/courses/Pagination';
 import { SearchParams } from '@/lib/api/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function CoursesPage() {
@@ -60,6 +70,10 @@ export default function CoursesPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [createContentType, setCreateContentType] = useState<'lesson' | 'assessment'>('lesson');
   
+  // Course deletion confirmation state
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<any>(null);
+  
   const [curriculumSearchParams, setCurriculumSearchParams] = useState<CurriculumSearchParams>({
     page: 1,
     per_page: 12,
@@ -71,6 +85,9 @@ export default function CoursesPage() {
   const { data: coursesData, isLoading: coursesLoading } = useCourses(
     activeTab === 'courses' ? searchParams : { page: 1, per_page: 1 }
   );
+  
+  // Course management hooks
+  const { deleteCourse } = useCourseManagement();
   
   // Get content management data using new unified hooks
   const { data: contentData, isLoading: contentLoading, error: contentError } = useContent(
@@ -140,6 +157,25 @@ export default function CoursesPage() {
         break;
       default:
         toast.info('Bulk action functionality coming soon');
+    }
+  };
+
+  const handleDeleteCourse = (course: any) => {
+    setCourseToDelete(course);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteCourse = async () => {
+    if (!courseToDelete) return;
+    
+    try {
+      await deleteCourse.mutateAsync(courseToDelete.id);
+      toast.success(`Course "${courseToDelete.name}" deleted successfully`);
+      setShowDeleteDialog(false);
+      setCourseToDelete(null);
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.detail || error?.message || 'Failed to delete course';
+      toast.error(errorMessage);
     }
   };
 
@@ -341,7 +377,7 @@ export default function CoursesPage() {
                     type="course"
                     onView={(item) => window.location.href = `/admin/courses/${item.id}`}
                     onEdit={(item) => window.location.href = `/admin/courses/${item.id}/edit`}
-                    onDelete={(item) => console.log('Delete:', item)}
+                    onDelete={handleDeleteCourse}
                   />
                 ))}
               </div>
@@ -591,6 +627,33 @@ export default function CoursesPage() {
         availableCourses={coursesData?.items || []}
         availableCurricula={[]} // TODO: Add curricula data when available
       />
+
+      {/* Course Deletion Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Course</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{courseToDelete?.name}"? This action cannot be undone and will remove all associated curricula, lessons, and student progress data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowDeleteDialog(false);
+              setCourseToDelete(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteCourse}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteCourse.isPending}
+            >
+              {deleteCourse.isPending ? 'Deleting...' : 'Delete Course'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

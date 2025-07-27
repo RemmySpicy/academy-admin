@@ -22,8 +22,8 @@ import {
   Archive
 } from 'lucide-react';
 import { ContentVersioning } from './ContentVersioning';
-import { EquipmentManager } from './EquipmentManager';
-import { MediaLibrary } from './MediaLibrary';
+import { EquipmentManager } from '@/features/equipment';
+import { MediaLibrary } from '@/features/media';
 import { AssessmentDetailView } from './AssessmentDetailView';
 import { useContentVersioning } from '../hooks/useContentVersioning';
 

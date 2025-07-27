@@ -99,11 +99,6 @@ export const useCreateCourse = () => {
       
       // Update the cache with the new course
       queryClient.setQueryData([COURSE_QUERY_KEYS.COURSE, newCourse.id], newCourse);
-      
-      toast.success('Course created successfully');
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to create course: ${error.message}`);
     },
   });
 };

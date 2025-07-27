@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { LessonCreateDialog } from './LessonCreateDialog';
 import { AssessmentCreateDialog } from './AssessmentCreateDialog';
-import { useCourses } from '../hooks/useCourses';
+import { useCourses } from '@/features/courses';
 
 // Legacy data structures for backward compatibility
 export interface ContentCreateData {

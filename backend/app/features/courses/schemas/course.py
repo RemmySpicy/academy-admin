@@ -17,7 +17,7 @@ from .common import (
 class PricingEntry(BaseModel):
     """Schema for individual pricing matrix entry."""
     
-    age_range: str = Field(..., description="Age range (e.g., '6-12-years')")
+    age_group: str = Field(..., description="Age group (e.g., '6-12', '13-17')")
     location_type: str = Field(..., description="Location type (our-facility, client-location, virtual)")
     session_type: str = Field(..., description="Session type (group, private)")
     price: float = Field(..., ge=0, description="Price in NGN")
@@ -35,7 +35,7 @@ class CourseBase(BaseModel):
     duration_weeks: Optional[int] = Field(None, ge=1, description="Course duration in weeks")
     sessions_per_payment: int = Field(8, ge=1, le=100, description="Sessions per payment cycle")
     completion_deadline_weeks: int = Field(6, ge=1, le=52, description="Completion deadline in weeks")
-    age_ranges: List[str] = Field(..., min_items=1, description="Available age ranges")
+    age_groups: List[str] = Field(..., min_items=1, description="Available age groups")
     location_types: List[str] = Field(..., min_items=1, description="Available location types")
     session_types: List[str] = Field(..., min_items=1, description="Available session types")
     pricing_matrix: List[PricingEntry] = Field(..., min_items=1, description="Pricing matrix")
@@ -71,7 +71,7 @@ class CourseUpdate(BaseModel):
     duration_weeks: Optional[int] = Field(None, ge=1, description="Course duration in weeks")
     sessions_per_payment: Optional[int] = Field(None, ge=1, le=100, description="Sessions per payment cycle")
     completion_deadline_weeks: Optional[int] = Field(None, ge=1, le=52, description="Completion deadline in weeks")
-    age_ranges: Optional[List[str]] = Field(None, min_items=1, description="Available age ranges")
+    age_groups: Optional[List[str]] = Field(None, min_items=1, description="Available age groups")
     location_types: Optional[List[str]] = Field(None, min_items=1, description="Available location types")
     session_types: Optional[List[str]] = Field(None, min_items=1, description="Available session types")
     pricing_matrix: Optional[List[PricingEntry]] = Field(None, min_items=1, description="Pricing matrix")
@@ -127,12 +127,12 @@ class CourseResponse(CourseBase, TimestampMixin):
                 "duration_weeks": 8,
                 "sessions_per_payment": 8,
                 "completion_deadline_weeks": 6,
-                "age_ranges": ["6-12-years", "13-18-years"],
+                "age_groups": ["6-12", "13-17"],
                 "location_types": ["our-facility", "client-location"],
                 "session_types": ["group", "private"],
                 "pricing_matrix": [
-                    {"age_range": "6-12-years", "location_type": "our-facility", "session_type": "group", "price": 15000},
-                    {"age_range": "6-12-years", "location_type": "our-facility", "session_type": "private", "price": 25000}
+                    {"age_group": "6-12", "location_type": "our-facility", "session_type": "group", "price": 15000},
+                    {"age_group": "6-12", "location_type": "our-facility", "session_type": "private", "price": 25000}
                 ],
                 "max_students": 12,
                 "min_students": 6,
@@ -171,7 +171,7 @@ class CourseSearchParams(BaseModel):
     difficulty_level: Optional[DifficultyLevelEnum] = Field(None, description="Filter by difficulty level")
     is_featured: Optional[bool] = Field(None, description="Filter by featured status")
     is_certification_course: Optional[bool] = Field(None, description="Filter by certification courses")
-    age_range: Optional[str] = Field(None, description="Filter by age range")
+    age_group: Optional[str] = Field(None, description="Filter by age group")
     location_type: Optional[str] = Field(None, description="Filter by location type")
     session_type: Optional[str] = Field(None, description="Filter by session type")
     sort_by: Optional[str] = Field("sequence", description="Sort field")

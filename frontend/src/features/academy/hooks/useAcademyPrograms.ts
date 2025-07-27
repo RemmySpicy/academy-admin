@@ -14,6 +14,7 @@ import type {
   SearchParams,
   PaginatedResponse
 } from '@/lib/api/types';
+import type { ProgramConfiguration } from '../api/academyApiService';
 
 // Query Keys
 export const ACADEMY_QUERY_KEYS = {
@@ -22,6 +23,7 @@ export const ACADEMY_QUERY_KEYS = {
   PROGRAM: 'academy-program',                      // Single program
   PROGRAM_OVERVIEW_STATS: 'academy-program-overview-stats',  // Academy-wide stats
   PROGRAM_DETAILED_STATS: 'academy-program-detailed-stats',  // Individual program stats
+  PROGRAM_CONFIGURATION: 'academy-program-configuration',   // Program configuration data
   
   // Users  
   USERS: 'academy-users',                          // List of users
@@ -185,5 +187,81 @@ export const useAcademyProgramStatistics = (id: string) => {
     enabled: !!id,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 10 * 60 * 1000, // 10 minutes
+  });
+};
+
+/**
+ * Get program configuration (age groups, difficulty levels, session types)
+ */
+export const useProgramConfiguration = (id: string) => {
+  return useQuery({
+    queryKey: [ACADEMY_QUERY_KEYS.PROGRAM, id, 'configuration'],
+    queryFn: async () => {
+      const response = await academyProgramsApi.getProgramConfiguration(id);
+      
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.error || 'Failed to fetch program configuration');
+    },
+    enabled: !!id,
+    staleTime: 10 * 60 * 1000, // 10 minutes - configuration doesn't change often
+  });
+};
+
+/**
+ * Get program age groups for course creation
+ */
+export const useProgramAgeGroups = (id: string) => {
+  return useQuery({
+    queryKey: [ACADEMY_QUERY_KEYS.PROGRAM, id, 'age-groups'],
+    queryFn: async () => {
+      const response = await academyProgramsApi.getProgramAgeGroups(id);
+      
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.error || 'Failed to fetch program age groups');
+    },
+    enabled: !!id,
+    staleTime: 10 * 60 * 1000,
+  });
+};
+
+/**
+ * Get program difficulty levels for course creation
+ */
+export const useProgramDifficultyLevels = (id: string) => {
+  return useQuery({
+    queryKey: [ACADEMY_QUERY_KEYS.PROGRAM, id, 'difficulty-levels'],
+    queryFn: async () => {
+      const response = await academyProgramsApi.getProgramDifficultyLevels(id);
+      
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.error || 'Failed to fetch program difficulty levels');
+    },
+    enabled: !!id,
+    staleTime: 10 * 60 * 1000,
+  });
+};
+
+/**
+ * Get program session types for course creation
+ */
+export const useProgramSessionTypes = (id: string) => {
+  return useQuery({
+    queryKey: [ACADEMY_QUERY_KEYS.PROGRAM, id, 'session-types'],
+    queryFn: async () => {
+      const response = await academyProgramsApi.getProgramSessionTypes(id);
+      
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.error || 'Failed to fetch program session types');
+    },
+    enabled: !!id,
+    staleTime: 10 * 60 * 1000,
   });
 };

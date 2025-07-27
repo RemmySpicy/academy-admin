@@ -48,8 +48,8 @@ import {
   Plus,
   ArrowUp,
   ArrowDown,
-  Expand,
-  Collapse,
+  ChevronsDown,
+  ChevronsUp,
   TreePine,
   Map,
   Layout,
@@ -58,7 +58,7 @@ import {
   XCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { AdvancedSearch } from './AdvancedSearch';
+import { AdvancedSearch } from '@/features/content';
 import type { CourseTree, Curriculum, Level, Module, Section, Lesson } from '../api/courseApiService';
 
 interface CurriculumTreeNavigatorProps {
@@ -482,7 +482,7 @@ export function CurriculumTreeNavigator({
                 onClick={viewMode === 'tree' ? expandAll : undefined}
                 disabled={viewMode === 'flat'}
               >
-                <Expand className="h-4 w-4" />
+                <ChevronsDown className="h-4 w-4" />
               </Button>
               <Button
                 variant="outline"
@@ -490,7 +490,7 @@ export function CurriculumTreeNavigator({
                 onClick={viewMode === 'tree' ? collapseAll : undefined}
                 disabled={viewMode === 'flat'}
               >
-                <Collapse className="h-4 w-4" />
+                <ChevronsUp className="h-4 w-4" />
               </Button>
               <Select value={viewMode} onValueChange={(value) => setViewMode(value as 'tree' | 'flat')}>
                 <SelectTrigger className="w-32">

@@ -173,19 +173,19 @@ export interface BulkActionResult {
 // API endpoints
 const API_ENDPOINTS = {
   media: {
-    list: '/api/v1/courses/media',
-    create: '/api/v1/courses/media',
-    get: (id: string) => `/api/v1/courses/media/${id}`,
-    update: (id: string) => `/api/v1/courses/media/${id}`,
-    delete: (id: string) => `/api/v1/courses/media/${id}`,
-    download: (id: string) => `/api/v1/courses/media/${id}/download`,
-    thumbnail: (id: string) => `/api/v1/courses/media/${id}/thumbnail`,
-    usage: (id: string) => `/api/v1/courses/media/${id}/usage`,
-    processingStatus: (id: string) => `/api/v1/courses/media/${id}/processing-status`,
-    stats: '/api/v1/courses/media/stats',
-    uploadSession: '/api/v1/courses/media/upload-session',
-    upload: (uploadId: string) => `/api/v1/courses/media/upload/${uploadId}`,
-    bulkTag: '/api/v1/courses/media/bulk-tag',
+    list: '/api/v1/media',
+    create: '/api/v1/media',
+    get: (id: string) => `/api/v1/media/${id}`,
+    update: (id: string) => `/api/v1/media/${id}`,
+    delete: (id: string) => `/api/v1/media/${id}`,
+    download: (id: string) => `/api/v1/media/${id}/download`,
+    thumbnail: (id: string) => `/api/v1/media/${id}/thumbnail`,
+    usage: (id: string) => `/api/v1/media/${id}/usage`,
+    processingStatus: (id: string) => `/api/v1/media/${id}/processing-status`,
+    stats: '/api/v1/media/stats',
+    uploadSession: '/api/v1/media/upload-session',
+    upload: (uploadId: string) => `/api/v1/media/upload/${uploadId}`,
+    bulkTag: '/api/v1/media/bulk-tag',
   },
 };
 
@@ -205,7 +205,7 @@ export const mediaApiService = {
 
     const queryString = queryParams.toString();
     const response = await httpClient.get<PaginatedResponse<Media>>(
-      `/api/v1/courses/media${queryString ? `?${queryString}` : ''}`
+      `/api/v1/media${queryString ? `?${queryString}` : ''}`
     );
     
     if (response.success) {
@@ -220,7 +220,7 @@ export const mediaApiService = {
    * Program context is automatically injected by httpClient
    */
   async createMedia(mediaData: MediaCreateRequest): Promise<Media> {
-    const response = await httpClient.post<Media>('/api/v1/courses/media', mediaData);
+    const response = await httpClient.post<Media>('/api/v1/media', mediaData);
     
     if (response.success) {
       return response.data;
@@ -234,7 +234,7 @@ export const mediaApiService = {
    * Program context is automatically validated by backend
    */
   async getMediaById(id: string): Promise<Media> {
-    const response = await httpClient.get<Media>(`/api/v1/courses/media/${id}`);
+    const response = await httpClient.get<Media>(`/api/v1/media/${id}`);
     
     if (response.success) {
       return response.data;
@@ -248,7 +248,7 @@ export const mediaApiService = {
    * Program context is automatically validated by backend
    */
   async updateMedia(id: string, mediaData: MediaUpdateRequest): Promise<Media> {
-    const response = await httpClient.put<Media>(`/api/v1/courses/media/${id}`, mediaData);
+    const response = await httpClient.put<Media>(`/api/v1/media/${id}`, mediaData);
     
     if (response.success) {
       return response.data;
@@ -262,7 +262,7 @@ export const mediaApiService = {
    * Program context is automatically validated by backend
    */
   async deleteMedia(id: string): Promise<void> {
-    const response = await httpClient.delete<void>(`/api/v1/courses/media/${id}`);
+    const response = await httpClient.delete<void>(`/api/v1/media/${id}`);
     
     if (!response.success) {
       throw new Error(response.error || 'Failed to delete media');
@@ -301,7 +301,7 @@ export const mediaApiService = {
     formData.append('folder', folder);
 
     const response = await httpClient.post<{ file_url: string; file_path: string }>(
-      '/api/v1/courses/media/upload',
+      '/api/v1/media/upload',
       formData
     );
     
@@ -381,7 +381,7 @@ export const mediaApiService = {
    * Program context is automatically validated by backend
    */
   getMediaDownloadUrl(id: string): string {
-    return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/courses/media/${id}/download`;
+    return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/media/${id}/download`;
   },
 
   /**
@@ -389,6 +389,6 @@ export const mediaApiService = {
    * Program context is automatically validated by backend
    */
   getMediaThumbnailUrl(id: string): string {
-    return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/courses/media/${id}/thumbnail`;
+    return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/media/${id}/thumbnail`;
   },
 };

@@ -450,13 +450,13 @@ export function CourseCard({
             )}
 
             {/* Age Groups */}
-            {course.age_ranges && course.age_ranges.length > 0 && (
+            {course.age_groups && course.age_groups.length > 0 && (
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-1 text-gray-500">
                   <Users className="h-4 w-4" />
                   <span>Age Groups</span>
                 </div>
-                <span className="font-medium">{course.age_ranges.length}</span>
+                <span className="font-medium">{course.age_groups.length}</span>
               </div>
             )}
 

@@ -23,7 +23,59 @@ All features implement consistent role-based access:
 
 ## Feature Integration Matrix
 
-### 1. Student Management ↔ Scheduling Integration ✅ **IMPLEMENTED**
+### 1. Program Configuration ↔ Multiple Features Integration ✅ **IMPLEMENTED**
+
+#### **Data Dependencies**
+```
+Program Model → Multiple Features
+├── age_groups (JSON) → Course/Curriculum age targeting
+├── difficulty_levels (JSON) → Course/Curriculum progression
+├── session_types (JSON) → Scheduling session creation
+├── default_session_duration (int) → Scheduling defaults
+└── program_code (string) → Cross-feature identification
+```
+
+#### **Integration Points**
+- **Age Group Configuration**: Defines available age ranges for course and curriculum targeting ✅ **IMPLEMENTED**
+- **Difficulty Level Configuration**: Provides progression structure for curriculum builders ✅ **IMPLEMENTED**
+- **Session Type Configuration**: Defines available session types with capacity limits for scheduling ✅ **IMPLEMENTED**
+- **Default Duration**: Sets default session duration for new session creation ✅ **IMPLEMENTED**
+- **Program Code**: Provides unique identifier for cross-feature references ✅ **IMPLEMENTED**
+
+#### **Business Rules**
+- Age groups must be non-overlapping ranges within reasonable limits (3-99 years) ✅ **IMPLEMENTED**
+- Difficulty levels have sortable weights for progression logic ✅ **IMPLEMENTED**
+- Session types include default types (Private, Group, School Group) plus custom types ✅ **IMPLEMENTED**
+- Default session duration must be between 15-300 minutes ✅ **IMPLEMENTED**
+- All configuration changes are validated for impact on existing data ✅ **IMPLEMENTED**
+
+#### **Frontend Implementation**
+- **AgeGroupsManager Component**: Dynamic add/remove with age range validation ✅ **IMPLEMENTED**
+- **DifficultyLevelsManager Component**: Sortable list with drag-and-drop reordering ✅ **IMPLEMENTED**
+- **SessionTypesManager Component**: Default + custom type management with capacity settings ✅ **IMPLEMENTED**
+- **Configuration Tab**: Unified interface for all program configuration management ✅ **IMPLEMENTED**
+
+#### **API Integration**
+```typescript
+// Program Configuration provides data to other features
+GET /api/v1/programs/{id}/age-groups
+GET /api/v1/programs/{id}/difficulty-levels  
+GET /api/v1/programs/{id}/session-types
+GET /api/v1/programs/{id}/configuration
+
+// Other features read from Program Configuration
+Course Management → uses age_groups, difficulty_levels
+Curriculum Management → uses age_groups, difficulty_levels
+Scheduling → uses session_types, default_session_duration
+```
+
+#### **Cross-Feature Impact**
+- **Course Creation**: Validates selected age groups and difficulty levels exist in program ✅ **IMPLEMENTED**
+- **Curriculum Builder**: Uses difficulty levels for progression and age groups for targeting ✅ **IMPLEMENTED**
+- **Session Creation**: Limited to program-defined session types with enforced capacity ✅ **IMPLEMENTED**
+- **Duration Defaults**: New sessions inherit program default duration ✅ **IMPLEMENTED**
+
+### 2. Student Management ↔ Scheduling Integration ✅ **IMPLEMENTED**
 
 #### **Data Dependencies**
 ```
@@ -69,12 +121,17 @@ POST /api/v1/students/{id}/attendance    // Attendance tracking
 
 #### **Data Dependencies**
 ```
-Facility Model → Scheduling
-├── instructor_assignments (per facility)
-├── instructor_availability (facility-specific)
-├── facility_capacity_rules
-├── operating_hours
-└── equipment_availability
+Multiple Models → Scheduling
+├── Facility Model
+│   ├── instructor_assignments (per facility)
+│   ├── instructor_availability (facility-specific)
+│   ├── facility_capacity_rules
+│   ├── operating_hours
+│   └── equipment_availability
+└── Program Configuration
+    ├── session_types → Available session types for scheduling
+    ├── default_session_duration → Default duration for new sessions
+    └── capacity_rules → Session type capacity validation
 ```
 
 #### **Integration Points**
@@ -83,6 +140,9 @@ Facility Model → Scheduling
 - **Availability Scope**: Instructor availability is facility-specific (not global) ✅ **IMPLEMENTED**
 - **Capacity Calculation**: Base capacity × instructor multipliers ✅ **IMPLEMENTED**
 - **Conflict Prevention**: Multiple sessions allowed with different instructors ✅ **IMPLEMENTED**
+- **Session Type Integration**: Session creation limited to program-defined session types ✅ **IMPLEMENTED**
+- **Duration Defaults**: New sessions inherit program default duration ✅ **IMPLEMENTED**
+- **Capacity Validation**: Session capacity enforced by program session type configuration ✅ **IMPLEMENTED**
 
 #### **Business Rules**
 - Instructors work within single program per facility ✅ **IMPLEMENTED**
@@ -103,41 +163,87 @@ GET /api/v1/facilities/{id}/instructors
 GET /api/v1/facilities/{id}/instructor-availability
 GET /api/v1/facilities/{id}/capacity-rules
 
+// Scheduling reads from Program Configuration
+GET /api/v1/programs/{id}/session-types
+GET /api/v1/programs/{id}/configuration
+
 // Scheduling updates Facility Management
 PUT /api/v1/facilities/{id}/utilization     // Usage statistics
 ```
 
-### 3. Course Management ↔ Student Credits Integration
+### 3. Course Management ↔ Multiple Features Integration ✅ **ENHANCED (2025-07-27)**
 
 #### **Data Dependencies**
 ```
-Course Model → Student Credits
-├── number_of_sessions (defines available credits)
-├── course_difficulty_levels  
-├── course_duration
-└── payment_amount
+Course Model → Multiple Features
+├── sessions_per_payment → Student Credits (defines available credits)
+├── difficulty_level ← Program Configuration (validates difficulty) ✅ **ENHANCED**
+├── age_groups ← Program Configuration (validates age groups) ✅ **ENHANCED**
+├── session_types ← Program Configuration (validates session types) ✅ **NEW**
+├── sequence → Automatic sequencing with gap management ✅ **NEW**
+├── course_duration → Session Scheduling
+└── payment_amount → Payment Processing
 ```
 
 #### **Integration Points**
-- **Credit Source**: Session credits come from course details
-- **Credit Assignment**: Credits added when course payment confirmed
-- **Course Flexibility**: Students can join any session regardless of specific course
-- **Progress Tracking**: Course progress determines skill level recommendations
+- **Credit Source**: Session credits come from course details ✅ **IMPLEMENTED**
+- **Credit Assignment**: Credits added when course payment confirmed ✅ **IMPLEMENTED**
+- **Course Flexibility**: Students can join any session regardless of specific course ✅ **IMPLEMENTED**
+- **Progress Tracking**: Course progress determines skill level recommendations ✅ **IMPLEMENTED**
+- **Configuration Validation**: Course creation validates against program configurations ✅ **ENHANCED (2025-07-27)**
+- **Automatic Sequencing**: Course sequence auto-assigned and gaps managed ✅ **NEW (2025-07-27)**
+- **Dynamic Form Options**: Course form fetches options from program configuration ✅ **NEW (2025-07-27)**
 
 #### **Business Rules**
-- Course enrollment not required for specific course sessions
-- Any course enrollment allows participation in any session
-- Credits are unified (no separate private/group credit types)
-- Credits non-transferable between students or courses
+- Course enrollment not required for specific course sessions ✅ **IMPLEMENTED**
+- Any course enrollment allows participation in any session ✅ **IMPLEMENTED**
+- Credits are unified (no separate private/group credit types) ✅ **IMPLEMENTED**
+- Credits non-transferable between students or courses ✅ **IMPLEMENTED**
+- Difficulty levels, age groups, and session types must exist in program configuration ✅ **ENHANCED (2025-07-27)**
+- Course sequence auto-assigned if not provided ✅ **NEW (2025-07-27)**
+- Sequence gaps automatically fixed on course deletion ✅ **NEW (2025-07-27)**
+
+#### **Frontend Implementation**
+- **Dynamic Options**: Course form loads age groups, difficulty levels, and session types from program configuration ✅ **NEW (2025-07-27)**
+- **Real-time Validation**: Frontend validates selections against program configuration ✅ **NEW (2025-07-27)**
+- **Loading States**: Visual indicators when fetching program configuration ✅ **NEW (2025-07-27)**
+- **Automatic Sequencing**: Sequence field auto-disabled for new courses ✅ **NEW (2025-07-27)**
 
 #### **API Integration**
 ```typescript
+// Course Management reads from Program Configuration ✅ **ENHANCED**
+GET /api/v1/programs/{id}/configuration        // Complete config
+GET /api/v1/programs/{id}/difficulty-levels   // Difficulty options
+GET /api/v1/programs/{id}/age-groups          // Age group options  
+GET /api/v1/programs/{id}/session-types       // Session type options
+
+// Course Management validates against Program Configuration ✅ **NEW**
+POST /api/v1/courses/                         // Validates config on create
+PUT /api/v1/courses/{id}                      // Validates config on update
+
 // Student Credits reads from Course Management
 GET /api/v1/courses/{id}/session-details
 GET /api/v1/courses/{id}/difficulty-levels
 
 // Course payments trigger credit assignment
 POST /api/v1/payments/confirm → triggers credit addition
+```
+
+#### **Backend Service Integration** ✅ **NEW (2025-07-27)**
+```python
+# Course Service validates against Program Configuration
+class CourseService:
+    def _validate_course_against_program_config(self, course_data, program):
+        # Validates difficulty_level, age_groups, session_types
+        pass
+    
+    def _get_next_sequence_for_program(self, program_id):
+        # Auto-assigns next sequence number
+        pass
+    
+    def _fix_sequence_gaps(self, program_id, deleted_sequence):
+        # Fixes gaps after course deletion
+        pass
 ```
 
 ### 4. Organizations ↔ Student Management Integration
@@ -268,10 +374,110 @@ DELETE /api/v1/mobile/students/me/cancel-session
 PUT /api/v1/mobile/instructors/me/update-attendance
 ```
 
+### 7. Course Management ↔ Program Configuration Deep Integration ✅ **NEW (2025-07-27)**
+
+#### **Data Dependencies**
+```
+Program Configuration → Course Management
+├── age_groups (JSON) → course.age_groups validation
+├── difficulty_levels (JSON) → course.difficulty_level validation
+├── session_types (JSON) → course.session_types validation
+└── Auto-sequencing logic → course.sequence assignment
+```
+
+#### **Integration Points**
+- **Real-time Configuration Fetching**: Frontend dynamically loads configuration options ✅ **IMPLEMENTED**
+- **Server-side Validation**: Backend validates all course data against program configuration ✅ **IMPLEMENTED**
+- **Automatic Sequence Management**: Courses auto-assigned sequence with gap filling ✅ **IMPLEMENTED**
+- **Fallback Handling**: Graceful degradation when configuration is unavailable ✅ **IMPLEMENTED**
+
+#### **Business Rules**
+- All course configuration options must exist in parent program ✅ **IMPLEMENTED**
+- Course sequence automatically managed to prevent gaps ✅ **IMPLEMENTED**
+- Configuration changes in program immediately affect course creation ✅ **IMPLEMENTED**
+- Invalid configuration prevents course creation/updates ✅ **IMPLEMENTED**
+
+#### **Frontend Hooks Integration**
+```typescript
+// Course Form uses program configuration hooks
+const { data: ageGroups } = useProgramAgeGroups(programId);
+const { data: difficultyLevels } = useProgramDifficultyLevels(programId);
+const { data: sessionTypes } = useProgramSessionTypes(programId);
+const { data: programConfig } = useProgramConfiguration(programId);
+
+// Dynamic option generation
+const ageRangeOptions = ageGroups?.map(ag => ({ value: ag.id, label: ag.name }));
+const difficultyOptions = difficultyLevels?.map(dl => ({ value: dl.id, label: dl.name }));
+const sessionTypeOptions = sessionTypes?.map(st => ({ value: st.id, label: st.name }));
+```
+
+#### **Backend Validation Flow**
+```python
+# Course creation with full validation
+def create_course(course_data, program_context):
+    program = get_program(course_data.program_id)
+    
+    # Validate against program configuration
+    validate_course_against_program_config(course_data, program)
+    
+    # Auto-assign sequence
+    if not course_data.sequence:
+        course_data.sequence = get_next_sequence_for_program(program_id)
+    
+    # Create course
+    return create(course_data)
+
+# Course deletion with gap management
+def delete_course(course_id):
+    course = get_course(course_id)
+    deleted_sequence = course.sequence
+    program_id = course.program_id
+    
+    # Delete course
+    delete(course_id)
+    
+    # Fix sequence gaps
+    fix_sequence_gaps(program_id, deleted_sequence)
+```
+
 ## Integration Implementation Patterns
 
 ### 1. Service Layer Integration
 ```typescript
+// Example: Course Service using Program Service ✅ **NEW (2025-07-27)**
+class CourseService {
+  constructor(
+    private programService: ProgramService,
+    private studentService: StudentService,
+    private notificationService: NotificationService
+  ) {}
+
+  async createCourse(courseData: CourseCreate, programContext: string) {
+    // Get program configuration
+    const program = await this.programService.getProgram(courseData.program_id);
+    
+    // Validate against program configuration
+    this.validateCourseAgainstProgramConfig(courseData, program);
+    
+    // Auto-assign sequence if not provided
+    if (!courseData.sequence) {
+      courseData.sequence = await this.getNextSequenceForProgram(courseData.program_id);
+    }
+    
+    // Create course
+    const course = await this.create(courseData);
+    
+    // Send notification
+    await this.notificationService.notify({
+      type: "course_created",
+      recipient: courseData.created_by,
+      data: { courseName: course.name }
+    });
+    
+    return course;
+  }
+}
+
 // Example: Scheduling Service using Student Service
 class SchedulingService {
   constructor(
@@ -326,6 +532,40 @@ eventBus.on('payment.confirmed', async (event) => {
 // All service methods must accept and propagate program context
 interface BaseService {
   programContext: ProgramContext;
+}
+
+// Enhanced Course Service with Program Configuration Integration ✅ **NEW**
+class CourseService implements BaseService {
+  async createCourse(courseData: CourseCreate, programContext: ProgramContext) {
+    // Get program with configuration
+    const program = await this.programService.getProgram(programContext.programId);
+    
+    // Validate course data against program configuration
+    await this.validateCourseAgainstProgramConfig(courseData, program);
+    
+    // Auto-assign sequence within program context
+    if (!courseData.sequence) {
+      courseData.sequence = await this.getNextSequenceForProgram(programContext.programId);
+    }
+    
+    return this.db.courses.create({
+      data: {
+        ...courseData,
+        program_id: programContext.programId
+      }
+    });
+  }
+
+  async deleteCourse(courseId: string, programContext: ProgramContext) {
+    const course = await this.getCourse(courseId, programContext);
+    if (!course) throw new Error('Course not found');
+    
+    // Delete course
+    await this.db.courses.delete({ where: { id: courseId } });
+    
+    // Fix sequence gaps within program context
+    await this.fixSequenceGaps(programContext.programId, course.sequence);
+  }
 }
 
 class StudentService implements BaseService {

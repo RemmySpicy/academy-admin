@@ -160,7 +160,7 @@ export const curriculaApiService = {
    */
   getCurricula: async (params: CurriculumSearchParams = {}): Promise<PaginatedCurriculumResponse> => {
     const response = await httpClient.get<PaginatedCurriculumResponse>(
-      API_ENDPOINTS.courses.curricula.list,
+      API_ENDPOINTS.curricula.list,
       params
     );
     
@@ -176,7 +176,7 @@ export const curriculaApiService = {
    */
   getCurriculaStats: async (): Promise<CurriculumStatsResponse> => {
     const response = await httpClient.get<CurriculumStatsResponse>(
-      `${API_ENDPOINTS.courses.curricula.list}/stats`
+      API_ENDPOINTS.curricula.stats
     );
     
     if (response.error) {
@@ -191,7 +191,7 @@ export const curriculaApiService = {
    */
   getCurriculum: async (id: string): Promise<Curriculum> => {
     const response = await httpClient.get<Curriculum>(
-      API_ENDPOINTS.courses.curricula.get(id)
+      API_ENDPOINTS.curricula.get(id)
     );
     
     if (response.error) {
@@ -206,7 +206,7 @@ export const curriculaApiService = {
    */
   createCurriculum: async (data: CurriculumCreate): Promise<Curriculum> => {
     const response = await httpClient.post<Curriculum>(
-      API_ENDPOINTS.courses.curricula.create,
+      API_ENDPOINTS.curricula.create,
       data
     );
     
@@ -222,7 +222,7 @@ export const curriculaApiService = {
    */
   updateCurriculum: async (id: string, data: CurriculumUpdate): Promise<Curriculum> => {
     const response = await httpClient.put<Curriculum>(
-      API_ENDPOINTS.courses.curricula.update(id),
+      API_ENDPOINTS.curricula.update(id),
       data
     );
     
@@ -238,7 +238,7 @@ export const curriculaApiService = {
    */
   deleteCurriculum: async (id: string): Promise<void> => {
     const response = await httpClient.delete(
-      API_ENDPOINTS.courses.curricula.delete(id)
+      API_ENDPOINTS.curricula.delete(id)
     );
     
     if (response.error) {
@@ -251,7 +251,7 @@ export const curriculaApiService = {
    */
   getCurriculaByCourse: async (courseId: string, params: CurriculumSearchParams = {}): Promise<PaginatedCurriculumResponse> => {
     const response = await httpClient.get<PaginatedCurriculumResponse>(
-      `${API_ENDPOINTS.courses.curricula.list}/by-course/${courseId}`,
+      `${API_ENDPOINTS.curricula.list}/by-course/${courseId}`,
       params
     );
     
@@ -267,7 +267,7 @@ export const curriculaApiService = {
    */
   getCurriculumTree: async (id: string): Promise<CurriculumTreeResponse> => {
     const response = await httpClient.get<CurriculumTreeResponse>(
-      `${API_ENDPOINTS.courses.curricula.get(id)}/tree`
+      API_ENDPOINTS.curricula.tree(id)
     );
     
     if (response.error) {
@@ -282,7 +282,7 @@ export const curriculaApiService = {
    */
   duplicateCurriculum: async (id: string, data: { name: string; course_id?: string }): Promise<Curriculum> => {
     const response = await httpClient.post<Curriculum>(
-      `${API_ENDPOINTS.courses.curricula.get(id)}/duplicate`,
+      API_ENDPOINTS.curricula.duplicate(id),
       data
     );
     
@@ -298,7 +298,7 @@ export const curriculaApiService = {
    */
   bulkMoveCurricula: async (data: BulkCurriculumMoveRequest): Promise<BulkActionResponse> => {
     const response = await httpClient.post<BulkActionResponse>(
-      `${API_ENDPOINTS.courses.curricula.list}/bulk-move`,
+      `${API_ENDPOINTS.curricula.list}/bulk-move`,
       data
     );
     
@@ -314,7 +314,7 @@ export const curriculaApiService = {
    */
   bulkUpdateCurriculumStatus: async (data: BulkCurriculumStatusUpdateRequest): Promise<BulkActionResponse> => {
     const response = await httpClient.post<BulkActionResponse>(
-      `${API_ENDPOINTS.courses.curricula.list}/bulk-status`,
+      `${API_ENDPOINTS.curricula.list}/bulk-status`,
       data
     );
     
@@ -330,7 +330,7 @@ export const curriculaApiService = {
    */
   reorderCurricula: async (reorderData: Array<{ id: string; sequence: number }>): Promise<BulkActionResponse> => {
     const response = await httpClient.post<BulkActionResponse>(
-      `${API_ENDPOINTS.courses.curricula.list}/reorder`,
+      `${API_ENDPOINTS.curricula.list}/reorder`,
       reorderData
     );
     
@@ -346,7 +346,7 @@ export const curriculaApiService = {
    */
   setDefaultCurriculum: async (curriculumId: string, ageGroups: string[]): Promise<Curriculum> => {
     const response = await httpClient.post<Curriculum>(
-      `${API_ENDPOINTS.courses.curricula.list}/${curriculumId}/set-default`,
+      `${API_ENDPOINTS.curricula.list}/${curriculumId}/set-default`,
       ageGroups
     );
     
@@ -362,7 +362,7 @@ export const curriculaApiService = {
    */
   removeDefaultCurriculum: async (curriculumId: string, ageGroups: string[]): Promise<Curriculum> => {
     const response = await httpClient.delete<Curriculum>(
-      `${API_ENDPOINTS.courses.curricula.list}/${curriculumId}/remove-default`,
+      `${API_ENDPOINTS.curricula.list}/${curriculumId}/remove-default`,
       ageGroups
     );
     
@@ -378,7 +378,7 @@ export const curriculaApiService = {
    */
   getDefaultCurriculaByCourse: async (courseId: string): Promise<{ defaults: Record<string, string> }> => {
     const response = await httpClient.get<{ defaults: Record<string, string> }>(
-      `${API_ENDPOINTS.courses.curricula.list}/courses/${courseId}/defaults`
+      `${API_ENDPOINTS.curricula.list}/courses/${courseId}/defaults`
     );
     
     if (response.error) {
@@ -397,7 +397,7 @@ export const curriculaApiService = {
    */
   getLevelsByCurriculum: async (curriculumId: string): Promise<any[]> => {
     const response = await httpClient.get<any>(
-      `${API_ENDPOINTS.courses.levels.list}/by-curriculum/${curriculumId}`
+      `${API_ENDPOINTS.curricula.levels.list}/by-curriculum/${curriculumId}`
     );
     
     if (response.error) {
@@ -412,7 +412,7 @@ export const curriculaApiService = {
    */
   createLevel: async (data: any): Promise<any> => {
     const response = await httpClient.post<any>(
-      API_ENDPOINTS.courses.levels.create,
+      API_ENDPOINTS.curricula.levels.create,
       data
     );
     
@@ -428,7 +428,7 @@ export const curriculaApiService = {
    */
   updateLevel: async (id: string, data: any): Promise<any> => {
     const response = await httpClient.put<any>(
-      API_ENDPOINTS.courses.levels.update(id),
+      API_ENDPOINTS.curricula.levels.update(id),
       data
     );
     
@@ -444,7 +444,7 @@ export const curriculaApiService = {
    */
   deleteLevel: async (id: string): Promise<void> => {
     const response = await httpClient.delete(
-      API_ENDPOINTS.courses.levels.delete(id)
+      API_ENDPOINTS.curricula.levels.delete(id)
     );
     
     if (response.error) {

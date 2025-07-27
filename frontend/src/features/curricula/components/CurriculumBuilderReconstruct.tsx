@@ -86,7 +86,7 @@ import type {
   CurriculumStatus
 } from '../api/courseApiService';
 import { useCurriculum } from '../hooks/useCurricula';
-import { useCourse } from '../hooks/useCourses';
+import { useCourse } from '@/features/courses';
 
 interface Level {
   id: string;

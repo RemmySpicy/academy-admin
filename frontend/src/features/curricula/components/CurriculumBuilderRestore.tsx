@@ -90,7 +90,7 @@ import type {
   CurriculumStatus
 } from '../api/courseApiService';
 import { useCurriculum } from '../hooks/useCurricula';
-import { useCourse, useCourses } from '../hooks/useCourses';
+import { useCourse, useCourses } from '@/features/courses';
 
 interface Level {
   id: string;

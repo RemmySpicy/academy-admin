@@ -42,7 +42,7 @@ async def create_course(
     
     Requires authentication and appropriate permissions.
     """
-    if not current_user.get("is_active"):
+    if not current_user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Inactive user"
@@ -53,7 +53,7 @@ async def create_course(
         if program_context:
             course_data.program_id = program_context
         
-        course = course_service.create_course(db, course_data, current_user["id"])
+        course = course_service.create_course(db, course_data, current_user.id)
         return course
     except ValueError as e:
         raise HTTPException(
@@ -221,7 +221,7 @@ async def update_course(
                 detail="Cannot move course to a different program"
             )
         
-        course = course_service.update_course(db, course_id, course_data, current_user["id"])
+        course = course_service.update_course(db, course_id, course_data, current_user.id)
         return course
     except ValueError as e:
         raise HTTPException(
@@ -248,8 +248,8 @@ async def delete_course(
     Permanently removes the course from the system.
     Requires admin privileges and no associated curricula.
     """
-    # Check admin permissions
-    if current_user.get("role") != "super_admin":
+    # Check admin permissions - check if super_admin is in roles array
+    if "super_admin" not in current_user.roles:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only administrators can delete courses"
@@ -367,7 +367,7 @@ async def bulk_move_courses(
         result = course_service.bulk_move_courses(
             db,
             move_data,
-            current_user["id"]
+            current_user.id
         )
         
         return BulkActionResponse(
@@ -405,7 +405,7 @@ async def bulk_update_status(
         result = course_service.bulk_update_status(
             db,
             status_data,
-            current_user["id"]
+            current_user.id
         )
         
         return BulkActionResponse(
@@ -443,7 +443,7 @@ async def reorder_courses(
         result = course_service.reorder_courses(
             db,
             reorder_data,
-            current_user["id"]
+            current_user.id
         )
         
         return BulkActionResponse(

@@ -31,7 +31,7 @@ import {
 import Link from 'next/link';
 import { CurriculumCard } from './CurriculumCard';
 import { CurriculumSearchAndFilter } from './CurriculumSearchAndFilter';
-import { useCourses } from '../hooks/useCourses';
+import { useCourses } from '@/features/courses';
 import { useCurricula } from '../hooks/useCurricula';
 import { Curriculum, CurriculumSearchParams } from '../api/curriculaApiService';
 
@@ -128,11 +128,11 @@ export function CourseGroupedCurriculaList({
 
   // Initialize expanded state for all courses when courses load
   useEffect(() => {
-    if (coursesections.length > 0) {
-      const allCourseIds = new Set(coursesections.map(section => section.course_id));
+    if (courses.length > 0) {
+      const allCourseIds = new Set(courses.map(course => course.id));
       setExpandedCourses(allCourseIds);
     }
-  }, [coursesections]);
+  }, [courses]);
 
   const toggleCourseExpansion = (courseId: string) => {
     setExpandedCourses(prev => {

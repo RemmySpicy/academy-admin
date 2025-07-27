@@ -19,7 +19,7 @@ import type {
 
 // Course Types
 export interface PricingEntry {
-  age_range: string;
+  age_group: string;
   location_type: string;
   session_type: string;
   price: number;
@@ -36,7 +36,7 @@ export interface Course {
   duration_weeks?: number;
   sessions_per_payment: number;
   completion_deadline_weeks: number;
-  age_ranges: string[];
+  age_groups: string[];
   location_types: string[];
   session_types: string[];
   pricing_matrix: PricingEntry[];
@@ -285,7 +285,7 @@ export interface CourseSearchParams extends SearchParams {
   is_certification_course?: boolean;
   price_min?: number;
   price_max?: number;
-  age_ranges?: string[];
+  age_groups?: string[];
   location_types?: string[];
   session_types?: string[];
   tags?: string[];
@@ -341,7 +341,7 @@ export interface CourseCreate {
   duration_weeks?: number;
   sessions_per_payment: number;
   completion_deadline_weeks: number;
-  age_ranges: string[];
+  age_groups: string[];
   location_types: string[];
   session_types: string[];
   pricing_matrix: PricingEntry[];
@@ -365,7 +365,7 @@ export interface BulkCourseUpdate {
     instructor_id?: string;
     tags?: string[];
     is_featured?: boolean;
-    age_ranges?: string[];
+    age_groups?: string[];
     location_types?: string[];
     session_types?: string[];
   };

@@ -84,11 +84,11 @@ class Course(BaseModel):
         comment="Time limit to complete paid sessions",
     )
     
-    # Availability Configuration
-    age_ranges: Mapped[List[str]] = mapped_column(
+    # Availability Configuration (must match program configuration)
+    age_groups: Mapped[List[str]] = mapped_column(
         JSON,
         nullable=False,
-        comment="Available age ranges for this course",
+        comment="Available age groups for this course (must exist in program age_groups configuration)",
     )
     
     location_types: Mapped[List[str]] = mapped_column(
@@ -100,7 +100,7 @@ class Course(BaseModel):
     session_types: Mapped[List[str]] = mapped_column(
         JSON,
         nullable=False,
-        comment="Available session types (group, private)",
+        comment="Available session types (must exist in program session_types configuration)",
     )
     
     # Pricing Configuration
@@ -147,13 +147,13 @@ class Course(BaseModel):
         Integer,
         nullable=False,
         default=1,
-        comment="Course sequence order in program",
+        comment="Course sequence order in program (auto-assigned if not provided)",
     )
     
     difficulty_level: Mapped[Optional[str]] = mapped_column(
         String(20),
         nullable=True,
-        comment="Course difficulty level",
+        comment="Course difficulty level (must exist in program difficulty_levels configuration)",
     )
     
     is_featured: Mapped[bool] = mapped_column(

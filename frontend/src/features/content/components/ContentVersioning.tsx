@@ -14,7 +14,7 @@ import {
   GitBranch, 
   Eye, 
   RotateCcw, 
-  Compare, 
+  GitCompare, 
   Clock,
   User,
   FileText,
@@ -338,7 +338,7 @@ export function ContentVersioning({
                           onClick={() => handleCompareVersions(version, versions[index + 1])}
                           title="Compare with previous version"
                         >
-                          <Compare className="h-4 w-4" />
+                          <GitCompare className="h-4 w-4" />
                         </Button>
                       )}
                       

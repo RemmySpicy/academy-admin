@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
 import CourseForm from '@/features/courses/components/CourseForm';
 import { useCreateCourse } from '@/features/courses/hooks/useCourses';
 import type { CourseCreate } from '@/features/courses/api/courseApiService';
@@ -16,9 +17,11 @@ export default function NewCoursePage() {
   const handleSubmit = async (data: CourseCreate) => {
     try {
       await createCourse.mutateAsync(data);
+      toast.success('Course created successfully');
       router.push('/admin/courses');
-    } catch (error) {
-      // Error is handled by the hook's onError
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.detail || error?.message || 'Failed to create course';
+      toast.error(errorMessage);
     }
   };
 

@@ -9,6 +9,7 @@
 ### 🏗️ **Architecture & Design**
 - [`architecture/SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md) - High-level system architecture
 - [`architecture/PROGRAM_CONTEXT_ARCHITECTURE.md`](architecture/PROGRAM_CONTEXT_ARCHITECTURE.md) - Program-centric design principles
+- [`architecture/FEATURE_INTEGRATION_GUIDE.md`](architecture/FEATURE_INTEGRATION_GUIDE.md) - ✅ **Cross-Feature Integration Patterns & Dependencies**
 - [`architecture/BACKEND_FEATURE_ARCHITECTURE.md`](architecture/BACKEND_FEATURE_ARCHITECTURE.md) - 🆕 **Backend Feature Separation & Domain Architecture** (2025-07-27)
 - [`architecture/DATABASE_SCHEMA.md`](architecture/DATABASE_SCHEMA.md) - Database design and relationships
 - [`architecture/FRONTEND_LAYOUT_ARCHITECTURE.md`](architecture/FRONTEND_LAYOUT_ARCHITECTURE.md) - Frontend layout and UI architecture
@@ -21,11 +22,14 @@
 - [`api/API_ENDPOINTS.md`](api/API_ENDPOINTS.md) - Complete API endpoint documentation
 
 ### ⚙️ **Features**
+- [`features/programs/README.md`](features/programs/README.md) - ✅ **Program Configuration System** (Foundational Setup & Cross-Feature Integration)
 - [`features/courses/README.md`](features/courses/README.md) - Course management system
+- [`features/curriculum/README.md`](features/curriculum/README.md) - ✅ **Curriculum Management System** (Fully Implemented)
 - [`features/facilities/README.md`](features/facilities/README.md) - Facility management system
 - [`features/students/README.md`](features/students/README.md) - ✅ **Unified Students & Parents Management System** (Fully Implemented)
 - [`features/teams/README.md`](features/teams/README.md) - ✅ **Teams Management System** (Fully Implemented)
-- [`features/scheduling/README.md`](features/scheduling/README.md) - Scheduling system *(to be updated)*
+- [`features/scheduling/README.md`](features/scheduling/README.md) - ✅ **Scheduling System** (Fully Implemented)
+- [`features/organizations/README.md`](features/organizations/README.md) - ✅ **Organization Management System** (Fully Implemented)
 - [`features/authentication/README.md`](features/authentication/README.md) - Authentication & authorization system
 
 ## 🎯 **Quick Access by Role**

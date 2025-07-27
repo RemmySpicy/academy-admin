@@ -27,7 +27,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { CurriculumSearchParams } from '../api/curriculaApiService';
-import { useCourses } from '../hooks/useCourses';
+import { useCourses } from '@/features/courses';
 
 interface CurriculumSearchAndFilterProps {
   onSearch: (params: CurriculumSearchParams) => void;

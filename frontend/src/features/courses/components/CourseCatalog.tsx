@@ -165,8 +165,11 @@ export function CourseCatalog({
     try {
       await deleteCourse.mutateAsync(course.id);
       onDeleteCourse?.(course);
-    } catch (error) {
+      toast.success(`Course "${course.name}" deleted successfully`);
+    } catch (error: any) {
       console.error('Failed to delete course:', error);
+      const errorMessage = error?.response?.data?.detail || error?.message || 'Failed to delete course';
+      toast.error(errorMessage);
     }
   };
 
