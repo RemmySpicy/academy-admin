@@ -10,24 +10,26 @@ import { Plus, BookOpen, Users, Target, BarChart3, GraduationCap } from 'lucide-
 import Link from 'next/link';
 import { useCourses } from '@/lib/hooks/useCourses';
 import { CourseCard } from '@/components/courses/CourseCard';
-import { CourseGroupedCurriculaList } from '@/features/courses/components/CourseGroupedCurriculaList';
-import type { CurriculumSearchParams } from '@/features/courses/api/curriculaApiService';
-import { ContentCard } from '@/features/courses/components/ContentCard';
-import { ContentFilter } from '@/features/courses/components/ContentFilter';
-import { ContentTable } from '@/features/courses/components/ContentTable';
-import { ContentViewControls, ViewMode, BulkAction } from '@/features/courses/components/ContentViewControls';
-import { GlobalContentEditModal } from '@/features/courses/components/GlobalContentEditModal';
-import { ContentUsageDialog } from '@/features/courses/components/ContentUsageDialog';
-import { ContentCreateDialog } from '@/features/courses/components/ContentCreateDialog';
-import { MediaLibrary } from '@/features/courses/components/MediaLibrary';
-import { EquipmentManager } from '@/features/courses/components/EquipmentManager';
+import { CourseGroupedCurriculaList } from '@/features/curricula';
+import type { CurriculumSearchParams } from '@/features/curricula';
+import { 
+  ContentCard,
+  ContentFilter,
+  ContentTable,
+  ContentViewControls,
+  GlobalContentEditModal,
+  ContentUsageDialog,
+  ContentCreateDialog
+} from '@/features/content';
+import type { ViewMode, BulkAction } from '@/features/content';
+import { MediaLibrary } from '@/features/media';
+import { EquipmentManager } from '@/features/equipment';
 import { 
   useContent, 
   useContentMutations, 
-  useContentUsage,
-  ContentSearchParams 
-} from '@/features/courses/hooks/useContent';
-import { ContentCreateData } from '@/features/courses/api/contentApiService';
+  useContentUsage
+} from '@/features/content';
+import type { ContentSearchParams, ContentCreateData } from '@/features/content';
 import { SearchAndFilter } from '@/components/courses/SearchAndFilter';
 import { Pagination } from '@/components/courses/Pagination';
 import { SearchParams } from '@/lib/api/types';

@@ -179,6 +179,9 @@ export interface StudentFormData {
   date_of_birth: string;
   gender?: string;
   
+  // Parent selection for prefilling
+  selected_parent_id?: string;
+  
   // Program & enrollment
   program_id: string;
   course_id?: string;

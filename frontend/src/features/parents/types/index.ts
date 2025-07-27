@@ -57,11 +57,13 @@ export interface ParentFormData {
   username: string;
   email: string;
   password?: string; // Only for create mode
+  salutation?: string;
   first_name: string;
   last_name: string;
   full_name?: string; // Computed from first + last names
   phone?: string;
   date_of_birth?: string;
+  referral_source?: string;
   profile_photo_url?: string;
   
   // Emergency contact
@@ -272,6 +274,14 @@ export const PAYMENT_METHOD_OPTIONS = [
   { value: 'bank_transfer', label: 'Bank Transfer' },
   { value: 'paypal', label: 'PayPal' },
   { value: 'other', label: 'Other' },
+] as const;
+
+export const SALUTATION_OPTIONS = [
+  { value: 'Mr', label: 'Mr' },
+  { value: 'Mrs', label: 'Mrs' },
+  { value: 'Ms', label: 'Ms' },
+  { value: 'Dr', label: 'Dr' },
+  { value: 'Prof', label: 'Prof' }
 ] as const;
 
 export const RELATIONSHIP_OPTIONS = [

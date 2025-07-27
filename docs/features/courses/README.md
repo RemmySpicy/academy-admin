@@ -1,16 +1,28 @@
 # Course Management Feature
 
 ## Overview
-Comprehensive course management system with program-centric architecture supporting multi-level educational content organization.
+Core course management system with program-centric architecture. As of 2025-07-27, the course management has been refactored into a clean, focused feature following domain-driven design principles.
 
 ## Current Implementation Status ✅
 
 ### **Fully Implemented**
-- 7-level course hierarchy (Programs → Courses → Curricula → Modules → Lessons → Content → Assessments)
+- Clean course management (focused on course metadata and structure)
 - Program context filtering for all course operations
 - Role-based access control for course management
 - RESTful API with automatic program scoping
 - Frontend course management interface
+
+### **⚠️ Architecture Change (2025-07-27)**
+The course management system has been **comprehensively refactored** to follow clean architecture principles:
+
+- **Courses Feature**: Now focused solely on core course management
+- **Curricula Feature**: Separated curriculum hierarchy (curricula → levels → modules → sections)
+- **Content Feature**: Separated educational content (lessons, assessments, versioning)
+- **Equipment Feature**: Separated equipment requirements and management
+- **Media Feature**: Separated media library and resources
+- **Progression Feature**: Separated student progression tracking
+
+📖 **For complete architecture details, see**: [`docs/architecture/BACKEND_FEATURE_ARCHITECTURE.md`](../../architecture/BACKEND_FEATURE_ARCHITECTURE.md)
 
 ### **Architecture**
 

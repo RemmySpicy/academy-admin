@@ -5,7 +5,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { curriculaApiService } from '../api/curriculaApiService';
-import { COURSE_QUERY_KEYS } from './useCourses';
+import { COURSE_QUERY_KEYS } from '../../courses/hooks/useCourses';
 import type {
   Curriculum,
   CurriculumCreate,

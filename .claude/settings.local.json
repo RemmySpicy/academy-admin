@@ -62,7 +62,10 @@
       "Bash(/dev/null)",
       "Bash(./scripts/run-tests.sh:*)",
       "Bash(echo:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(claude --version)",
+      "Bash(true)"
     ],
     "deny": []
   }

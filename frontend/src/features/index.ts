@@ -10,17 +10,29 @@
 // Authentication Feature
 export * from './authentication';
 
-// Students Feature
+// Students & Parents Features
 export * from './students';
+export * from './parents';
 
-// Curriculum Feature - empty for now
-// export * from './curriculum';
+// Course Management Features
+export * from './courses';
+export * from './curricula';
+export * from './content';
+export * from './equipment';
+export * from './media';
 
-// Scheduling Feature - empty for now
-// export * from './scheduling';
+// Academy Management Features
+export * from './academy';
+export * from './teams';
+export * from './programs';
 
-// Facilities Feature - empty for now
-// export * from './facilities';
+// Operational Features
+export * from './scheduling';
+export * from './facilities';
+export * from './payments';
 
-// Common Feature - empty for now
-// export * from './common';
+// Organization Management
+export * from './organizations';
+
+// Common Features
+export * from './common';

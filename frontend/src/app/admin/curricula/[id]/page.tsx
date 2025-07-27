@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCurriculum } from '@/features/courses/hooks/useCurricula';
+import { useCurriculum } from '@/features/curricula';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { toast } from 'sonner';
 

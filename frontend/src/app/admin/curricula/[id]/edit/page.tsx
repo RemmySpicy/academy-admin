@@ -3,8 +3,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { CurriculumBuilder } from '@/features/courses/components/CurriculumBuilder';
-import { useCurriculum } from '@/features/courses/hooks/useCurricula';
+import { CurriculumBuilder, useCurriculum } from '@/features/curricula';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function EditCurriculumPage() {

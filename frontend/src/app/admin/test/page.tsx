@@ -6,9 +6,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { TestTube, GitCompare } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { CurriculumBuilder } from '@/features/courses/components/CurriculumBuilder';
-import { CurriculumBuilderReconstruct } from '@/features/courses/components/CurriculumBuilderReconstruct';
-import { CurriculumBuilder as CurriculumBuilderRestore } from '@/features/courses/components/CurriculumBuilderRestore';
+import { 
+  CurriculumBuilder,
+  CurriculumBuilderReconstruct,
+  CurriculumBuilderRestore
+} from '@/features/curricula';
 
 export default function TestPage() {
   const [activeTab, setActiveTab] = useState('original');

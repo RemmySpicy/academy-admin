@@ -5,10 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, BookOpen } from 'lucide-react';
 import Link from 'next/link';
-import { CurriculumSearchAndFilter } from '@/features/courses/components/CurriculumSearchAndFilter';
-import { CurriculumCard } from '@/features/courses/components/CurriculumCard';
-import { useCurricula } from '@/features/courses/hooks/useCurricula';
-import type { CurriculumSearchParams } from '@/features/courses/api/curriculaApiService';
+import { CurriculumSearchAndFilter, CurriculumCard, useCurricula } from '@/features/curricula';
+import type { CurriculumSearchParams } from '@/features/curricula';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { toast } from 'sonner';
 

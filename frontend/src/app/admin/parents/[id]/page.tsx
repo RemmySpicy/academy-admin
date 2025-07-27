@@ -392,7 +392,9 @@ export default function ParentDetailPage() {
               <CardContent className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-gray-600">Full Name</label>
-                  <p className="text-sm text-gray-900">{parent.full_name || parent.username}</p>
+                  <p className="text-sm text-gray-900">
+                    {parent.salutation ? `${parent.salutation} ` : ''}{parent.first_name} {parent.last_name}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-600">Username</label>
@@ -404,6 +406,12 @@ export default function ParentDetailPage() {
                     <p className="text-sm text-gray-900">
                       {new Date(parent.date_of_birth).toLocaleDateString()} {age && `(Age ${age})`}
                     </p>
+                  </div>
+                )}
+                {parent.referral_source && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">How they heard about us</label>
+                    <p className="text-sm text-gray-900">{parent.referral_source}</p>
                   </div>
                 )}
                 <div>

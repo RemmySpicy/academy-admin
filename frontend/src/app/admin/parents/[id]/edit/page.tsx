@@ -22,9 +22,11 @@ interface ParentEditFormData {
   basic_info: {
     first_name: string;
     last_name: string;
+    salutation?: string;
     email: string;
     phone?: string;
-    occupation?: string;
+    date_of_birth?: string;
+    referral_source?: string;
     emergency_contact_name?: string;
     emergency_contact_phone?: string;
     additional_notes?: string;
@@ -370,13 +372,31 @@ export default function EditParentPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  label="Salutation"
+                  type="select"
+                  value={formData.basic_info.salutation || ''}
+                  onChange={(value) => handleBasicInfoChange('salutation', value)}
+                  placeholder="Select salutation"
+                  options={[
+                    { value: 'Mr.', label: 'Mr.' },
+                    { value: 'Mrs.', label: 'Mrs.' },
+                    { value: 'Ms.', label: 'Ms.' },
+                    { value: 'Dr.', label: 'Dr.' },
+                    { value: 'Prof.', label: 'Prof.' },
+                    { value: 'Chief', label: 'Chief' },
+                    { value: 'Hon.', label: 'Hon.' }
+                  ]}
+                  note="Helps us know how to address the parent properly"
+                />
+                
                 <FormField
                   label="First Name"
                   type="text"
                   value={formData.basic_info.first_name}
                   onChange={(value) => handleBasicInfoChange('first_name', value)}
-                  placeholder="Enter parent's first name"
+                  placeholder="Enter first name"
                   required
                   error={errors.first_name}
                 />
@@ -386,11 +406,13 @@ export default function EditParentPage() {
                   type="text"
                   value={formData.basic_info.last_name}
                   onChange={(value) => handleBasicInfoChange('last_name', value)}
-                  placeholder="Enter parent's last name"
+                  placeholder="Enter last name"
                   required
                   error={errors.last_name}
                 />
-                
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   label="Email"
                   type="email"
@@ -411,11 +433,20 @@ export default function EditParentPage() {
                 />
                 
                 <FormField
-                  label="Occupation"
+                  label="Date of Birth"
+                  type="date"
+                  value={formData.basic_info.date_of_birth || ''}
+                  onChange={(value) => handleBasicInfoChange('date_of_birth', value)}
+                  placeholder="Select date of birth"
+                />
+                
+                <FormField
+                  label="How did you hear about us?"
                   type="text"
-                  value={formData.basic_info.occupation || ''}
-                  onChange={(value) => handleBasicInfoChange('occupation', value)}
-                  placeholder="Parent's occupation"
+                  value={formData.basic_info.referral_source || ''}
+                  onChange={(value) => handleBasicInfoChange('referral_source', value)}
+                  placeholder="e.g., Friend referral, Social media, Website"
+                  note="Phone number or email of referrer"
                 />
               </div>
               

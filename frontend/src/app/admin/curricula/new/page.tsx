@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CurriculumBuilder } from '@/features/courses/components/CurriculumBuilder';
+import { CurriculumBuilder } from '@/features/curricula';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function NewCurriculumPage() {

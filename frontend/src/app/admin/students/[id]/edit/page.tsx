@@ -22,9 +22,11 @@ interface StudentEditFormData {
   basic_info: {
     first_name: string;
     last_name: string;
+    salutation?: string;
     email?: string;
     phone?: string;
     date_of_birth?: string;
+    referral_source?: string;
     emergency_contact_name?: string;
     emergency_contact_phone?: string;
     medical_notes?: string;
@@ -335,13 +337,28 @@ export default function EditStudentPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  label="Salutation"
+                  type="select"
+                  value={formData.basic_info.salutation || ''}
+                  onChange={(value) => handleBasicInfoChange('salutation', value)}
+                  placeholder="Select salutation"
+                  options={[
+                    { value: 'Master', label: 'Master' },
+                    { value: 'Miss', label: 'Miss' },
+                    { value: 'Mr.', label: 'Mr.' },
+                    { value: 'Ms.', label: 'Ms.' }
+                  ]}
+                  note="Appropriate title for the student"
+                />
+                
                 <FormField
                   label="First Name"
                   type="text"
                   value={formData.basic_info.first_name}
                   onChange={(value) => handleBasicInfoChange('first_name', value)}
-                  placeholder="Enter student's first name"
+                  placeholder="Enter first name"
                   required
                   error={errors.first_name}
                 />
@@ -351,16 +368,27 @@ export default function EditStudentPage() {
                   type="text"
                   value={formData.basic_info.last_name}
                   onChange={(value) => handleBasicInfoChange('last_name', value)}
-                  placeholder="Enter student's last name"
+                  placeholder="Enter last name"
                   required
                   error={errors.last_name}
                 />
-                
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   label="Date of Birth"
                   type="date"
                   value={formData.basic_info.date_of_birth || ''}
                   onChange={(value) => handleBasicInfoChange('date_of_birth', value)}
+                />
+                
+                <FormField
+                  label="How did you hear about us?"
+                  type="text"
+                  value={formData.basic_info.referral_source || ''}
+                  onChange={(value) => handleBasicInfoChange('referral_source', value)}
+                  placeholder="e.g., Parent referral, Friend, Website"
+                  note="Referral source"
                 />
                 
                 <FormField

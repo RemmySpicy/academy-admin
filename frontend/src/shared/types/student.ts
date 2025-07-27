@@ -14,6 +14,7 @@ export interface Student extends AuditFields {
   student_id: string; // Generated ID like STU-2025-0001
   first_name: string;
   last_name: string;
+  full_name: string;
   email: string;
   phone?: string;
   date_of_birth: string;
