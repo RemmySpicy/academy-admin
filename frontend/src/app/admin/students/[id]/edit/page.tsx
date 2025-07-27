@@ -20,7 +20,8 @@ import { useStudent } from '@/features/students/hooks';
 // Types
 interface StudentEditFormData {
   basic_info: {
-    full_name: string;
+    first_name: string;
+    last_name: string;
     email?: string;
     phone?: string;
     date_of_birth?: string;
@@ -51,7 +52,8 @@ export default function EditStudentPage() {
   const [activeTab, setActiveTab] = useState('basic');
   const [formData, setFormData] = useState<StudentEditFormData>({
     basic_info: {
-      full_name: '',
+      first_name: '',
+      last_name: '',
       email: '',
       phone: '',
       date_of_birth: '',
@@ -82,7 +84,8 @@ export default function EditStudentPage() {
     if (student) {
       setFormData({
         basic_info: {
-          full_name: student.full_name || '',
+          first_name: student.first_name || '',
+          last_name: student.last_name || '',
           email: student.email || '',
           phone: student.phone || '',
           date_of_birth: student.date_of_birth || '',
@@ -188,8 +191,11 @@ export default function EditStudentPage() {
     const newErrors: Record<string, string> = {};
 
     // Basic info validation
-    if (!formData.basic_info.full_name.trim()) {
-      newErrors.full_name = 'Full name is required';
+    if (!formData.basic_info.first_name.trim()) {
+      newErrors.first_name = 'First name is required';
+    }
+    if (!formData.basic_info.last_name.trim()) {
+      newErrors.last_name = 'Last name is required';
     }
 
     // Account settings validation
@@ -331,13 +337,23 @@ export default function EditStudentPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
-                  label="Full Name"
+                  label="First Name"
                   type="text"
-                  value={formData.basic_info.full_name}
-                  onChange={(value) => handleBasicInfoChange('full_name', value)}
-                  placeholder="Enter student's full name"
+                  value={formData.basic_info.first_name}
+                  onChange={(value) => handleBasicInfoChange('first_name', value)}
+                  placeholder="Enter student's first name"
                   required
-                  error={errors.full_name}
+                  error={errors.first_name}
+                />
+                
+                <FormField
+                  label="Last Name"
+                  type="text"
+                  value={formData.basic_info.last_name}
+                  onChange={(value) => handleBasicInfoChange('last_name', value)}
+                  placeholder="Enter student's last name"
+                  required
+                  error={errors.last_name}
                 />
                 
                 <FormField

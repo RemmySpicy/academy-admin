@@ -298,7 +298,8 @@ export interface EnhancedUser {
   id: string;
   username: string;
   email: string;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   phone?: string;
   date_of_birth?: string;
   profile_photo_url?: string;
@@ -325,7 +326,8 @@ export interface StudentParentCreate {
   parent_username: string;
   parent_email: string;
   parent_password: string;
-  parent_full_name: string;
+  parent_first_name: string;
+  parent_last_name: string;
   parent_phone?: string;
   parent_date_of_birth?: string;
   
@@ -333,7 +335,8 @@ export interface StudentParentCreate {
   child_username: string;
   child_email: string;
   child_password: string;
-  child_full_name: string;
+  child_first_name: string;
+  child_last_name: string;
   child_phone?: string;
   child_date_of_birth?: string;
   

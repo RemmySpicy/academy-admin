@@ -45,12 +45,16 @@ export default function UsersPage() {
     loadUsers();
   }, []);
 
+  // Helper function to get full name
+  const getFullName = (user: User) => `${user.first_name} ${user.last_name}`.trim();
+
   // Filter users based on search term
-  const filteredUsers = users.filter(user =>
-    user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter(user => {
+    const fullName = getFullName(user);
+    return fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           user.email.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   const handleDeleteUser = async (userId: string) => {
     if (!confirm('Are you sure you want to delete this user?')) {
@@ -165,12 +169,12 @@ export default function UsersPage() {
                           <div className="flex items-center">
                             <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
                               <span className="text-sm font-medium text-blue-600">
-                                {user.full_name.split(' ')[0][0]}{user.full_name.split(' ')[1]?.[0] || ''}
+                                {user.first_name[0]}{user.last_name[0] || ''}
                               </span>
                             </div>
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900">
-                                {user.full_name}
+                                {getFullName(user)}
                               </div>
                               <div className="text-sm text-gray-500">
                                 {user.username} • {user.email}

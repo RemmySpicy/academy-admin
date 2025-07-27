@@ -798,7 +798,7 @@ export default function StudentsParentsPage() {
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
                               <span className="text-sm font-medium text-purple-600">
-                                {parent.full_name ? parent.full_name.split(' ').map(n => n[0]).join('') : parent.username[0]}
+                                {parent.first_name ? `${parent.first_name[0]}${parent.last_name?.[0] || ''}` : parent.username[0]}
                               </span>
                             </div>
                             <div>
@@ -806,7 +806,7 @@ export default function StudentsParentsPage() {
                                 href={`/admin/parents/${parent.id}`}
                                 className="font-medium text-purple-600 hover:text-purple-800"
                               >
-                                {parent.full_name || parent.username}
+                                {parent.first_name ? `${parent.first_name} ${parent.last_name}` : parent.username}
                               </Link>
                               <div className="text-sm text-gray-500 flex items-center">
                                 <Mail className="h-3 w-3 mr-1" />

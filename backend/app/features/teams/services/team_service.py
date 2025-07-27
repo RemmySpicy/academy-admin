@@ -50,7 +50,7 @@ class TeamService:
                 search_term = f"%{search_params.search}%"
                 query = query.filter(
                     or_(
-                        User.full_name.ilike(search_term),
+                        func.concat(User.first_name, ' ', User.last_name).ilike(search_term),
                         User.username.ilike(search_term),
                         User.email.ilike(search_term)
                     )
@@ -64,14 +64,17 @@ class TeamService:
             
             # Apply sorting
             if search_params.sort_by and search_params.sort_order:
-                sort_field = getattr(User, search_params.sort_by, User.full_name)
+                if search_params.sort_by == 'full_name':
+                    sort_field = func.concat(User.first_name, ' ', User.last_name)
+                else:
+                    sort_field = getattr(User, search_params.sort_by, func.concat(User.first_name, ' ', User.last_name))
                 if search_params.sort_order.lower() == "desc":
                     query = query.order_by(desc(sort_field))
                 else:
                     query = query.order_by(asc(sort_field))
         else:
             # Default sorting
-            query = query.order_by(User.full_name)
+            query = query.order_by(func.concat(User.first_name, ' ', User.last_name))
         
         # Get total count
         total_count = query.count()
@@ -87,7 +90,8 @@ class TeamService:
                 id=str(user.id),
                 username=user.username,
                 email=user.email,
-                full_name=user.full_name,
+                first_name=user.first_name,
+                last_name=user.last_name,
                 roles=user.roles,
                 primary_role=user.primary_role,
                 is_active=user.is_active,
@@ -328,14 +332,14 @@ class TeamService:
             search_term = f"%{search}%"
             query = query.filter(
                 or_(
-                    User.full_name.ilike(search_term),
+                    func.concat(User.first_name, ' ', User.last_name).ilike(search_term),
                     User.username.ilike(search_term),
                     User.email.ilike(search_term)
                 )
             )
         
         # Order by name
-        query = query.order_by(User.full_name)
+        query = query.order_by(func.concat(User.first_name, ' ', User.last_name))
         
         # Get total count
         total_count = query.count()
@@ -356,7 +360,8 @@ class TeamService:
                 id=str(user.id),
                 username=user.username,
                 email=user.email,
-                full_name=user.full_name,
+                first_name=user.first_name,
+                last_name=user.last_name,
                 roles=user.roles,
                 primary_role=user.primary_role,
                 is_active=user.is_active,
@@ -408,7 +413,8 @@ class TeamService:
                 id=str(user.id),
                 username=user.username,
                 email=user.email,
-                full_name=user.full_name,
+                first_name=user.first_name,
+                last_name=user.last_name,
                 roles=user.roles,
                 primary_role=user.primary_role,
                 is_active=user.is_active,

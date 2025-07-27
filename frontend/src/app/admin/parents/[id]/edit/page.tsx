@@ -20,7 +20,8 @@ import { useParent } from '@/features/parents/hooks/useParents';
 // Types
 interface ParentEditFormData {
   basic_info: {
-    full_name: string;
+    first_name: string;
+    last_name: string;
     email: string;
     phone?: string;
     occupation?: string;
@@ -57,7 +58,8 @@ export default function EditParentPage() {
   const [activeTab, setActiveTab] = useState('basic');
   const [formData, setFormData] = useState<ParentEditFormData>({
     basic_info: {
-      full_name: '',
+      first_name: '',
+      last_name: '',
       email: '',
       phone: '',
       occupation: '',
@@ -84,7 +86,7 @@ export default function EditParentPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   usePageTitle(
-    parent ? `Edit ${parent.full_name}` : 'Edit Parent',
+    parent ? `Edit ${parent.first_name} ${parent.last_name}` : 'Edit Parent',
     'Update parent information and relationships'
   );
 
@@ -93,7 +95,8 @@ export default function EditParentPage() {
     if (parent) {
       setFormData({
         basic_info: {
-          full_name: parent.full_name || '',
+          first_name: parent.first_name || '',
+          last_name: parent.last_name || '',
           email: parent.email || '',
           phone: parent.phone || '',
           occupation: parent.occupation || '',
@@ -214,8 +217,11 @@ export default function EditParentPage() {
     const newErrors: Record<string, string> = {};
 
     // Basic info validation
-    if (!formData.basic_info.full_name.trim()) {
-      newErrors.full_name = 'Full name is required';
+    if (!formData.basic_info.first_name.trim()) {
+      newErrors.first_name = 'First name is required';
+    }
+    if (!formData.basic_info.last_name.trim()) {
+      newErrors.last_name = 'Last name is required';
     }
 
     if (!formData.basic_info.email.trim()) {
@@ -303,7 +309,7 @@ export default function EditParentPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Edit {parent.full_name}
+              Edit {parent.first_name} {parent.last_name}
             </h1>
             <p className="text-gray-600">Update parent information and relationships</p>
           </div>
@@ -366,13 +372,23 @@ export default function EditParentPage() {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
-                  label="Full Name"
+                  label="First Name"
                   type="text"
-                  value={formData.basic_info.full_name}
-                  onChange={(value) => handleBasicInfoChange('full_name', value)}
-                  placeholder="Enter parent's full name"
+                  value={formData.basic_info.first_name}
+                  onChange={(value) => handleBasicInfoChange('first_name', value)}
+                  placeholder="Enter parent's first name"
                   required
-                  error={errors.full_name}
+                  error={errors.first_name}
+                />
+                
+                <FormField
+                  label="Last Name"
+                  type="text"
+                  value={formData.basic_info.last_name}
+                  onChange={(value) => handleBasicInfoChange('last_name', value)}
+                  placeholder="Enter parent's last name"
+                  required
+                  error={errors.last_name}
                 />
                 
                 <FormField
@@ -662,7 +678,7 @@ export default function EditParentPage() {
                     <div className="space-y-1">
                       {formData.relationships.map((rel, index) => (
                         <div key={index} className="flex items-center justify-between text-sm">
-                          <span>{rel.child?.full_name}</span>
+                          <span>{rel.child?.first_name} {rel.child?.last_name}</span>
                           <Badge variant="outline" className="text-xs">
                             {rel.relationship_type}
                           </Badge>

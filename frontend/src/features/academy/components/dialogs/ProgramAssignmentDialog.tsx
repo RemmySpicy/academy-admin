@@ -210,7 +210,7 @@ export function ProgramAssignmentDialog({
             <span>Manage Program Assignments</span>
           </DialogTitle>
           <DialogDescription>
-            Manage program assignments for {user.full_name} (@{user.username})
+            Manage program assignments for {user.first_name} {user.last_name} (@{user.username})
           </DialogDescription>
         </DialogHeader>
 

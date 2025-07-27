@@ -236,11 +236,11 @@ export function TeamManagement() {
                       <div className="flex items-center space-x-4">
                         <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
                           <span className="text-sm font-medium text-blue-600">
-                            {member.full_name.split(' ')[0][0]}{member.full_name.split(' ')[1]?.[0] || ''}
+                            {member.first_name[0]}{member.last_name?.[0] || ''}
                           </span>
                         </div>
                         <div>
-                          <h3 className="font-medium text-gray-900">{member.full_name}</h3>
+                          <h3 className="font-medium text-gray-900">{member.first_name} {member.last_name}</h3>
                           <div className="flex items-center space-x-4 text-sm text-gray-500">
                             <div className="flex items-center space-x-1">
                               <Mail className="h-3 w-3" />

@@ -25,7 +25,8 @@ export default function EditUserPage({ params }: EditUserPageProps) {
   const [formData, setFormData] = useState<UserUpdate>({
     username: '',
     email: '',
-    full_name: '',
+    first_name: '',
+    last_name: '',
     role: 'user',
     is_active: true,
   });
@@ -41,7 +42,8 @@ export default function EditUserPage({ params }: EditUserPageProps) {
           setFormData({
             username: response.data.username,
             email: response.data.email,
-            full_name: response.data.full_name,
+            first_name: response.data.first_name,
+            last_name: response.data.last_name,
             role: response.data.role,
             is_active: response.data.is_active,
           });
@@ -151,16 +153,31 @@ export default function EditUserPage({ params }: EditUserPageProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name *
+                    First Name *
                   </label>
                   <input
                     type="text"
-                    name="full_name"
-                    value={formData.full_name}
+                    name="first_name"
+                    value={formData.first_name}
                     onChange={handleInputChange}
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter full name"
+                    placeholder="Enter first name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Last Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="last_name"
+                    value={formData.last_name}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter last name"
                   />
                 </div>
 

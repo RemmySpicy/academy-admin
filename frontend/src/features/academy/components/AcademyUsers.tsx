@@ -437,11 +437,11 @@ export function AcademyUsers() {
                         <div className="flex items-center space-x-3">
                           <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                             <span className="text-sm font-medium text-blue-600">
-                              {user.full_name.split(' ').map(n => n[0]).join('')}
+                              {user.first_name[0]}{user.last_name?.[0] || ''}
                             </span>
                           </div>
                           <div>
-                            <div className="font-medium">{user.full_name}</div>
+                            <div className="font-medium">{user.first_name} {user.last_name}</div>
                             <div className="text-sm text-gray-500">@{user.username}</div>
                           </div>
                         </div>

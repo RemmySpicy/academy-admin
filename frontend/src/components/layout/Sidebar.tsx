@@ -288,13 +288,13 @@ export function Sidebar({ className }: SidebarProps) {
           <div className="flex items-center">
             <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center">
               <span className="text-sm font-medium text-blue-600">
-                {user.full_name.split(' ')[0][0]}{user.full_name.split(' ')[1]?.[0] || ''}
+                {user.first_name[0]}{user.last_name[0] || ''}
               </span>
             </div>
             {!isCollapsed && (
               <div className="ml-3 flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
-                  {user.full_name}
+                  {user.first_name} {user.last_name}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
                   {user.role === 'super_admin' ? 'Super Admin' : 

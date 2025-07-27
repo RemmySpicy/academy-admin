@@ -123,7 +123,8 @@ export interface ParentFormData {
 export interface ParentUpdateFormData {
   username?: string;
   email?: string;
-  full_name?: string;
+  first_name?: string;
+  last_name?: string;
   phone?: string;
   date_of_birth?: string;
   profile_photo_url?: string;
@@ -152,7 +153,7 @@ export interface ParentSearchFilters {
   has_children?: boolean;
   program_id?: string;
   relationship_type?: RelationshipType;
-  sort_by?: 'full_name' | 'email' | 'created_at' | 'children_count';
+  sort_by?: 'first_name' | 'last_name' | 'email' | 'created_at' | 'children_count';
   sort_order?: 'asc' | 'desc';
 }
 

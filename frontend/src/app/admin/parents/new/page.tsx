@@ -17,7 +17,8 @@ import { useProgramContext } from '@/hooks/useProgramContext';
 
 // Types
 interface ParentData {
-  full_name: string;
+  first_name: string;
+  last_name: string;
   email: string;
   phone?: string;
   password?: string;
@@ -73,7 +74,8 @@ export default function NewParentPage() {
   // Form data
   const [formData, setFormData] = useState<CreateParentFormData>({
     parent: {
-      full_name: '',
+      first_name: '',
+      last_name: '',
       email: '',
       phone: '',
       password: '',
@@ -232,8 +234,11 @@ export default function NewParentPage() {
     const newErrors: Record<string, string> = {};
 
     // Parent validation
-    if (!formData.parent.full_name.trim()) {
-      newErrors.full_name = 'Full name is required';
+    if (!formData.parent.first_name.trim()) {
+      newErrors.first_name = 'First name is required';
+    }
+    if (!formData.parent.last_name.trim()) {
+      newErrors.last_name = 'Last name is required';
     }
 
     if (!formData.parent.email.trim()) {
@@ -484,7 +489,7 @@ export default function NewParentPage() {
                 <Card key={relationship.child_id} className="border-l-4 border-l-blue-500">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <h5 className="font-medium">{relationship.child.full_name}</h5>
+                      <h5 className="font-medium">{relationship.child.first_name} {relationship.child.last_name}</h5>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -568,13 +573,23 @@ export default function NewParentPage() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
-              label="Full Name"
+              label="First Name"
               type="text"
-              value={formData.parent.full_name}
-              onChange={(value) => handleParentDataChange('full_name', value)}
-              placeholder="Enter parent's full name"
+              value={formData.parent.first_name}
+              onChange={(value) => handleParentDataChange('first_name', value)}
+              placeholder="Enter parent's first name"
               required
-              error={errors.full_name}
+              error={errors.first_name}
+            />
+            
+            <FormField
+              label="Last Name"
+              type="text"
+              value={formData.parent.last_name}
+              onChange={(value) => handleParentDataChange('last_name', value)}
+              placeholder="Enter parent's last name"
+              required
+              error={errors.last_name}
             />
             
             <FormField
