@@ -8,10 +8,10 @@ from sqlalchemy import func, and_, or_, desc, asc
 
 from app.features.programs.models.program import Program
 from app.features.courses.models.course import Course
-from app.features.courses.models.curriculum import Curriculum
-from app.features.courses.models.level import Level
-from app.features.courses.models.module import Module
-from app.features.courses.models.lesson import Lesson
+from app.features.curricula.models.curriculum import Curriculum
+from app.features.curricula.models.level import Level
+from app.features.curricula.models.module import Module
+from app.features.content.models.lesson import Lesson
 from app.features.courses.schemas.course import (
     CourseCreate,
     CourseUpdate,

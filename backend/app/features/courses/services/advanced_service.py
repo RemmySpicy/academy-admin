@@ -11,10 +11,11 @@ import time
 from collections import defaultdict
 
 from app.features.programs.models.program import Program
-from app.features.courses.models import (
-    Course, Curriculum, Level, Module, Section, Lesson,
-    AssessmentRubric, EquipmentRequirement, MediaLibrary, ContentVersion
-)
+from app.features.courses.models import Course
+from app.features.curricula.models import Curriculum, Level, Module, Section
+from app.features.content.models import Lesson, AssessmentRubric, ContentVersion
+from app.features.equipment.models import EquipmentRequirement
+from app.features.media.models import MediaLibrary
 from app.features.courses.schemas.advanced import (
     FullCurriculumTreeResponse, TreeNode, CurriculumSearchRequest,
     CurriculumSearchResponse, SearchResult, SearchFacet, BulkCurriculumOperationRequest,

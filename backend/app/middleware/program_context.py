@@ -13,6 +13,7 @@ from fastapi import HTTPException, Request, Depends, status
 from sqlalchemy.orm import Session
 
 from app.features.common.models.database import get_db
+from app.features.authentication.models.user import User
 from app.features.authentication.models.user_program_assignment import UserProgramAssignment
 from app.features.programs.models.program import Program
 
@@ -66,7 +67,7 @@ def get_bypass_program_filter(request: Request) -> bool:
 
 async def validate_program_access(
     program_id: str,
-    current_user: dict,
+    current_user: User,
     db: Session = Depends(get_db)
 ) -> bool:
     """
@@ -81,12 +82,12 @@ async def validate_program_access(
         True if user has access, False otherwise
     """
     # Super admin has access to all programs
-    if current_user.get("role") == "super_admin":
+    if current_user.primary_role == "super_admin":
         return True
     
     # Check if user has program assignment
     assignment = db.query(UserProgramAssignment).filter(
-        UserProgramAssignment.user_id == current_user["id"],
+        UserProgramAssignment.user_id == current_user.id,
         UserProgramAssignment.program_id == program_id
     ).first()
     
@@ -94,7 +95,7 @@ async def validate_program_access(
 
 
 async def get_user_accessible_programs(
-    current_user: dict,
+    current_user: User,
     db: Session = Depends(get_db)
 ) -> List[str]:
     """
@@ -108,13 +109,13 @@ async def get_user_accessible_programs(
         List of program IDs the user can access
     """
     # Super admin has access to all programs
-    if current_user.get("role") == "super_admin":
+    if current_user.primary_role == "super_admin":
         programs = db.query(Program.id).all()
         return [p.id for p in programs]
     
     # Get user's program assignments
     assignments = db.query(UserProgramAssignment.program_id).filter(
-        UserProgramAssignment.user_id == current_user["id"]
+        UserProgramAssignment.user_id == current_user.id
     ).all()
     
     return [assignment.program_id for assignment in assignments]
@@ -123,7 +124,7 @@ async def get_user_accessible_programs(
 def require_program_context(
     program_context: Optional[str] = Depends(get_program_context),
     bypass_filter: bool = Depends(get_bypass_program_filter),
-    current_user: dict = None  # Will be injected by auth dependency
+    current_user: User = None  # Will be injected by auth dependency
 ) -> str:
     """
     Dependency that requires a valid program context.
@@ -140,7 +141,7 @@ def require_program_context(
         HTTPException: If program context is missing or invalid
     """
     # Super admin can bypass program context requirement
-    if bypass_filter and current_user and current_user.get("role") == "super_admin":
+    if bypass_filter and current_user and current_user.primary_role == "super_admin":
         return None  # No program context required
     
     if not program_context:
@@ -154,7 +155,7 @@ def require_program_context(
 
 async def validate_program_context_access(
     program_context: str = Depends(require_program_context),
-    current_user: dict = None,  # Will be injected by auth dependency
+    current_user: User = None,  # Will be injected by auth dependency
     db: Session = Depends(get_db)
 ) -> str:
     """
@@ -221,7 +222,7 @@ def create_program_filter_dependency(current_user_dependency):
     async def program_filter_dependency(
         program_context: Optional[str] = Depends(get_program_context),
         bypass_filter: bool = Depends(get_bypass_program_filter),
-        current_user: dict = Depends(current_user_dependency),
+        current_user: User = Depends(current_user_dependency),
         db: Session = Depends(get_db)
     ) -> Optional[str]:
         """
@@ -231,7 +232,7 @@ def create_program_filter_dependency(current_user_dependency):
             Program ID to filter by, or None if bypassed
         """
         # Super admin can bypass if header is set
-        if bypass_filter and current_user.get("role") == "super_admin":
+        if bypass_filter and current_user.primary_role == "super_admin":
             return None
         
         # Require program context for non-super-admin users

@@ -10,11 +10,11 @@ sys.path.append('/app')
 from app.features.common.models.database import get_db
 from app.features.programs.models.program import Program
 from app.features.courses.models.course import Course
-from app.features.courses.models.curriculum import Curriculum
-from app.features.courses.models.level import Level
-from app.features.courses.models.module import Module
-from app.features.courses.models.section import Section
-from app.features.courses.models.lesson import Lesson
+from app.features.curricula.models.curriculum import Curriculum
+from app.features.curricula.models.level import Level
+from app.features.curricula.models.module import Module
+from app.features.curricula.models.section import Section
+from app.features.content.models.lesson import Lesson
 from app.features.common.models.enums import DifficultyLevel, CurriculumStatus
 from sqlalchemy.orm import Session
 

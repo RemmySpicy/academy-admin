@@ -17,20 +17,20 @@ from app.features.authentication.models.user_program_assignment import UserProgr
 # Import program models  
 from app.features.programs.models.program import Program
 
-# Import curriculum models
+# Import separated models
 from app.features.courses.models.course import Course
-from app.features.courses.models.curriculum import Curriculum
-from app.features.courses.models.level import Level
-from app.features.courses.models.module import Module
-from app.features.courses.models.section import Section
-from app.features.courses.models.lesson import Lesson
-from app.features.courses.models.assessment import AssessmentRubric, AssessmentCriteria
-from app.features.courses.models.equipment import EquipmentRequirement
-from app.features.courses.models.media import MediaLibrary
-from app.features.courses.models.content_version import ContentVersion
+from app.features.curricula.models.curriculum import Curriculum
+from app.features.curricula.models.level import Level
+from app.features.curricula.models.module import Module
+from app.features.curricula.models.section import Section
+from app.features.content.models.lesson import Lesson
+from app.features.content.models.assessment import AssessmentRubric, AssessmentCriteria
+from app.features.equipment.models.equipment import EquipmentRequirement
+from app.features.media.models.media import MediaLibrary
+from app.features.content.models.content_version import ContentVersion
 
 # Import progression system models
-from app.features.courses.models.progression import (
+from app.features.progression.models.progression import (
     CurriculumProgressionSettings,
     LevelAssessmentCriteria, 
     StudentLessonProgress,

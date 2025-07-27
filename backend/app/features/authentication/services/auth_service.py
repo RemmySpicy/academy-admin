@@ -3,7 +3,7 @@ Authentication service for handling JWT tokens and password operations.
 """
 
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, List
 
 import jwt
 from passlib.context import CryptContext
@@ -71,172 +71,104 @@ class AuthService:
             (User.username == username) | (User.email == username)
         ).first()
     
+    def get_user_by_email(self, db: Session, email: str) -> Optional[User]:
+        """Get user by email."""
+        return db.query(User).filter(User.email == email).first()
+    
     def get_user_by_id(self, db: Session, user_id: str) -> Optional[User]:
         """Get user by ID."""
         return db.query(User).filter(User.id == user_id).first()
     
-    def create_user(self, user_data: dict) -> dict:
+    def create_user(self, db: Session, user_data: dict) -> User:
         """Create a new user."""
-        conn = sqlite3.connect("academy_admin.db")
-        cursor = conn.cursor()
-        
-        # Generate UUID for user ID
-        import uuid
-        user_id = str(uuid.uuid4())
-        
         # Hash password
         password_hash = self.get_password_hash(user_data["password"])
         
-        # Insert user
-        cursor.execute('''
-            INSERT INTO users (
-                id, username, email, password_hash, full_name, role, is_active
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            user_id,
-            user_data["username"],
-            user_data["email"],
-            password_hash,
-            user_data["full_name"],
-            user_data.get("role", "user"),
-            user_data.get("is_active", True)
-        ))
+        # Create user instance
+        db_user = User(
+            username=user_data["username"],
+            email=user_data["email"],
+            password_hash=password_hash,
+            first_name=user_data["first_name"],
+            last_name=user_data["last_name"],
+            salutation=user_data.get("salutation"),
+            phone=user_data.get("phone"),
+            date_of_birth=user_data.get("date_of_birth"),
+            referral_source=user_data.get("referral_source"),
+            roles=user_data.get("roles", ["program_admin"]),
+            primary_role=user_data.get("role", "program_admin"),
+            is_active=user_data.get("is_active", True),
+        )
         
-        conn.commit()
-        conn.close()
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
         
-        # Return created user (without password)
-        return self.get_user_by_id(user_id)
+        return db_user
     
-    def update_user(self, user_id: str, user_data: dict) -> Optional[dict]:
+    def update_user(self, db: Session, user_id: str, user_data: dict) -> Optional[User]:
         """Update user information."""
-        conn = sqlite3.connect("academy_admin.db")
-        cursor = conn.cursor()
+        db_user = self.get_user_by_id(db, user_id)
+        if not db_user:
+            return None
         
-        # Build update query dynamically
-        update_fields = []
-        values = []
+        # Update fields that exist in the user_data
+        for field, value in user_data.items():
+            if hasattr(db_user, field):
+                setattr(db_user, field, value)
         
-        for field in ["username", "email", "full_name", "role", "is_active"]:
-            if field in user_data:
-                update_fields.append(f"{field} = ?")
-                values.append(user_data[field])
+        db.commit()
+        db.refresh(db_user)
         
-        if not update_fields:
-            return self.get_user_by_id(user_id)
-        
-        # Add updated_at timestamp
-        update_fields.append("updated_at = CURRENT_TIMESTAMP")
-        values.append(user_id)
-        
-        query = f"UPDATE users SET {', '.join(update_fields)} WHERE id = ?"
-        cursor.execute(query, values)
-        
-        conn.commit()
-        conn.close()
-        
-        return self.get_user_by_id(user_id)
+        return db_user
     
-    def change_password(self, user_id: str, current_password: str, new_password: str) -> bool:
+    def change_password(self, db: Session, user_id: str, current_password: str, new_password: str) -> bool:
         """Change user password."""
-        user = self.get_user_by_id(user_id)
+        user = self.get_user_by_id(db, user_id)
         if not user:
             return False
         
         # Verify current password
-        if not self.verify_password(current_password, user["password_hash"]):
+        if not self.verify_password(current_password, user.password_hash):
             return False
         
         # Update password
-        conn = sqlite3.connect("academy_admin.db")
-        cursor = conn.cursor()
-        
         new_password_hash = self.get_password_hash(new_password)
-        cursor.execute(
-            "UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-            (new_password_hash, user_id)
-        )
+        user.password_hash = new_password_hash
         
-        conn.commit()
-        conn.close()
-        
+        db.commit()
         return True
     
-    def update_last_login(self, user_id: str) -> None:
+    def update_last_login(self, db: Session, user_id: str) -> None:
         """Update user's last login timestamp."""
-        conn = sqlite3.connect("academy_admin.db")
-        cursor = conn.cursor()
-        
-        cursor.execute(
-            "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?",
-            (user_id,)
-        )
-        
-        conn.commit()
-        conn.close()
+        user = self.get_user_by_id(db, user_id)
+        if user:
+            user.last_login = datetime.utcnow()
+            db.commit()
     
-    def deactivate_user(self, user_id: str) -> bool:
+    def deactivate_user(self, db: Session, user_id: str) -> bool:
         """Deactivate a user account."""
-        conn = sqlite3.connect("academy_admin.db")
-        cursor = conn.cursor()
-        
-        cursor.execute(
-            "UPDATE users SET is_active = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-            (user_id,)
-        )
-        
-        affected_rows = cursor.rowcount
-        conn.commit()
-        conn.close()
-        
-        return affected_rows > 0
-    
-    def get_users(self) -> list:
-        """Get all users (admin only)."""
-        conn = sqlite3.connect("academy_admin.db")
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT id, username, email, full_name, role, is_active, created_at, updated_at
-            FROM users
-            ORDER BY created_at DESC
-        ''')
-        
-        users = []
-        for row in cursor.fetchall():
-            users.append({
-                "id": row[0],
-                "username": row[1],
-                "email": row[2],
-                "full_name": row[3],
-                "role": row[4],
-                "is_active": bool(row[5]),
-                "created_at": row[6],
-                "updated_at": row[7]
-            })
-        
-        conn.close()
-        return users
-    
-    def delete_user(self, user_id: str) -> bool:
-        """Delete a user (admin only)."""
-        conn = sqlite3.connect("academy_admin.db")
-        cursor = conn.cursor()
-        
-        # Check if user exists
-        cursor.execute("SELECT id FROM users WHERE id = ?", (user_id,))
-        if cursor.fetchone() is None:
-            conn.close()
+        user = self.get_user_by_id(db, user_id)
+        if not user:
             return False
         
-        # Delete user
-        cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
-        affected_rows = cursor.rowcount
+        user.is_active = False
+        db.commit()
+        return True
+    
+    def get_users(self, db: Session) -> List[User]:
+        """Get all users (admin only)."""
+        return db.query(User).order_by(User.created_at.desc()).all()
+    
+    def delete_user(self, db: Session, user_id: str) -> bool:
+        """Delete a user (admin only)."""
+        user = self.get_user_by_id(db, user_id)
+        if not user:
+            return False
         
-        conn.commit()
-        conn.close()
-        
-        return affected_rows > 0
+        db.delete(user)
+        db.commit()
+        return True
     
     def get_current_user(self, db: Session, token: str) -> Optional[User]:
         """Get current user from JWT token."""

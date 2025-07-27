@@ -100,6 +100,10 @@ class UserCreate(BaseModel):
     password: str = Field(..., min_length=8, max_length=255, description="Password")
     first_name: str = Field(..., min_length=1, max_length=100, description="First name")
     last_name: str = Field(..., min_length=1, max_length=100, description="Last name")
+    salutation: Optional[str] = Field(None, max_length=10, description="User's salutation")
+    phone: Optional[str] = Field(None, max_length=20, description="Phone number")
+    date_of_birth: Optional[datetime] = Field(None, description="Date of birth")
+    referral_source: Optional[str] = Field(None, max_length=100, description="How user heard about academy")
     role: str = Field(default="program_admin", description="User role")
     is_active: bool = Field(default=True, description="Whether user is active")
     
@@ -137,6 +141,10 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = Field(None, description="Email address")
     first_name: Optional[str] = Field(None, min_length=1, max_length=100, description="First name")
     last_name: Optional[str] = Field(None, min_length=1, max_length=100, description="Last name")
+    salutation: Optional[str] = Field(None, max_length=10, description="User's salutation")
+    phone: Optional[str] = Field(None, max_length=20, description="Phone number")
+    date_of_birth: Optional[datetime] = Field(None, description="Date of birth")
+    referral_source: Optional[str] = Field(None, max_length=100, description="How user heard about academy")
     role: Optional[str] = Field(None, description="User role")
     is_active: Optional[bool] = Field(None, description="Whether user is active")
     

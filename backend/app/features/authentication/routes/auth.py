@@ -10,6 +10,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.features.authentication.models.user import User
 from app.features.authentication.schemas.auth import (
     LoginRequest,
     LoginResponse,
@@ -29,7 +30,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     db: Session = Depends(get_db)
-) -> dict:
+) -> User:
     """Get current user from JWT token."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -41,25 +42,14 @@ async def get_current_user(
     if user is None:
         raise credentials_exception
     
-    # Convert User object to dict
-    return {
-        "id": str(user.id),
-        "username": user.username,
-        "email": user.email,
-        "first_name": user.first_name,
-        "last_name": user.last_name,
-        "role": user.primary_role,
-        "is_active": user.is_active,
-        "last_login": user.last_login.isoformat() if user.last_login else None,
-        "created_at": user.created_at.isoformat(),
-    }
+    return user
 
 
 async def get_current_active_user(
-    current_user: Annotated[dict, Depends(get_current_user)]
-) -> dict:
+    current_user: Annotated[User, Depends(get_current_user)]
+) -> User:
     """Get current active user."""
-    if not current_user.get("is_active"):
+    if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
@@ -166,44 +156,47 @@ async def login_json(login_data: LoginRequest, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
-    current_user: Annotated[dict, Depends(get_current_active_user)]
+    current_user: Annotated[User, Depends(get_current_active_user)]
 ):
     """Get current user information."""
     return UserResponse(
-        id=current_user["id"],
-        username=current_user["username"],
-        email=current_user["email"],
-        full_name=current_user["full_name"],
-        role=current_user["role"],
-        is_active=current_user["is_active"],
-        last_login=current_user.get("last_login"),
-        created_at=current_user["created_at"],
+        id=current_user.id,
+        username=current_user.username,
+        email=current_user.email,
+        first_name=current_user.first_name,
+        last_name=current_user.last_name,
+        role=current_user.primary_role,
+        is_active=current_user.is_active,
+        last_login=current_user.last_login,
+        created_at=current_user.created_at,
     )
 
 
 @router.get("/users", response_model=list[UserResponse])
 async def get_users(
-    current_user: Annotated[dict, Depends(get_current_active_user)]
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Session = Depends(get_db)
 ):
     """Get all users (admin only)."""
-    if current_user["role"] != "super_admin":
+    if current_user.primary_role != "super_admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
     
     try:
-        users = auth_service.get_users()
+        users = auth_service.get_users(db)
         return [
             UserResponse(
-                id=user["id"],
-                username=user["username"],
-                email=user["email"],
-                full_name=user["full_name"],
-                role=user["role"],
-                is_active=user["is_active"],
-                last_login=user.get("last_login"),
-                created_at=user["created_at"],
+                id=user.id,
+                username=user.username,
+                email=user.email,
+                first_name=user.first_name,
+                last_name=user.last_name,
+                role=user.primary_role,
+                is_active=user.is_active,
+                last_login=user.last_login,
+                created_at=user.created_at,
             )
             for user in users
         ]
@@ -217,17 +210,18 @@ async def get_users(
 @router.get("/users/{user_id}", response_model=UserResponse)
 async def get_user(
     user_id: str,
-    current_user: Annotated[dict, Depends(get_current_active_user)]
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Session = Depends(get_db)
 ):
     """Get a specific user by ID (admin only)."""
-    if current_user["role"] != "super_admin":
+    if current_user.primary_role != "super_admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
     
     try:
-        user = auth_service.get_user_by_id(user_id)
+        user = auth_service.get_user_by_id(db, user_id)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -235,14 +229,15 @@ async def get_user(
             )
         
         return UserResponse(
-            id=user["id"],
-            username=user["username"],
-            email=user["email"],
-            full_name=user["full_name"],
-            role=user["role"],
-            is_active=user["is_active"],
-            last_login=user.get("last_login"),
-            created_at=user["created_at"],
+            id=user.id,
+            username=user.username,
+            email=user.email,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            role=user.primary_role,
+            is_active=user.is_active,
+            last_login=user.last_login,
+            created_at=user.created_at,
         )
     except Exception as e:
         raise HTTPException(
@@ -254,24 +249,25 @@ async def get_user(
 @router.post("/users", response_model=UserResponse)
 async def create_user(
     user_data: UserCreate,
-    current_user: Annotated[dict, Depends(get_current_active_user)]
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Session = Depends(get_db)
 ):
     """Create a new user (admin only)."""
-    if current_user["role"] != "super_admin":
+    if current_user.primary_role != "super_admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
     
     # Check if username or email already exists
-    existing_user = auth_service.get_user_by_username(user_data.username)
+    existing_user = auth_service.get_user_by_username(db, user_data.username)
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already registered"
         )
     
-    existing_user = auth_service.get_user_by_username(user_data.email)
+    existing_user = auth_service.get_user_by_email(db, user_data.email)
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -279,16 +275,17 @@ async def create_user(
         )
     
     try:
-        user = auth_service.create_user(user_data.dict())
+        user = auth_service.create_user(db, user_data.dict())
         return UserResponse(
-            id=user["id"],
-            username=user["username"],
-            email=user["email"],
-            full_name=user["full_name"],
-            role=user["role"],
-            is_active=user["is_active"],
-            last_login=user.get("last_login"),
-            created_at=user["created_at"],
+            id=user.id,
+            username=user.username,
+            email=user.email,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            role=user.primary_role,
+            is_active=user.is_active,
+            last_login=user.last_login,
+            created_at=user.created_at,
         )
     except Exception as e:
         raise HTTPException(
@@ -301,25 +298,26 @@ async def create_user(
 async def update_user(
     user_id: str,
     user_data: UserUpdate,
-    current_user: Annotated[dict, Depends(get_current_active_user)]
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Session = Depends(get_db)
 ):
     """Update user information (admin only, or own profile)."""
     # Check permissions
-    if current_user["role"] != "super_admin" and current_user["id"] != user_id:
+    if current_user.primary_role != "super_admin" and str(current_user.id) != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
     
     # Non-admin users cannot change their own role
-    if current_user["role"] != "super_admin" and "role" in user_data.dict(exclude_unset=True):
+    if current_user.primary_role != "super_admin" and "role" in user_data.dict(exclude_unset=True):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Cannot change your own role"
         )
     
     try:
-        user = auth_service.update_user(user_id, user_data.dict(exclude_unset=True))
+        user = auth_service.update_user(db, user_id, user_data.dict(exclude_unset=True))
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -327,14 +325,15 @@ async def update_user(
             )
         
         return UserResponse(
-            id=user["id"],
-            username=user["username"],
-            email=user["email"],
-            full_name=user["full_name"],
-            role=user["role"],
-            is_active=user["is_active"],
-            last_login=user.get("last_login"),
-            created_at=user["created_at"],
+            id=user.id,
+            username=user.username,
+            email=user.email,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            role=user.primary_role,
+            is_active=user.is_active,
+            last_login=user.last_login,
+            created_at=user.created_at,
         )
     except Exception as e:
         raise HTTPException(
@@ -346,24 +345,25 @@ async def update_user(
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
     user_id: str,
-    current_user: Annotated[dict, Depends(get_current_active_user)]
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Session = Depends(get_db)
 ):
     """Delete a user (admin only)."""
-    if current_user["role"] != "super_admin":
+    if current_user.primary_role != "super_admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
     
     # Don't allow deleting yourself
-    if current_user["id"] == user_id:
+    if str(current_user.id) == user_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot delete your own account"
         )
     
     try:
-        success = auth_service.delete_user(user_id)
+        success = auth_service.delete_user(db, user_id)
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -379,11 +379,13 @@ async def delete_user(
 @router.post("/change-password")
 async def change_password(
     password_data: PasswordChangeRequest,
-    current_user: Annotated[dict, Depends(get_current_active_user)]
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Session = Depends(get_db)
 ):
     """Change user password."""
     success = auth_service.change_password(
-        current_user["id"],
+        db,
+        str(current_user.id),
         password_data.current_password,
         password_data.new_password
     )
@@ -398,7 +400,7 @@ async def change_password(
 
 
 @router.post("/logout")
-async def logout(current_user: Annotated[dict, Depends(get_current_active_user)]):
+async def logout(current_user: Annotated[User, Depends(get_current_active_user)]):
     """Logout endpoint (token invalidation would be handled client-side)."""
     return {"detail": "Successfully logged out"}
 

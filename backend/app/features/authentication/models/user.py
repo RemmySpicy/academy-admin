@@ -103,6 +103,12 @@ class User(BaseModel):
     )
     
     # Additional profile fields for students/parents
+    salutation: Mapped[Optional[str]] = mapped_column(
+        String(10),
+        nullable=True,
+        comment="User's salutation (Mr., Ms., Dr., etc.)",
+    )
+    
     phone: Mapped[Optional[str]] = mapped_column(
         String(20),
         nullable=True,
@@ -113,6 +119,12 @@ class User(BaseModel):
         DateTime(timezone=True),
         nullable=True,
         comment="User's date of birth",
+    )
+    
+    referral_source: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="How the user heard about the academy",
     )
     
     profile_photo_url: Mapped[Optional[str]] = mapped_column(
