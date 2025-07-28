@@ -27,7 +27,7 @@ router = APIRouter()
 get_program_filter = create_program_filter_dependency(get_current_active_user)
 
 
-@router.post("/", response_model=ContentVersionResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ContentVersionResponse, status_code=status.HTTP_201_CREATED)
 async def create_content_version(
     version_data: ContentVersionCreate,
     db: Annotated[Session, Depends(get_db)],
@@ -60,7 +60,7 @@ async def create_content_version(
         )
 
 
-@router.get("/", response_model=ContentVersionListResponse)
+@router.get("", response_model=ContentVersionListResponse)
 async def list_content_versions(
     db: Annotated[Session, Depends(get_db)],
     program_context: Annotated[Optional[str], Depends(get_program_filter)],

@@ -97,11 +97,9 @@ class Program(BaseModel):
         cascade="all, delete-orphan"
     )
     
-    user_relationships = relationship(
-        "UserRelationship",
-        back_populates="program",
-        cascade="all, delete-orphan"
-    )
+    # Note: Other relationships are managed through foreign keys in other models
+    # and can be accessed via joins or proper relationship definitions
+    
     # Note: Relationship to courses will be defined when course model is created
     # courses = relationship("Course", back_populates="program", cascade="all, delete-orphan")
     

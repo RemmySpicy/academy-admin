@@ -153,7 +153,7 @@ const mockEquipmentApiService = {
   },
 
   createEquipment: async (data: EquipmentCreate): Promise<Equipment> => {
-    const response = await httpClient.post<Equipment>('/api/v1/equipment/', data);
+    const response = await httpClient.post<Equipment>('/api/v1/equipment', data);
     
     if (response.success) {
       return response.data;
@@ -217,7 +217,7 @@ const mockEquipmentApiService = {
   },
 
   createRequirement: async (data: EquipmentRequirementCreate): Promise<EquipmentRequirement> => {
-    const response = await httpClient.post<EquipmentRequirement>('/api/v1/equipment/requirements/', data);
+    const response = await httpClient.post<EquipmentRequirement>('/api/v1/equipment/requirements', data);
     
     if (response.success) {
       return response.data;

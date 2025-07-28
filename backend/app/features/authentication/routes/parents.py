@@ -30,7 +30,7 @@ router = APIRouter()
 get_program_filter = create_program_filter_dependency(get_current_active_user)
 
 
-@router.get("/", response_model=UserListResponse)
+@router.get("", response_model=UserListResponse)
 async def list_parents(
     current_user: Annotated[dict, Depends(get_current_active_user)],
     db: Session = Depends(get_db),
@@ -342,7 +342,7 @@ async def update_parent(
         )
 
 
-@router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_parent(
     user_data: UserCreate,
     current_user: Annotated[dict, Depends(get_current_active_user)],

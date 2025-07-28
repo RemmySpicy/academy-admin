@@ -31,6 +31,7 @@
     "docker:backend": "docker-compose up backend",
     "docker:frontend": "docker-compose up frontend",
     "restart:frontend": "./scripts/restart-frontend.sh",
+    "restart:frontend:quick": "docker compose restart frontend",
     "db:local:up": "docker-compose -f docker-compose.local.yml up -d",
     "db:local:down": "docker-compose -f docker-compose.local.yml down",
     "db:local:logs": "docker-compose -f docker-compose.local.yml logs -f",

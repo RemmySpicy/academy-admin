@@ -26,7 +26,7 @@ from app.features.students.services.student_service import student_service
 router = APIRouter()
 
 
-@router.post("/", response_model=StudentResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=StudentResponse, status_code=status.HTTP_201_CREATED)
 async def create_student(
     student_data: StudentCreate,
     current_user: Annotated[dict, Depends(get_current_active_user)],
@@ -60,7 +60,7 @@ async def create_student(
         )
 
 
-@router.get("/", response_model=StudentListResponse)
+@router.get("", response_model=StudentListResponse)
 async def list_students(
     current_user: Annotated[dict, Depends(get_current_active_user)],
     db: Session = Depends(get_db),
@@ -68,7 +68,7 @@ async def list_students(
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(20, ge=1, le=100, description="Items per page"),
     search: Optional[str] = Query(None, description="Search query"),
-    status: Optional[str] = Query(None, description="Filter by status"),
+    status_filter: Optional[str] = Query(None, description="Filter by status"),
     enrollment_date_from: Optional[str] = Query(None, description="Filter by enrollment date from (YYYY-MM-DD)"),
     enrollment_date_to: Optional[str] = Query(None, description="Filter by enrollment date to (YYYY-MM-DD)"),
     gender: Optional[str] = Query(None, description="Filter by gender"),
@@ -83,12 +83,12 @@ async def list_students(
     try:
         # Build search parameters
         search_params = None
-        if any([search, status, enrollment_date_from, enrollment_date_to, gender, sort_by]):
+        if any([search, status_filter, enrollment_date_from, enrollment_date_to, gender, sort_by]):
             from datetime import date
             
             search_params = StudentSearchParams(
                 search=search,
-                status=status,
+                status=status_filter,
                 enrollment_date_from=date.fromisoformat(enrollment_date_from) if enrollment_date_from else None,
                 enrollment_date_to=date.fromisoformat(enrollment_date_to) if enrollment_date_to else None,
                 gender=gender,
@@ -556,4 +556,265 @@ async def get_my_parents(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error retrieving parent contacts: {str(e)}"
+        )
+
+
+# New Two-Step Workflow Endpoints
+
+@router.post("/profile-only", response_model=StudentResponse, status_code=status.HTTP_201_CREATED)
+async def create_student_profile_only(
+    student_data: StudentCreate,
+    current_user: Annotated[dict, Depends(get_current_active_user)],
+    db: Session = Depends(get_db)
+):
+    """
+    Create a student profile without automatic program assignment (Step 1 of two-step workflow).
+    
+    This endpoint creates a student profile that can later be assigned to programs/courses.
+    It separates profile creation from program assignment for more flexible workflows.
+    """
+    # Check permissions
+    if not current_user.get("is_active"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive user"
+        )
+    
+    try:
+        student = student_service.create_student_profile_only(db, student_data, current_user["id"])
+        return student
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error creating student profile: {str(e)}"
+        )
+
+
+@router.post("/{student_id}/assign-to-program")
+async def assign_student_to_program(
+    student_id: str,
+    current_user: Annotated[dict, Depends(get_current_active_user)],
+    db: Session = Depends(get_db),
+    program_id: str = Query(..., description="Program ID to assign to"),
+    assignment_notes: Optional[str] = Query(None, description="Assignment notes")
+):
+    """
+    Assign a student to a program (Step 2 of two-step workflow).
+    
+    This endpoint assigns an existing student profile to a specific program,
+    enabling them to be enrolled in courses within that program.
+    """
+    # Check permissions
+    if not current_user.get("is_active"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive user"
+        )
+    
+    try:
+        assignment = student_service.assign_student_to_program(
+            db, student_id, program_id, current_user["id"], assignment_notes
+        )
+        return {
+            "success": True,
+            "message": "Student assigned to program successfully",
+            "assignment": {
+                "id": assignment.id,
+                "user_id": assignment.user_id,
+                "program_id": assignment.program_id,
+                "role_in_program": assignment.role_in_program.value,
+                "assignment_date": assignment.assignment_date.isoformat(),
+                "is_active": assignment.is_active
+            }
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error assigning student to program: {str(e)}"
+        )
+
+
+@router.post("/{student_id}/enroll-in-course")
+async def enroll_student_in_course(
+    student_id: str,
+    current_user: Annotated[dict, Depends(get_current_active_user)],
+    db: Session = Depends(get_db),
+    program_context: Optional[str] = Depends(get_program_context),
+    course_id: str = Query(..., description="Course ID to enroll in"),
+    assignment_type: Optional[str] = Query("direct", description="Assignment type"),
+    credits_awarded: Optional[int] = Query(0, description="Credits to award"),
+    assignment_notes: Optional[str] = Query(None, description="Assignment notes"),
+    referral_source: Optional[str] = Query(None, description="Referral source"),
+    special_requirements: Optional[str] = Query(None, description="Special requirements"),
+    notes: Optional[str] = Query(None, description="Additional notes")
+):
+    """
+    Enroll a student in a specific course.
+    
+    This endpoint enrolls an existing student in a course within the current program context.
+    The student must already be assigned to the program.
+    """
+    # Check permissions
+    if not current_user.get("is_active"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive user"
+        )
+    
+    try:
+        enrollment_details = {
+            'assigned_by': current_user["id"],
+            'assignment_type': assignment_type,
+            'credits_awarded': credits_awarded,
+            'assignment_notes': assignment_notes,
+            'referral_source': referral_source,
+            'special_requirements': special_requirements,
+            'notes': notes
+        }
+        
+        enrollment = student_service.enroll_student_in_course(
+            db, student_id, course_id, enrollment_details, program_context
+        )
+        
+        return {
+            "success": True,
+            "message": "Student enrolled in course successfully",
+            "enrollment": {
+                "id": enrollment.id,
+                "user_id": enrollment.user_id,
+                "course_id": enrollment.course_id,
+                "program_id": enrollment.program_id,
+                "status": enrollment.status.value,
+                "enrollment_date": enrollment.enrollment_date.isoformat(),
+                "assignment_date": enrollment.assignment_date.isoformat(),
+                "enrollment_fee": float(enrollment.enrollment_fee),
+                "outstanding_balance": float(enrollment.outstanding_balance)
+            }
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error enrolling student in course: {str(e)}"
+        )
+
+
+@router.post("/create-and-assign")
+async def create_student_and_assign_to_course(
+    student_data: StudentCreate,
+    current_user: Annotated[dict, Depends(get_current_active_user)],
+    db: Session = Depends(get_db),
+    program_context: Optional[str] = Depends(get_program_context),
+    course_id: str = Query(..., description="Course ID to assign to")
+):
+    """
+    Combined operation: create student profile and assign to course.
+    
+    This endpoint provides a convenient method for the common workflow of
+    creating a student and immediately assigning them to a course. It combines
+    all three steps: profile creation, program assignment, and course enrollment.
+    """
+    # Check permissions
+    if not current_user.get("is_active"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive user"
+        )
+    
+    if not program_context:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Program context is required for this operation"
+        )
+    
+    try:
+        result = student_service.create_student_and_assign_to_course(
+            db, student_data, course_id, program_context, current_user["id"]
+        )
+        
+        if result.get('success'):
+            return {
+                "success": True,
+                "message": result['message'],
+                "student": result['student'],
+                "enrollment": result['enrollment']
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result.get('error', 'Unknown error occurred')
+            )
+            
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error creating and assigning student: {str(e)}"
+        )
+
+
+@router.get("/in-program-by-enrollment", response_model=StudentListResponse)
+async def get_students_in_program_by_enrollment(
+    current_user: Annotated[dict, Depends(get_current_active_user)],
+    db: Session = Depends(get_db),
+    program_context: Optional[str] = Depends(get_program_context),
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(20, ge=1, le=100, description="Items per page")
+):
+    """
+    Get students in program based on course enrollments (new assignment-based approach).
+    
+    This endpoint returns students who are in the program based on their course
+    enrollments rather than direct program assignment. This supports the new
+    assignment-based workflow where program membership is determined by course enrollments.
+    """
+    if not program_context:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Program context is required for this operation"
+        )
+    
+    try:
+        students, total_count = student_service.get_students_in_program_by_enrollment(
+            db=db,
+            program_id=program_context,
+            page=page,
+            per_page=per_page
+        )
+        
+        # Calculate pagination info
+        total_pages = (total_count + per_page - 1) // per_page
+        
+        return StudentListResponse(
+            items=students,
+            total=total_count,
+            page=page,
+            per_page=per_page,
+            total_pages=total_pages,
+            has_next=page < total_pages,
+            has_prev=page > 1
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error listing students by enrollment: {str(e)}"
         )

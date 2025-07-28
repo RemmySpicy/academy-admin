@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from app.api.api_v1.endpoints import health
 from app.features.authentication.routes import auth, parents, users
-from app.features.students.routes import students
+from app.features.students.routes import students_router, course_assignments_router
 from app.features.programs.routes import programs
 from app.features.courses.routes import courses, advanced
 from app.features.curricula.routes import curricula, levels, modules, sections
@@ -17,13 +17,15 @@ from app.features.organizations.routes import (
     partner_auth_router,
     payment_overrides_router
 )
+from app.features.profiles.routes_simple import router as profiles_router
 
 api_router = APIRouter()
 
 api_router.include_router(health.router, prefix="/health", tags=["health"])
 api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
 api_router.include_router(users.router, prefix="/users", tags=["users"])
-api_router.include_router(students.router, prefix="/students", tags=["students"])
+api_router.include_router(students_router, prefix="/students", tags=["students"])
+api_router.include_router(course_assignments_router, prefix="/course-assignments", tags=["course-assignments"])
 api_router.include_router(parents.router, prefix="/parents", tags=["parents"])
 
 # Course management routes
@@ -67,3 +69,6 @@ api_router.include_router(teams.router, prefix="/teams", tags=["teams"])
 api_router.include_router(organizations_router, prefix="/organizations", tags=["organizations"])
 api_router.include_router(partner_auth_router, prefix="/organizations/auth", tags=["partner-auth"])
 api_router.include_router(payment_overrides_router, prefix="/organizations", tags=["payment-overrides"])
+
+# Unified profile creation routes (separate top-level)
+api_router.include_router(profiles_router, prefix="/profiles", tags=["profiles"])

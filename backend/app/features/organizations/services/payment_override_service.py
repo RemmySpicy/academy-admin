@@ -133,3 +133,20 @@ class AccessOverrideService:
             "restricted_courses": [],
             "total_overrides": 0
         }
+
+
+# Create service instance to be imported by other modules
+# Note: This creates a factory function that returns a service instance with a DB session
+def get_payment_override_service(db: Session) -> PaymentOverrideService:
+    """Factory function to create PaymentOverrideService instance with DB session."""
+    return PaymentOverrideService(db)
+
+
+def get_access_override_service(db: Session) -> AccessOverrideService:
+    """Factory function to create AccessOverrideService instance with DB session."""
+    return AccessOverrideService(db)
+
+
+# For backward compatibility with existing imports
+payment_override_service = None  # Will be initialized with DB session when needed
+access_override_service = None  # Will be initialized with DB session when needed

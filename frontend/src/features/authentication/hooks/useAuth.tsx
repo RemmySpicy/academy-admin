@@ -24,7 +24,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -70,17 +70,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     initAuth();
   }, []);
 
-  const login = async (credentials: LoginCredentials): Promise<void> => {
+  const login = async (credentials: LoginCredentials): Promise<User> => {
+    console.log('useAuth login called with:', { username: credentials.username });
     setIsLoading(true);
     try {
       const response = await authApiService.login(credentials.username, credentials.password);
+      console.log('Login API response:', { success: response.success, user: response.data?.user });
       
       if (response.success) {
-        setUser(response.data.user);
+        const loggedInUser = response.data.user;
+        console.log('Setting user in auth context:', loggedInUser);
+        setUser(loggedInUser);
+        console.log('User set successfully');
+        return loggedInUser; // Return the user immediately
       } else {
+        console.error('Login failed:', response.error);
         throw new Error(response.error || 'Login failed');
       }
     } catch (error) {
+      console.error('Login error:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -88,18 +96,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const logout = async (): Promise<void> => {
+    console.log('Starting logout process...');
     setIsLoading(true);
+    
     try {
       // Call logout API (optional, don't throw on failure)
       await authApiService.logout();
+      console.log('Logout API call successful');
     } catch (error) {
       // Ignore logout API errors
       console.warn('Logout API call failed:', error);
     } finally {
       // Always clear local auth data
+      console.log('Clearing auth data...');
       authApiService.clearAuth();
       setUser(null);
       setIsLoading(false);
+      
+      // Force page reload to ensure clean state
+      console.log('Forcing page reload after logout...');
+      window.location.reload();
     }
   };
 

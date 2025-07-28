@@ -134,7 +134,14 @@ class User(BaseModel):
     )
     
     # Relationships
-    program_assignments = relationship(
+    # program_assignments = relationship(
+    #     "ProgramAssignment",
+    #     foreign_keys="ProgramAssignment.user_id",
+    #     back_populates="user",
+    #     cascade="all, delete-orphan"
+    # )
+    
+    user_program_assignments = relationship(
         "UserProgramAssignment",
         foreign_keys="UserProgramAssignment.user_id",
         back_populates="user",
@@ -159,17 +166,26 @@ class User(BaseModel):
     # Course enrollments
     course_enrollments = relationship(
         "CourseEnrollment",
+        foreign_keys="CourseEnrollment.user_id",
         back_populates="user",
         cascade="all, delete-orphan"
     )
     
     # Student profile (if user is a student)
-    student_profile = relationship(
-        "Student",
-        uselist=False,
-        back_populates="user",
-        cascade="all, delete-orphan"
-    )
+    # student_profile = relationship(
+    #     "Student",
+    #     uselist=False,
+    #     back_populates="user",
+    #     cascade="all, delete-orphan"
+    # )
+    
+    # Parent profile (if user is a parent)
+    # parent_profile = relationship(
+    #     "Parent",
+    #     uselist=False,
+    #     back_populates="user",
+    #     cascade="all, delete-orphan"
+    # )
     
     # Organization memberships
     organization_memberships = relationship(

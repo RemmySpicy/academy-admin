@@ -107,7 +107,15 @@ class UserRelationship(BaseModel):
     )
     
     # Relationship to Program model
-    program = relationship("Program", back_populates="user_relationships")
+    program = relationship("Program")
+    
+    # Parent-child relationship for enhanced functionality
+    parent_child_relationship = relationship(
+        "ParentChildRelationship",
+        uselist=False,
+        back_populates="user_relationship",
+        cascade="all, delete-orphan"
+    )
     
     # Constraints and indexes
     __table_args__ = (

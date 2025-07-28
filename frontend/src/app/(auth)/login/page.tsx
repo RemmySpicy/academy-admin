@@ -9,21 +9,34 @@ import { AuthRedirectService } from '@/features/authentication/services/authRedi
 function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const redirectUrl = searchParams.get('redirect');
+  const forceLogout = searchParams.get('logout');
+
+  // Handle forced logout
+  useEffect(() => {
+    console.log('Logout effect:', { forceLogout, isAuthenticated });
+    if (forceLogout === 'true' && isAuthenticated) {
+      console.log('Forcing logout...');
+      logout();
+      return;
+    }
+  }, [forceLogout, isAuthenticated, logout]);
 
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (isAuthenticated && user && forceLogout !== 'true') {
       // Use role-based redirect service
       const targetUrl = AuthRedirectService.getLoginRedirectUrl(user, redirectUrl || undefined);
       router.push(targetUrl);
     }
-  }, [isAuthenticated, user, router, redirectUrl]);
+  }, [isAuthenticated, user, router, redirectUrl, forceLogout]);
 
   const handleLoginSuccess = (loggedInUser: any) => {
+    console.log('handleLoginSuccess called with user:', loggedInUser);
     // Get appropriate redirect URL based on user role
     const targetUrl = AuthRedirectService.getLoginRedirectUrl(loggedInUser, redirectUrl || undefined);
+    console.log('Redirecting to:', targetUrl);
     router.push(targetUrl);
   };
 

@@ -96,6 +96,7 @@ export const useProgramContext = create<ProgramContextState>()(
         },
 
         loadUserPrograms: async (userId: string) => {
+          console.log('Starting loadUserPrograms for userId:', userId);
           set({ isLoadingPrograms: true, error: null });
 
           try {
@@ -109,6 +110,7 @@ export const useProgramContext = create<ProgramContextState>()(
             console.log('Extracted programs:', programs);
             
             // Set available programs and assignments
+            console.log('Setting available programs and clearing loading state...');
             set({ 
               availablePrograms: programs,
               userProgramAssignments: assignments,

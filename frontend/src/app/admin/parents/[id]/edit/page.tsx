@@ -12,7 +12,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useProgramContext } from '@/hooks/useProgramContext';
 
 // Import reusable components
-import { PersonSearchAndSelect, OrganizationSelector, RelationshipManager, FormField } from '@/components/ui/forms';
+import { PersonSearchAndSelect, OrganizationSelector, RelationshipManager, SimpleFormField as FormField } from '@/components/ui/forms';
 
 // Hooks for data fetching
 import { useParent } from '@/features/parents/hooks/useParents';
@@ -62,9 +62,11 @@ export default function EditParentPage() {
     basic_info: {
       first_name: '',
       last_name: '',
+      salutation: '',
       email: '',
       phone: '',
-      occupation: '',
+      date_of_birth: '',
+      referral_source: '',
       emergency_contact_name: '',
       emergency_contact_phone: '',
       additional_notes: ''
@@ -99,9 +101,11 @@ export default function EditParentPage() {
         basic_info: {
           first_name: parent.first_name || '',
           last_name: parent.last_name || '',
+          salutation: parent.salutation || '',
           email: parent.email || '',
           phone: parent.phone || '',
-          occupation: parent.occupation || '',
+          date_of_birth: parent.date_of_birth || '',
+          referral_source: parent.referral_source || '',
           emergency_contact_name: parent.emergency_contact_name || '',
           emergency_contact_phone: parent.emergency_contact_phone || '',
           additional_notes: parent.additional_notes || ''

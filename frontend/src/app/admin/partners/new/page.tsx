@@ -13,7 +13,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useProgramContext } from '@/hooks/useProgramContext';
 
 // Import reusable components
-import { FormField } from '@/components/ui/forms';
+import { SimpleFormField as FormField } from '@/components/ui/forms';
 
 // Types
 interface NewPartnerFormData {

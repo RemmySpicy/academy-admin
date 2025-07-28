@@ -82,7 +82,7 @@ class UserProgramAssignment(Base):
     )
     
     # Relationships
-    user = relationship("User", foreign_keys=[user_id], back_populates="program_assignments")
+    user = relationship("User", foreign_keys=[user_id], back_populates="user_program_assignments")
     program = relationship("Program", back_populates="user_assignments")
     assigner = relationship("User", foreign_keys=[assigned_by])
     

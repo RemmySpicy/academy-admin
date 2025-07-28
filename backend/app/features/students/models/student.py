@@ -3,7 +3,7 @@ Student model for comprehensive student profile management.
 """
 
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import (
@@ -20,7 +20,7 @@ from sqlalchemy import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.features.common.models.base import BaseModel
-from app.features.common.models.enums import StudentStatus, Gender
+from app.features.common.models.enums import StudentStatus, Gender, EnrollmentStatus
 
 
 class Student(BaseModel):
@@ -71,11 +71,11 @@ class Student(BaseModel):
         comment="Student's last name",
     )
     
-    email: Mapped[str] = mapped_column(
+    email: Mapped[Optional[str]] = mapped_column(
         String(255),
         unique=True,
-        nullable=False,
-        comment="Student's email address (unique)",
+        nullable=True,
+        comment="Student's email address (optional for children)",
     )
     
     phone: Mapped[Optional[str]] = mapped_column(
@@ -102,13 +102,7 @@ class Student(BaseModel):
         comment="Address information as JSON",
     )
     
-    # Academy Information
-    program_id: Mapped[str] = mapped_column(
-        String(36),
-        ForeignKey("programs.id"),
-        nullable=False,
-        comment="Reference to the program this student belongs to",
-    )
+    # Academy Information - program membership is now managed via ProgramAssignment model
     
     # Authentication Link (Optional - for mobile app access)
     user_id: Mapped[Optional[str]] = mapped_column(
@@ -183,8 +177,10 @@ class Student(BaseModel):
     )
     
     # Relationships
-    user = relationship("User", back_populates="student_profile")
+    user = relationship("User")
     course_enrollments = relationship("CourseEnrollment", back_populates="student")
+    parent_relationships = relationship("ParentChildRelationship", back_populates="student")
+    # Program assignments are accessed via user.program_assignments
     
     # Indexes for performance
     __table_args__ = (
@@ -194,8 +190,8 @@ class Student(BaseModel):
         Index("idx_students_status", "status"),
         Index("idx_students_enrollment_date", "enrollment_date"),
         Index("idx_students_full_name", "first_name", "last_name"),
-        Index("idx_students_program_id", "program_id"),
-        Index("idx_students_program_status", "program_id", "status"),
+        Index("idx_students_user_id", "user_id"),
+        # Program membership is now tracked via ProgramAssignment and CourseEnrollment
     )
     
     @property
@@ -243,6 +239,56 @@ class Student(BaseModel):
             parts.append(self.address["country"])
         
         return ", ".join(parts)
+    
+    @property
+    def parents(self):
+        """Get all parents of this student through parent relationships."""
+        return [rel.parent for rel in self.parent_relationships if rel.is_active]
+    
+    @property
+    def primary_parent(self):
+        """Get the primary parent contact for this student."""
+        primary_relationships = [rel for rel in self.parent_relationships 
+                               if rel.is_active and rel.is_primary_contact]
+        return primary_relationships[0].parent if primary_relationships else None
+    
+    @property
+    def has_login_credentials(self) -> bool:
+        """Check if student has login credentials (email and linked user account)."""
+        return bool(self.email and self.user_id)
+    
+    @property
+    def assigned_programs(self) -> List[str]:
+        """Get list of program IDs this student is assigned to."""
+        if not self.user or not self.user.program_assignments:
+            return []
+        return [
+            pa.program_id for pa in self.user.program_assignments 
+            if pa.is_active and pa.is_student_role
+        ]
+    
+    @property
+    def enrolled_courses(self) -> List["CourseEnrollment"]:
+        """Get list of active course enrollments for this student."""
+        return [
+            ce for ce in self.course_enrollments 
+            if ce.status == EnrollmentStatus.ACTIVE
+        ]
+    
+    @property
+    def programs_via_enrollments(self) -> List[str]:
+        """Get programs this student is enrolled in via course enrollments."""
+        return list(set([
+            ce.program_id for ce in self.enrolled_courses
+        ]))
+    
+    def is_assigned_to_program(self, program_id: str) -> bool:
+        """Check if student is assigned to a specific program."""
+        return program_id in self.assigned_programs
+    
+    def is_enrolled_in_program(self, program_id: str) -> bool:
+        """Check if student has active course enrollments in a specific program."""
+        return program_id in self.programs_via_enrollments
     
     def __repr__(self) -> str:
         """String representation of the student."""

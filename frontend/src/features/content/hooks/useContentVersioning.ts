@@ -150,7 +150,7 @@ const mockVersioningApiService = {
   },
 
   createVersion: async (data: VersionCreate): Promise<ContentVersion> => {
-    const response = await httpClient.post<ContentVersion>('/api/v1/content/versions/', data);
+    const response = await httpClient.post<ContentVersion>('/api/v1/content/versions', data);
     
     if (response.success && response.data) {
       return response.data;

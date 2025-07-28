@@ -30,7 +30,7 @@ router = APIRouter()
 get_program_filter = create_program_filter_dependency(get_current_active_user)
 
 
-@router.post("/", response_model=CourseResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=CourseResponse, status_code=status.HTTP_201_CREATED)
 async def create_course(
     course_data: CourseCreate,
     db: Annotated[Session, Depends(get_db)],
@@ -67,7 +67,7 @@ async def create_course(
         )
 
 
-@router.get("/", response_model=CourseListResponse)
+@router.get("", response_model=CourseListResponse)
 async def list_courses(
     db: Annotated[Session, Depends(get_db)],
     program_context: Annotated[Optional[str], Depends(get_program_filter)],

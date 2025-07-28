@@ -12,7 +12,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useProgramContext } from '@/hooks/useProgramContext';
 
 // Import reusable components
-import { PersonSearchAndSelect, OrganizationSelector, RelationshipManager, FormField } from '@/components/ui/forms';
+import { PersonSearchAndSelect, OrganizationSelector, RelationshipManager, SimpleFormField as FormField } from '@/components/ui/forms';
 
 // Hooks for data fetching
 import { useStudent } from '@/features/students/hooks';

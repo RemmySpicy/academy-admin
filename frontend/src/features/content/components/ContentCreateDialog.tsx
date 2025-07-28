@@ -73,7 +73,7 @@ export function ContentCreateDialog({
   // Fetch course data for hierarchical assignment
   const { data: coursesData } = useCourses({ 
     page: 1, 
-    page_size: 100 // Get all courses
+    per_page: 100 // Get all courses
   });
   
   // Create sample course hierarchy for testing (until we implement full data fetching)

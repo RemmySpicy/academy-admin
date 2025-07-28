@@ -24,7 +24,7 @@ from app.features.programs.services.program_service import program_service
 router = APIRouter()
 
 
-@router.post("/", response_model=ProgramResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ProgramResponse, status_code=status.HTTP_201_CREATED)
 async def create_program(
     program_data: ProgramCreate,
     db: Annotated[Session, Depends(get_db)],
@@ -56,7 +56,7 @@ async def create_program(
         )
 
 
-@router.get("/", response_model=ProgramListResponse)
+@router.get("", response_model=ProgramListResponse)
 async def list_programs(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[dict, Depends(get_current_active_user)],

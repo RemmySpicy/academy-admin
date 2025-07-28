@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { User, Users, Building2, AlertCircle, CheckCircle } from 'lucide-react';
 
 // Import reusable components
-import { PersonSearchAndSelect, OrganizationSelector, FormField } from '@/components/ui/forms';
+import { PersonSearchAndSelect, OrganizationSelector, SimpleFormField as FormField } from '@/components/ui/forms';
 import { useProgramContext } from '@/hooks/useProgramContext';
 
 // Types
@@ -19,6 +19,7 @@ interface StudentData {
   last_name: string;
   salutation?: string;
   email?: string;
+  password?: string;
   phone?: string;
   date_of_birth?: string;
   referral_source?: string;
@@ -49,7 +50,6 @@ interface CreateStudentFormData {
   student: StudentData;
   parent_relationship?: ParentRelationship;
   organization_sponsorship?: OrganizationSponsorship;
-  create_login_credentials: boolean;
 }
 
 type CreationMode = 'independent' | 'with_parent';
@@ -74,6 +74,7 @@ export default function StudentCreateForm({ onSuccess, onCancel }: StudentCreate
       last_name: '',
       salutation: '',
       email: '',
+      password: '',
       phone: '',
       date_of_birth: '',
       referral_source: '',
@@ -81,8 +82,7 @@ export default function StudentCreateForm({ onSuccess, onCancel }: StudentCreate
       emergency_contact_phone: '',
       medical_notes: '',
       additional_notes: ''
-    },
-    create_login_credentials: false
+    }
   });
   
   // UI state
@@ -145,6 +145,11 @@ export default function StudentCreateForm({ onSuccess, onCancel }: StudentCreate
     setSelectedOrganization(organization);
     setFormData(prev => ({
       ...prev,
+      // Auto-fill referral source with organization name
+      student: {
+        ...prev.student,
+        referral_source: prev.student.referral_source || organization.name
+      },
       organization_sponsorship: {
         organization_id: organization.id,
         payment_override: {
@@ -159,9 +164,16 @@ export default function StudentCreateForm({ onSuccess, onCancel }: StudentCreate
     setSelectedOrganization(null);
     setFormData(prev => {
       const { organization_sponsorship, ...rest } = prev;
-      return rest;
+      return {
+        ...rest,
+        // Clear referral source if it was auto-filled with organization name
+        student: {
+          ...rest.student,
+          referral_source: prev.student.referral_source === selectedOrganization?.name ? '' : prev.student.referral_source
+        }
+      };
     });
-  }, []);
+  }, [selectedOrganization]);
 
   const searchParents = async (query: string) => {
     try {
@@ -225,9 +237,18 @@ export default function StudentCreateForm({ onSuccess, onCancel }: StudentCreate
       newErrors.organization_id = 'Please select an organization';
     }
 
-    // Login credentials validation
-    if (formData.create_login_credentials && !formData.student.email) {
-      newErrors.email = 'Email is required for login credentials';
+    // Email validation (required for independent students)
+    if (isEmailRequired() && (!formData.student.email || !formData.student.email.trim())) {
+      newErrors.email = 'Email is required for independent students';
+    } else if (formData.student.email && formData.student.email.trim() && !/\S+@\S+\.\S+/.test(formData.student.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    // Password validation (required for independent students)
+    if (isPasswordRequired() && (!formData.student.password || !formData.student.password.trim())) {
+      newErrors.password = 'Password is required for independent students';
+    } else if (formData.student.password && formData.student.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
     }
 
     setErrors(newErrors);
@@ -246,7 +267,7 @@ export default function StudentCreateForm({ onSuccess, onCancel }: StudentCreate
         organization_mode: organizationMode,
         profile_data: {
           student: formData.student,
-          create_login_credentials: formData.create_login_credentials,
+          create_login_credentials: !!(formData.student.email && formData.student.password),
           ...(creationMode === 'with_parent' && formData.parent_relationship && {
             parent_relationship: formData.parent_relationship
           }),
@@ -287,6 +308,31 @@ export default function StudentCreateForm({ onSuccess, onCancel }: StudentCreate
     }
   };
 
+  // Helper functions for dynamic behavior
+  const getSalutationOptions = () => {
+    if (creationMode === 'independent') {
+      // Independent students get full adult salutations like parents
+      return [
+        { value: 'Mr.', label: 'Mr.' },
+        { value: 'Mrs.', label: 'Mrs.' },
+        { value: 'Ms.', label: 'Ms.' },
+        { value: 'Dr.', label: 'Dr.' },
+        { value: 'Prof.', label: 'Prof.' },
+        { value: 'Chief', label: 'Chief' },
+        { value: 'Hon.', label: 'Hon.' }
+      ];
+    } else {
+      // Child students get limited salutations
+      return [
+        { value: 'Master', label: 'Master' },
+        { value: 'Miss', label: 'Miss' }
+      ];
+    }
+  };
+
+  const isEmailRequired = () => creationMode === 'independent';
+  const isPasswordRequired = () => creationMode === 'independent';
+
   // Determine form state
   const isIndependent = creationMode === 'independent';
   const isWithParent = creationMode === 'with_parent';
@@ -312,26 +358,34 @@ export default function StudentCreateForm({ onSuccess, onCancel }: StudentCreate
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
-                  <label className="text-sm font-medium">Creation Mode</label>
+                  <label className="text-sm font-medium">Family Connection</label>
                   <Badge variant={isIndependent ? "outline" : "default"}>
-                    {isIndependent ? "Independent" : "Linked to Parent"}
+                    {isIndependent ? "Independent Profile" : "Child of Existing Parent"}
                   </Badge>
                 </div>
                 <p className="text-xs text-gray-500">
                   {isIndependent 
-                    ? "Create student without parent connection" 
-                    : "Link student to an existing parent"}
+                    ? "Create a standalone student profile with no family connections" 
+                    : "Link this student to an existing parent in the system"}
                 </p>
               </div>
-              <Switch
-                checked={isWithParent}
-                onCheckedChange={(checked) => {
-                  setCreationMode(checked ? 'with_parent' : 'independent');
-                  if (!checked) {
-                    handleParentRemove();
-                  }
-                }}
-              />
+              <div className="flex items-center space-x-3">
+                <span className={`text-sm ${isIndependent ? 'font-medium text-gray-900' : 'text-gray-500'}`}>
+                  Independent
+                </span>
+                <Switch
+                  checked={isWithParent}
+                  onCheckedChange={(checked) => {
+                    setCreationMode(checked ? 'with_parent' : 'independent');
+                    if (!checked) {
+                      handleParentRemove();
+                    }
+                  }}
+                />
+                <span className={`text-sm ${isWithParent ? 'font-medium text-gray-900' : 'text-gray-500'}`}>
+                  Child
+                </span>
+              </div>
             </div>
           </div>
 
@@ -342,33 +396,41 @@ export default function StudentCreateForm({ onSuccess, onCancel }: StudentCreate
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
-                  <label className="text-sm font-medium">Payment Mode</label>
+                  <label className="text-sm font-medium">Organization Membership</label>
                   <Badge variant={isIndividual ? "outline" : "default"}>
-                    {isIndividual ? "Individual Payment" : "Organization Sponsored"}
+                    {isIndividual ? "Individual Student" : "Organization Member"}
                   </Badge>
                 </div>
                 <p className="text-xs text-gray-500">
                   {isIndividual 
-                    ? "Student/family pays individually" 
-                    : "Student is sponsored by a partner organization"}
+                    ? "Regular student registration with standard payment options" 
+                    : "Student associated with a partner organization (configurations, sponsorship, etc.)"}
                 </p>
               </div>
-              <Switch
-                checked={isOrganizationSponsored}
-                onCheckedChange={(checked) => {
-                  setOrganizationMode(checked ? 'organization' : 'individual');
-                  if (!checked) {
-                    handleOrganizationRemove();
-                  }
-                }}
-              />
+              <div className="flex items-center space-x-3">
+                <span className={`text-sm ${isIndividual ? 'font-medium text-gray-900' : 'text-gray-500'}`}>
+                  Individual
+                </span>
+                <Switch
+                  checked={isOrganizationSponsored}
+                  onCheckedChange={(checked) => {
+                    setOrganizationMode(checked ? 'organization' : 'individual');
+                    if (!checked) {
+                      handleOrganizationRemove();
+                    }
+                  }}
+                />
+                <span className={`text-sm ${isOrganizationSponsored ? 'font-medium text-gray-900' : 'text-gray-500'}`}>
+                  Organization
+                </span>
+              </div>
             </div>
             
             {isOrganizationSponsored && (
               <Alert>
                 <Building2 className="h-4 w-4" />
                 <AlertDescription>
-                  Select a partner organization that will sponsor this student's fees.
+                  Organization members inherit settings from their partner organization and may receive sponsorship benefits.
                 </AlertDescription>
               </Alert>
             )}
@@ -560,13 +622,8 @@ export default function StudentCreateForm({ onSuccess, onCancel }: StudentCreate
               value={formData.student.salutation || ''}
               onChange={(value) => handleStudentDataChange('salutation', value)}
               placeholder="Select salutation"
-              options={[
-                { value: 'Master', label: 'Master' },
-                { value: 'Miss', label: 'Miss' },
-                { value: 'Mr.', label: 'Mr.' },
-                { value: 'Ms.', label: 'Ms.' }
-              ]}
-              note="Appropriate title for the student"
+              options={getSalutationOptions()}
+              note={isIndependent ? "Professional title for independent student" : "Appropriate title for the student"}
             />
             
             <FormField
@@ -601,12 +658,12 @@ export default function StudentCreateForm({ onSuccess, onCancel }: StudentCreate
             />
             
             <FormField
-              label="How did you hear about us?"
+              label="Referral (Parent, Friend, Website, Organization)"
               type="text"
               value={formData.student.referral_source || ''}
               onChange={(value) => handleStudentDataChange('referral_source', value)}
-              placeholder="e.g., Parent referral, Friend, Website"
-              note="Referral source (will be auto-filled if parent selected)"
+              placeholder={selectedOrganization ? selectedOrganization.name : "e.g., Parent referral, Friend, Website"}
+              note={selectedOrganization ? `Auto-filled: ${selectedOrganization.name}` : "How did you hear about us?"}
             />
             
             <FormField
@@ -615,8 +672,20 @@ export default function StudentCreateForm({ onSuccess, onCancel }: StudentCreate
               value={formData.student.email || ''}
               onChange={(value) => handleStudentDataChange('email', value)}
               placeholder="student@example.com"
+              required={isEmailRequired()}
               error={errors.email}
-              note={formData.create_login_credentials ? "Required for login access" : "Optional"}
+              note={isEmailRequired() ? "Required for independent students" : "Optional for child students"}
+            />
+            
+            <FormField
+              label="Password"
+              type="password"
+              value={formData.student.password || ''}
+              onChange={(value) => handleStudentDataChange('password', value)}
+              placeholder="Enter password"
+              required={isPasswordRequired()}
+              error={errors.password}
+              note={isPasswordRequired() ? "Required for independent students (min 6 characters)" : "Optional for child students"}
             />
             
             <FormField
@@ -626,23 +695,6 @@ export default function StudentCreateForm({ onSuccess, onCancel }: StudentCreate
               onChange={(value) => handleStudentDataChange('phone', value)}
               placeholder="+234 xxx xxx xxxx"
               note="Will be auto-filled if parent selected"
-            />
-          </div>
-          
-          {/* Login Credentials Toggle */}
-          <div className="flex items-center justify-between py-2">
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Create Login Credentials</label>
-              <p className="text-xs text-gray-500">
-                Allow student to access their own dashboard
-              </p>
-            </div>
-            <Switch
-              checked={formData.create_login_credentials}
-              onCheckedChange={(checked) => setFormData(prev => ({
-                ...prev,
-                create_login_credentials: checked
-              }))}
             />
           </div>
           

@@ -27,7 +27,7 @@ router = APIRouter()
 get_program_filter = create_program_filter_dependency(get_current_active_user)
 
 
-@router.post("/", response_model=EquipmentRequirementResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=EquipmentRequirementResponse, status_code=status.HTTP_201_CREATED)
 async def create_equipment_requirement(
     equipment_data: EquipmentRequirementCreate,
     db: Annotated[Session, Depends(get_db)],
@@ -60,7 +60,7 @@ async def create_equipment_requirement(
         )
 
 
-@router.get("/", response_model=EquipmentRequirementListResponse)
+@router.get("", response_model=EquipmentRequirementListResponse)
 async def list_equipment_requirements(
     db: Annotated[Session, Depends(get_db)],
     program_context: Annotated[Optional[str], Depends(get_program_filter)],

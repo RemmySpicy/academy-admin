@@ -29,7 +29,7 @@ from app.middleware.program_context import get_program_context
 router = APIRouter()
 
 
-@router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
     user_data: UserCreate,
     current_user: Annotated[dict, Depends(get_current_active_user)],
@@ -146,7 +146,7 @@ async def create_student_parent_profile(
         )
 
 
-@router.get("/", response_model=UserListResponse)
+@router.get("", response_model=UserListResponse)
 async def list_users(
     current_user: Annotated[dict, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)],

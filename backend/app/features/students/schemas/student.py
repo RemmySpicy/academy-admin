@@ -20,7 +20,7 @@ class StudentBase(BaseModel):
     
     first_name: str = Field(..., min_length=1, max_length=100, description="Student's first name")
     last_name: str = Field(..., min_length=1, max_length=100, description="Student's last name")
-    email: EmailStr = Field(..., description="Student's email address")
+    email: Optional[EmailStr] = Field(None, description="Student's email address (optional for children)")
     phone: Optional[str] = Field(None, min_length=10, max_length=20, description="Student's phone number")
     date_of_birth: date = Field(..., description="Student's date of birth")
     gender: Optional[GenderEnum] = Field(None, description="Student's gender")

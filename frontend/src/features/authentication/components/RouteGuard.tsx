@@ -105,13 +105,29 @@ export function RouteGuard({ children, fallback }: RouteGuardProps) {
     checkAccess();
   }, [authLoading, isAuthenticated, user, pathname, router, isReady, hasProgram, needsProgramSelection]);
 
+  // Debug logging for stuck overlay
+  console.log('RouteGuard state:', { 
+    authLoading, 
+    isChecking, 
+    isAuthenticated, 
+    user: !!user, 
+    pathname,
+    isReady,
+    hasProgram,
+    needsProgramSelection 
+  });
+
   // Show loading while checking access
   if (authLoading || isChecking) {
     return fallback || (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Verifying access...</p>
+          <p className="text-gray-600">
+            Verifying access... 
+            {authLoading && ' (Auth loading)'}
+            {isChecking && ' (Access checking)'}
+          </p>
         </div>
       </div>
     );

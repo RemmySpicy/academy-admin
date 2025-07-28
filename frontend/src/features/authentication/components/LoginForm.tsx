@@ -30,7 +30,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
 
   const {
     register,
@@ -50,12 +50,13 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     setError(null);
 
     try {
-      await login(data);
-      // The user should be available in the auth context after successful login
-      // We'll pass it to the success callback for role-based redirect
-      const { user: loggedInUser } = useAuth();
+      console.log('Starting login process...');
+      const loggedInUser = await login(data);
+      console.log('Login successful, user:', loggedInUser);
+      // Use the returned user from login instead of the context state
       onSuccess?.(loggedInUser);
     } catch (err) {
+      console.error('Login failed:', err);
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setIsLoading(false);

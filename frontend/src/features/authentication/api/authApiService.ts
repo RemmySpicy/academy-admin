@@ -217,13 +217,29 @@ export class AuthApiService {
    * Clear authentication data
    */
   static clearAuth(): void {
+    console.log('Clearing all authentication data...');
+    
+    // Clear localStorage items
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     
-    // Clear cookie
-    document.cookie = `${TOKEN_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    // Clear all potential auth-related localStorage items
+    Object.keys(localStorage).forEach(key => {
+      if (key.includes('academy') || key.includes('auth') || key.includes('token') || key.includes('user')) {
+        localStorage.removeItem(key);
+      }
+    });
     
+    // Clear cookies
+    document.cookie = `${TOKEN_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    document.cookie = `academy_admin_auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    document.cookie = `academy_admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    document.cookie = `academy_admin_refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    
+    // Clear HTTP client token
     httpClient.setToken(null);
+    
+    console.log('Authentication data cleared');
   }
 
   /**

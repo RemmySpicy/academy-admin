@@ -248,3 +248,19 @@ class ProfileType(str, enum.Enum):
     """User profile type enumeration."""
     FULL_USER = "full_user"
     PROFILE_ONLY = "profile_only"
+
+
+# Program Assignment Enums
+
+class ProgramRole(str, enum.Enum):
+    """Role in program enumeration."""
+    STUDENT = "student"
+    PARENT = "parent"
+    BOTH = "both"
+
+
+class AssignmentType(str, enum.Enum):
+    """Course assignment type enumeration."""
+    DIRECT = "direct"
+    PARENT_ASSIGNED = "parent_assigned"
+    BULK_ASSIGNED = "bulk_assigned"

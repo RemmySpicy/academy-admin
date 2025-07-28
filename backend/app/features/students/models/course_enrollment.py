@@ -6,11 +6,11 @@ from datetime import date, datetime
 from typing import Optional
 from decimal import Decimal
 
-from sqlalchemy import ForeignKey, String, Date, Numeric, Index
+from sqlalchemy import ForeignKey, String, Date, Numeric, Index, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.features.common.models.base import BaseModel
-from app.features.common.models.enums import EnrollmentStatus
+from app.features.common.models.enums import EnrollmentStatus, AssignmentType
 
 
 class CourseEnrollment(BaseModel):
@@ -81,6 +81,40 @@ class CourseEnrollment(BaseModel):
         comment="Date when the course was completed",
     )
     
+    # Assignment metadata (new fields)
+    assignment_date: Mapped[date] = mapped_column(
+        Date,
+        nullable=False,
+        default=date.today,
+        comment="Date when the user was assigned to this course",
+    )
+    
+    assignment_type: Mapped[AssignmentType] = mapped_column(
+        default=AssignmentType.DIRECT,
+        nullable=False,
+        comment="Type of assignment (direct, parent_assigned, bulk_assigned)",
+    )
+    
+    credits_awarded: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        nullable=True,
+        default=0,
+        comment="Credits awarded for this course enrollment",
+    )
+    
+    assignment_notes: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Notes about this course assignment",
+    )
+    
+    assigned_by: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("users.id"),
+        nullable=False,
+        comment="ID of the user who made this assignment",
+    )
+    
     # Status and progress
     status: Mapped[EnrollmentStatus] = mapped_column(
         default=EnrollmentStatus.ACTIVE,
@@ -136,10 +170,11 @@ class CourseEnrollment(BaseModel):
     )
     
     # Relationships
-    user = relationship("User", back_populates="course_enrollments")
+    user = relationship("User", foreign_keys=[user_id], back_populates="course_enrollments")
     student = relationship("Student", back_populates="course_enrollments")
     course = relationship("Course", back_populates="enrollments")
     program = relationship("Program")
+    assigner = relationship("User", foreign_keys=[assigned_by])
     
     # Constraints and indexes
     __table_args__ = (
@@ -151,6 +186,13 @@ class CourseEnrollment(BaseModel):
         Index("idx_course_enrollments_user_course", "user_id", "course_id"),
         Index("idx_course_enrollments_user_program", "user_id", "program_id"),
         Index("idx_course_enrollments_active", "status", "enrollment_date"),
+        # New indexes for assignment fields
+        Index("idx_course_enrollments_assignment_date", "assignment_date"),
+        Index("idx_course_enrollments_assignment_type", "assignment_type"),
+        Index("idx_course_enrollments_assigned_by", "assigned_by"),
+        Index("idx_course_enrollments_credits", "credits_awarded"),
+        Index("idx_course_enrollments_user_assignment", "user_id", "assignment_date"),
+        Index("idx_course_enrollments_program_assignment", "program_id", "assignment_date"),
     )
     
     def __repr__(self) -> str:

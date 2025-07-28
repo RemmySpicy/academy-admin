@@ -3,6 +3,7 @@
  */
 
 import { FormField } from './FormField';
+import { SimpleFormField } from './SimpleFormField';
 import { AddressForm } from './AddressForm';
 import { EmergencyContactForm } from './EmergencyContactForm';
 import { TabContainer, TabPanel } from './TabContainer';
@@ -12,6 +13,7 @@ import { RelationshipManager } from './RelationshipManager';
 import { PaymentOverrideCard } from './PaymentOverrideCard';
 
 export { FormField, type FormFieldProps } from './FormField';
+export { SimpleFormField, type SimpleFormFieldProps } from './SimpleFormField';
 export { AddressForm, type AddressData } from './AddressForm';
 export { EmergencyContactForm, type EmergencyContactData } from './EmergencyContactForm';
 export { TabContainer, TabPanel, type TabConfig } from './TabContainer';
@@ -22,6 +24,7 @@ export { PaymentOverrideCard } from './PaymentOverrideCard';
 
 export default {
   FormField,
+  SimpleFormField,
   AddressForm,
   EmergencyContactForm,
   TabContainer,

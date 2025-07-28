@@ -30,8 +30,9 @@ export const useProgramContextInitializer = () => {
     const { user, isAuthenticated } = useAuth();
     authData = { user, isAuthenticated };
   } catch (error) {
-    // Auth context not available - this is normal during SSR or before provider setup
-    console.warn('Auth context not available during program context initialization');
+    // Auth context not available - this is normal during SSR or on auth pages
+    // Don't log this as it's expected behavior
+    authData = { user: null, isAuthenticated: false };
   }
 
   useEffect(() => {
@@ -39,12 +40,8 @@ export const useProgramContextInitializer = () => {
       console.log('Loading programs for user:', authData.user.id);
       // Load user's programs when authenticated
       loadUserPrograms(authData.user.id);
-    } else {
-      console.log('User not authenticated or no user ID:', { 
-        isAuthenticated: authData.isAuthenticated, 
-        userId: authData.user?.id 
-      });
     }
+    // Don't log when user is not authenticated - this is normal on public pages
   }, [authData.isAuthenticated, authData.user?.id, loadUserPrograms]);
 
   useEffect(() => {
@@ -87,6 +84,15 @@ export const useProgramContextGuard = () => {
   
   const isReady = !isLoadingPrograms && availablePrograms.length > 0;
   const hasProgram = currentProgram !== null;
+  
+  // Debug logging for program context guard
+  console.log('ProgramContextGuard state:', {
+    isLoadingPrograms,
+    availableProgramsCount: availablePrograms.length,
+    isReady,
+    hasProgram,
+    currentProgram: currentProgram?.id || null
+  });
   
   return {
     isReady,

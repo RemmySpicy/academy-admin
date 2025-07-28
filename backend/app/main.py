@@ -5,6 +5,9 @@ from app.api.api_v1.api import api_router
 from app.middleware import ProgramContextMiddleware
 # from app.middleware.security import SecurityHeadersMiddleware, RateLimitMiddleware, LoggingMiddleware
 
+# Import all models to ensure SQLAlchemy relationships are properly initialized
+import app.models
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,

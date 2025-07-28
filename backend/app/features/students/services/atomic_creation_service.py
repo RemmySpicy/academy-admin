@@ -9,7 +9,7 @@ from typing import List, Optional, Dict, Any, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.core.database import get_db
+from app.features.common.models.database import get_db
 from app.features.authentication.models import User
 from app.features.authentication.services.user_service import UserService
 from app.features.students.models import Student
