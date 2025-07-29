@@ -27,7 +27,7 @@ import { useStudents, useStudentStats, useDeleteStudent, useStudentBulkAction } 
 import { parentApi, type EnhancedParent, type ParentStats } from '@/features/parents';
 import { useParents, useParentStats } from '@/features/parents/hooks/useParents';
 import { Student, StudentStats } from '@/features/students/types';
-import { useAuth } from '@/features/authentication/hooks';
+import { useAuth } from '@/components/providers/AppStateProvider';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 // Helper function to calculate age from date of birth

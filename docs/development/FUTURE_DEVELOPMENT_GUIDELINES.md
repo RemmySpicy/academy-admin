@@ -144,6 +144,104 @@ export function useAcademyFeatures() {
 }
 ```
 
+## 🔗 **API Endpoint Management (UPDATED 2025-01-29)**
+
+### ✅ **Use Centralized API Endpoints**
+
+**All API endpoints are now centralized in `/frontend/src/lib/api/endpoints.ts`**
+
+#### ❌ **DON'T: Hardcoded API Paths**
+```typescript
+// ❌ WRONG - Hardcoded paths
+const response = await httpClient.get('/api/v1/programs');
+const user = await httpClient.get('/api/v1/users/123');
+const courses = await httpClient.get('/api/v1/courses');
+```
+
+#### ✅ **DO: Use Centralized Endpoints**
+```typescript
+// ✅ CORRECT - Centralized endpoints
+import { httpClient, API_ENDPOINTS } from '@/lib/api/httpClient';
+
+const response = await httpClient.get(API_ENDPOINTS.programs.list);
+const user = await httpClient.get(API_ENDPOINTS.users.byId('123'));
+const courses = await httpClient.get(API_ENDPOINTS.courses.list);
+```
+
+### 🔧 **API Service Implementation Pattern**
+
+#### ✅ **Modern API Service Structure**
+```typescript
+// ✅ CORRECT - Feature API service using centralized endpoints
+import { httpClient, API_ENDPOINTS } from '@/lib/api/httpClient';
+import type { Feature, FeatureCreate, FeatureUpdate } from '../types';
+
+export class FeatureApiService {
+  static async getAll(params?: SearchParams) {
+    return httpClient.get(API_ENDPOINTS.features.list, params);
+  }
+
+  static async getById(id: string) {
+    return httpClient.get(API_ENDPOINTS.features.byId(id));
+  }
+
+  static async create(data: FeatureCreate) {
+    return httpClient.post(API_ENDPOINTS.features.create, data);
+  }
+
+  static async update(id: string, data: FeatureUpdate) {
+    return httpClient.put(API_ENDPOINTS.features.update(id), data);
+  }
+
+  static async delete(id: string) {
+    return httpClient.delete(API_ENDPOINTS.features.delete(id));
+  }
+}
+```
+
+### 📝 **Available Endpoint Categories**
+
+The centralized system includes endpoints for:
+- **Authentication**: `API_ENDPOINTS.auth.*`
+- **Programs**: `API_ENDPOINTS.programs.*`
+- **Users**: `API_ENDPOINTS.users.*`
+- **Students**: `API_ENDPOINTS.students.*`
+- **Parents**: `API_ENDPOINTS.parents.*`
+- **Courses**: `API_ENDPOINTS.courses.*`
+- **Curricula**: `API_ENDPOINTS.curricula.*`
+- **Content**: `API_ENDPOINTS.content.*`
+- **Scheduling**: `API_ENDPOINTS.scheduling.*`
+- **Equipment**: `API_ENDPOINTS.equipment.*`
+- **Media**: `API_ENDPOINTS.media.*`
+- **Organizations**: `API_ENDPOINTS.organizations.*`
+- **Teams**: `API_ENDPOINTS.teams.*`
+- **Facilities**: `API_ENDPOINTS.facilities.*`
+- **Payments**: `API_ENDPOINTS.payments.*`  
+- **System**: `API_ENDPOINTS.system.*`
+
+### 🎯 **Benefits of Centralized Endpoints**
+
+1. **Single Source of Truth**: All API paths in one location
+2. **Type Safety**: Function-based endpoints prevent typos
+3. **Easy Maintenance**: Update API version in one place
+4. **Consistent Usage**: Same pattern across all features
+5. **Better IDE Support**: Autocomplete and IntelliSense
+
+### 🔄 **Migration from Legacy Endpoints**
+
+If you encounter hardcoded paths in existing code:
+
+```typescript
+// ❌ Replace these patterns:
+const BASE_PATH = '/api/v1/features';
+await httpClient.get(`${BASE_PATH}/${id}`);
+await httpClient.get('/api/v1/features/stats');
+
+// ✅ With centralized endpoints:
+await httpClient.get(API_ENDPOINTS.features.byId(id));
+await httpClient.get(API_ENDPOINTS.features.stats);
+```
+
 ## 📂 **File Structure Standards**
 
 ### 🎯 **Program Management Feature**

@@ -14,7 +14,7 @@ import {
   Activity,
   UserCheck
 } from 'lucide-react';
-import { useAuth } from '@/features/authentication/hooks';
+import { useAuth } from '@/components/providers/AppStateProvider';
 
 interface StatCard {
   title: string;

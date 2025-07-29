@@ -21,7 +21,7 @@ import {
   LogOut,
   TestTube
 } from 'lucide-react';
-import { useAuth } from '@/features/authentication/hooks';
+import { useAuth } from '@/components/providers/AppStateProvider';
 import { useProgramContextHooks } from '@/store';
 
 interface NavItem {

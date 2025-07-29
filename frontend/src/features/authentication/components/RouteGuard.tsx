@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/features/authentication/hooks';
-import { useProgramContextGuard, useProgramContextInitializer } from '@/store';
+import { useRouteGuardState } from '@/components/providers/AppStateProvider';
 import { AuthRedirectService } from '@/features/authentication/services/authRedirectService';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,19 +14,26 @@ interface RouteGuardProps {
 }
 
 /**
- * Route Guard Component
+ * Production-Ready Route Guard Component
  * 
- * Protects routes based on user roles and program access.
- * Automatically redirects unauthorized users to appropriate pages.
+ * Protects routes based on user roles and program access using unified state management.
+ * No more race conditions or defensive try-catch blocks.
  */
 export function RouteGuard({ children, fallback }: RouteGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const {
+    user,
+    isAuthenticated,
+    authLoading,
+    currentProgram,
+    hasPrograms,
+    needsProgramSelection,
+    programsLoading,
+    isReady,
+    isLoading
+  } = useRouteGuardState();
   
-  // Initialize program context when user is authenticated
-  const programInitializer = useProgramContextInitializer();
-  const { isReady, hasProgram, needsProgramSelection } = useProgramContextGuard();
   const [isChecking, setIsChecking] = useState(true);
   const [accessDenied, setAccessDenied] = useState<{
     reason: string;
@@ -36,16 +42,28 @@ export function RouteGuard({ children, fallback }: RouteGuardProps) {
 
   useEffect(() => {
     const checkAccess = async () => {
+      console.log('RouteGuard: Starting access check...', {
+        pathname,
+        isAuthenticated,
+        userId: user?.id,
+        userRole: user?.role,
+        isReady,
+        hasPrograms,
+        currentProgram: currentProgram?.id
+      });
+      
       setIsChecking(true);
       setAccessDenied(null);
 
-      // Wait for auth to complete
-      if (authLoading) {
+      // Wait for authentication and program loading to complete
+      if (isLoading) {
+        console.log('RouteGuard: Still loading, waiting...');
         return;
       }
 
       // Redirect to login if not authenticated
       if (!isAuthenticated || !user) {
+        console.log('RouteGuard: Not authenticated, redirecting to login');
         router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
         return;
       }
@@ -58,6 +76,7 @@ export function RouteGuard({ children, fallback }: RouteGuardProps) {
       );
 
       if (!routeValidation.allowed) {
+        console.log('RouteGuard: Route validation failed:', routeValidation.reason);
         if (routeValidation.redirectTo) {
           router.push(routeValidation.redirectTo);
         } else {
@@ -74,12 +93,14 @@ export function RouteGuard({ children, fallback }: RouteGuardProps) {
         const permission = AuthRedirectService.findRoutePermission(pathname);
         
         if (permission?.requiresProgram) {
-          // Wait for program context to be ready
-          if (!isReady) {
-            return; // Still loading program context
-          }
+          console.log('RouteGuard: Route requires program access, checking...', {
+            hasPrograms,
+            needsProgramSelection,
+            currentProgram: currentProgram?.name
+          });
 
           if (needsProgramSelection) {
+            console.log('RouteGuard: Program selection required');
             setAccessDenied({
               reason: 'Program selection required',
               redirectTo: '/admin?error=program_required',
@@ -88,7 +109,8 @@ export function RouteGuard({ children, fallback }: RouteGuardProps) {
             return;
           }
 
-          if (!hasProgram) {
+          if (!hasPrograms) {
+            console.log('RouteGuard: No program access');
             setAccessDenied({
               reason: 'No program access',
               redirectTo: '/admin?error=no_program_access',
@@ -99,34 +121,31 @@ export function RouteGuard({ children, fallback }: RouteGuardProps) {
         }
       }
 
+      console.log('RouteGuard: Access check passed');
       setIsChecking(false);
     };
 
     checkAccess();
-  }, [authLoading, isAuthenticated, user, pathname, router, isReady, hasProgram, needsProgramSelection]);
-
-  // Debug logging for stuck overlay
-  console.log('RouteGuard state:', { 
-    authLoading, 
-    isChecking, 
+  }, [
+    isLoading,
     isAuthenticated, 
-    user: !!user, 
-    pathname,
-    isReady,
-    hasProgram,
-    needsProgramSelection 
-  });
+    user, 
+    pathname, 
+    router, 
+    isReady, 
+    hasPrograms, 
+    needsProgramSelection,
+    currentProgram
+  ]);
 
   // Show loading while checking access
-  if (authLoading || isChecking) {
+  if (isLoading || isChecking) {
     return fallback || (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">
-            Verifying access... 
-            {authLoading && ' (Auth loading)'}
-            {isChecking && ' (Access checking)'}
+            {isLoading ? 'Loading application...' : 'Verifying access...'}
           </p>
         </div>
       </div>

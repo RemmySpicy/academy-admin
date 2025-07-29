@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/features/authentication/hooks';
+import { useAuth } from '@/components/providers/AppStateProvider';
 
 export default function Home() {
   const { isAuthenticated, isLoading } = useAuth();

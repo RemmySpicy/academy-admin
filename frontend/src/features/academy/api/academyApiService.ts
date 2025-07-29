@@ -5,7 +5,7 @@
  * programs, users, and system settings management.
  */
 
-import { httpClient, ApiResponse } from '@/lib/api/httpClient';
+import { httpClient, ApiResponse, API_ENDPOINTS } from '@/lib/api/httpClient';
 import type { 
   Program, 
   ProgramCreate, 
@@ -21,7 +21,6 @@ import type {
  * Academy Programs API Service
  */
 export class AcademyProgramsApiService {
-  private static readonly BASE_PATH = '/api/v1/programs';
 
   /**
    * Get all programs (academy-wide, no program filtering)
@@ -41,7 +40,7 @@ export class AcademyProgramsApiService {
 
     const queryString = queryParams.toString();
     return httpClient.get<PaginatedResponse<Program>>(
-      `${this.BASE_PATH}${queryString ? `?${queryString}` : ''}`
+      `${API_ENDPOINTS.programs.list}${queryString ? `?${queryString}` : ''}`
     );
   }
 
@@ -49,7 +48,7 @@ export class AcademyProgramsApiService {
    * Get a specific program by ID
    */
   static async getProgram(id: string): Promise<ApiResponse<Program>> {
-    return httpClient.get<Program>(`${this.BASE_PATH}/${id}?bypass_program_filter=true`);
+    return httpClient.get<Program>(`${API_ENDPOINTS.programs.byId(id)}?bypass_program_filter=true`);
   }
 
   /**
@@ -81,28 +80,28 @@ export class AcademyProgramsApiService {
       default_duration: number;
     };
   }>> {
-    return httpClient.get(`${this.BASE_PATH}/${id}/statistics?bypass_program_filter=true`);
+    return httpClient.get(`${API_ENDPOINTS.programs.statistics(id)}?bypass_program_filter=true`);
   }
 
   /**
    * Create a new program
    */
   static async createProgram(data: ProgramCreate): Promise<ApiResponse<Program>> {
-    return httpClient.post<Program>(this.BASE_PATH, data);
+    return httpClient.post<Program>(API_ENDPOINTS.programs.create, data);
   }
 
   /**
    * Update an existing program
    */
   static async updateProgram(id: string, data: ProgramUpdate): Promise<ApiResponse<Program>> {
-    return httpClient.put<Program>(`${this.BASE_PATH}/${id}`, data);
+    return httpClient.put<Program>(API_ENDPOINTS.programs.update(id), data);
   }
 
   /**
    * Delete a program
    */
   static async deleteProgram(id: string): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(`${this.BASE_PATH}/${id}`);
+    return httpClient.delete<void>(API_ENDPOINTS.programs.delete(id));
   }
 
   /**
@@ -119,7 +118,7 @@ export class AcademyProgramsApiService {
       active_programs: number;
       total_students: number;
       total_courses: number;
-    }>(`${this.BASE_PATH}/stats?bypass_program_filter=true`);
+    }>(`${API_ENDPOINTS.programs.stats}?bypass_program_filter=true`);
   }
 
   /**
@@ -131,28 +130,28 @@ export class AcademyProgramsApiService {
     session_types: Array<{id: string; name: string; capacity: number}>;
     default_session_duration: number;
   }>> {
-    return httpClient.get(`${this.BASE_PATH}/${id}/configuration?bypass_program_filter=true`);
+    return httpClient.get(`${API_ENDPOINTS.programs.configuration(id)}?bypass_program_filter=true`);
   }
 
   /**
    * Get program age groups
    */
   static async getProgramAgeGroups(id: string): Promise<ApiResponse<Array<{id: string; name: string; from_age: number; to_age: number}>>> {
-    return httpClient.get(`${this.BASE_PATH}/${id}/age-groups?bypass_program_filter=true`);
+    return httpClient.get(`${API_ENDPOINTS.programs.ageGroups(id)}?bypass_program_filter=true`);
   }
 
   /**
    * Get program difficulty levels
    */
   static async getProgramDifficultyLevels(id: string): Promise<ApiResponse<Array<{id: string; name: string; weight: number}>>> {
-    return httpClient.get(`${this.BASE_PATH}/${id}/difficulty-levels?bypass_program_filter=true`);
+    return httpClient.get(`${API_ENDPOINTS.programs.difficultyLevels(id)}?bypass_program_filter=true`);
   }
 
   /**
    * Get program session types
    */
   static async getProgramSessionTypes(id: string): Promise<ApiResponse<Array<{id: string; name: string; capacity: number}>>> {
-    return httpClient.get(`${this.BASE_PATH}/${id}/session-types?bypass_program_filter=true`);
+    return httpClient.get(`${API_ENDPOINTS.programs.sessionTypes(id)}?bypass_program_filter=true`);
   }
 }
 
@@ -160,7 +159,6 @@ export class AcademyProgramsApiService {
  * Academy Users API Service
  */
 export class AcademyUsersApiService {
-  private static readonly BASE_PATH = '/api/v1/users';
 
   /**
    * Get all users (academy-wide)
@@ -180,7 +178,7 @@ export class AcademyUsersApiService {
 
     const queryString = queryParams.toString();
     return httpClient.get<PaginatedResponse<User>>(
-      `${this.BASE_PATH}${queryString ? `?${queryString}` : ''}`
+      `${API_ENDPOINTS.users.list}${queryString ? `?${queryString}` : ''}`
     );
   }
 
@@ -188,42 +186,42 @@ export class AcademyUsersApiService {
    * Get a specific user by ID
    */
   static async getUser(id: string): Promise<ApiResponse<User>> {
-    return httpClient.get<User>(`${this.BASE_PATH}/${id}`);
+    return httpClient.get<User>(API_ENDPOINTS.users.byId(id));
   }
 
   /**
    * Create a new user
    */
   static async createUser(data: UserCreate): Promise<ApiResponse<User>> {
-    return httpClient.post<User>(this.BASE_PATH, data);
+    return httpClient.post<User>(API_ENDPOINTS.users.create, data);
   }
 
   /**
    * Update an existing user
    */
   static async updateUser(id: string, data: UserUpdate): Promise<ApiResponse<User>> {
-    return httpClient.put<User>(`${this.BASE_PATH}/${id}`, data);
+    return httpClient.put<User>(API_ENDPOINTS.users.update(id), data);
   }
 
   /**
    * Delete a user
    */
   static async deleteUser(id: string): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(`${this.BASE_PATH}/${id}`);
+    return httpClient.delete<void>(API_ENDPOINTS.users.delete(id));
   }
 
   /**
    * Assign user to program
    */
   static async assignUserToProgram(userId: string, programId: string): Promise<ApiResponse<void>> {
-    return httpClient.post<void>(`${this.BASE_PATH}/${userId}/programs`, { program_id: programId });
+    return httpClient.post<void>(API_ENDPOINTS.users.assignToProgram(userId), { program_id: programId });
   }
 
   /**
    * Remove user from program
    */
   static async removeUserFromProgram(userId: string, programId: string): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(`${this.BASE_PATH}/${userId}/programs/${programId}`);
+    return httpClient.delete<void>(API_ENDPOINTS.users.removeFromProgram(userId, programId));
   }
 
   /**
@@ -238,7 +236,7 @@ export class AcademyUsersApiService {
       total_users: number;
       active_users: number;
       users_by_role: Record<string, number>;
-    }>(`${this.BASE_PATH}/stats`);
+    }>(API_ENDPOINTS.users.stats);
   }
 }
 
@@ -246,20 +244,19 @@ export class AcademyUsersApiService {
  * Academy System Settings API Service
  */
 export class AcademySettingsApiService {
-  private static readonly BASE_PATH = '/api/v1/settings';
 
   /**
    * Get system settings
    */
   static async getSettings(): Promise<ApiResponse<Record<string, any>>> {
-    return httpClient.get<Record<string, any>>(this.BASE_PATH);
+    return httpClient.get<Record<string, any>>(API_ENDPOINTS.settings.get);
   }
 
   /**
    * Update system settings
    */
   static async updateSettings(settings: Record<string, any>): Promise<ApiResponse<Record<string, any>>> {
-    return httpClient.put<Record<string, any>>(this.BASE_PATH, settings);
+    return httpClient.put<Record<string, any>>(API_ENDPOINTS.settings.update, settings);
   }
 
   /**
@@ -276,7 +273,7 @@ export class AcademySettingsApiService {
       uptime: number;
       database: string;
       cache: string;
-    }>('/api/v1/health/system');
+    }>(API_ENDPOINTS.system.health);
   }
 }
 

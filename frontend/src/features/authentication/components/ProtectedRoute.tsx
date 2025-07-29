@@ -2,7 +2,7 @@
 
 import { useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../hooks';
+import { useAuth } from '@/components/providers/AppStateProvider';
 import { useProgramContextInitializer } from '@/store';
 import { Loader2 } from 'lucide-react';
 

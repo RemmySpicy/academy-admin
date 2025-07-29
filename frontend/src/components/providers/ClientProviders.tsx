@@ -1,12 +1,11 @@
 'use client';
 
-import { AuthProvider } from '@/features/authentication/hooks';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import { ToastProvider } from '@/components/providers/ToastProvider';
 import { Toaster } from '@/components/ui/toaster';
-import { ProgramContextProvider } from '@/store';
-import { ProgramContextSyncProvider } from '@/components/providers/ProgramContextSyncProvider';
+import { AppStateProvider } from '@/components/providers/AppStateProvider';
 import { UnsavedChangesProvider } from '@/hooks/useUnsavedChanges';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 interface ClientProvidersProps {
   children: React.ReactNode;
@@ -14,18 +13,16 @@ interface ClientProvidersProps {
 
 export function ClientProviders({ children }: ClientProvidersProps) {
   return (
-    <QueryProvider>
-      <AuthProvider>
-        <ProgramContextProvider>
+    <ErrorBoundary>
+      <QueryProvider>
+        <AppStateProvider>
           <UnsavedChangesProvider>
-            <ProgramContextSyncProvider>
-              {children}
-              <ToastProvider />
-              <Toaster />
-            </ProgramContextSyncProvider>
+            {children}
+            <ToastProvider />
+            <Toaster />
           </UnsavedChangesProvider>
-        </ProgramContextProvider>
-      </AuthProvider>
-    </QueryProvider>
+        </AppStateProvider>
+      </QueryProvider>
+    </ErrorBoundary>
   );
 }

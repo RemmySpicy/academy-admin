@@ -67,7 +67,11 @@
       "Bash(claude --version)",
       "Bash(true)",
       "Bash(PYTHONPATH=. python3 -c \"from alembic.config import Config; from alembic import command; alembic_cfg = Config(''alembic.ini''); command.upgrade(alembic_cfg, ''head'')\")",
-      "Bash(alembic:*)"
+      "Bash(alembic:*)",
+      "Bash(mypy:*)",
+      "Bash(./venv/bin/mypy --version)",
+      "Bash(node:*)",
+      "Bash(cat:*)"
     ],
     "deny": []
   }

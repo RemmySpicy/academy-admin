@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { Eye, EyeOff, Loader2, GraduationCap, Shield, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '../hooks';
+import { useAuth } from '@/components/providers/AppStateProvider';
 
 const loginSchema = z.object({
   username: z

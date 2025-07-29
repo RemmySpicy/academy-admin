@@ -6,7 +6,7 @@
 
 import React, { useEffect } from 'react';
 import { useProgramContext } from './programContext';
-import { useAuth } from '@/features/authentication/hooks';
+import { useAuth } from '@/components/providers/AppStateProvider';
 
 /**
  * Program Context Initializer Hook

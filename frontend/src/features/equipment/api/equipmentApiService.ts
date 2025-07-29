@@ -3,7 +3,7 @@
  * Handles all equipment-related API operations with automatic program context
  */
 
-import { httpClient } from '@/lib/api/httpClient';
+import { httpClient, API_ENDPOINTS as GLOBAL_API_ENDPOINTS } from '@/lib/api/httpClient';
 import { PaginatedResponse } from '@/lib/api/types';
 
 export interface Equipment {
@@ -181,21 +181,9 @@ export interface LessonEquipmentSummary {
   consumable_equipment_count: number;
 }
 
-// API endpoints
+// Use centralized API endpoints
 const API_ENDPOINTS = {
-  equipment: {
-    list: '/api/v1/equipment',
-    create: '/api/v1/equipment',
-    get: (id: string) => `/api/v1/equipment/${id}`,
-    update: (id: string) => `/api/v1/equipment/${id}`,
-    delete: (id: string) => `/api/v1/equipment/${id}`,
-    stats: '/api/v1/equipment/stats',
-    byLesson: (lessonId: string) => `/api/v1/equipment/by-lesson/${lessonId}`,
-    usage: (equipmentName: string) => `/api/v1/equipment/usage/${equipmentName}`,
-    bulkUpdate: '/api/v1/equipment/bulk-update',
-    inventorySummary: '/api/v1/equipment/inventory/summary',
-    lessonSummary: (lessonId: string) => `/api/v1/equipment/requirements/lesson/${lessonId}`,
-  },
+  equipment: GLOBAL_API_ENDPOINTS.equipment,
 };
 
 export const equipmentApiService = {
