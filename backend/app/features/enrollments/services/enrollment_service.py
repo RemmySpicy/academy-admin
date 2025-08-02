@@ -16,8 +16,8 @@ from sqlalchemy import and_, or_, func
 from fastapi import HTTPException, status
 import logging
 
-from app.features.students.models.course_enrollment import CourseEnrollment
-from app.features.students.models.program_assignment import ProgramAssignment
+from app.features.enrollments.models.course_enrollment import CourseEnrollment
+from app.features.enrollments.models.program_assignment import ProgramAssignment
 from app.features.students.models.student import Student
 from app.features.parents.models.parent import Parent
 from app.features.authentication.models.user import User

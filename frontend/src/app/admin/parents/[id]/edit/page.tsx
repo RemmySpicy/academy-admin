@@ -97,6 +97,7 @@ export default function EditParentPage() {
   // Initialize form data when parent loads
   React.useEffect(() => {
     if (parent) {
+      console.log('Parent data received:', parent); // Debug log
       setFormData({
         basic_info: {
           first_name: parent.first_name || '',
@@ -108,20 +109,20 @@ export default function EditParentPage() {
           referral_source: parent.referral_source || '',
           emergency_contact_name: parent.emergency_contact_name || '',
           emergency_contact_phone: parent.emergency_contact_phone || '',
-          additional_notes: parent.additional_notes || ''
+          additional_notes: parent.notes || parent.additional_notes || ''
         },
         address: {
-          street: parent.address?.street || '',
+          street: parent.address?.street || parent.address?.line1 || '',
           city: parent.address?.city || '',
           state: parent.address?.state || '',
-          postal_code: parent.address?.postal_code || '',
+          postal_code: parent.address?.postal_code || parent.address?.zip || '',
           country: parent.address?.country || 'Nigeria'
         },
         account_settings: {
           profile_type: 'full_user',
           roles: parent.roles || ['parent']
         },
-        relationships: parent.child_relationships || [],
+        relationships: parent.child_relationships || parent.children || [],
         organization_memberships: parent.organization_memberships || []
       });
     }
@@ -181,9 +182,11 @@ export default function EditParentPage() {
 
   const searchOrganizations = async (query: string) => {
     try {
-      const response = await fetch(`/api/v1/organizations/search?q=${encodeURIComponent(query)}&program_id=${currentProgram?.id}`, {
+      // Search across entire system, not just current program
+      const response = await fetch(`/api/v1/organizations/search?q=${encodeURIComponent(query)}`, {
         headers: {
-          'X-Program-Context': currentProgram?.id || ''
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
         }
       });
       

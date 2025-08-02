@@ -9,12 +9,14 @@ from sqlalchemy.orm import Session
 from app.features.common.models.base import BaseModel
 
 ModelType = TypeVar("ModelType", bound=BaseModel)
+CreateSchemaType = TypeVar("CreateSchemaType")
+UpdateSchemaType = TypeVar("UpdateSchemaType")
 
 
-class BaseService(Generic[ModelType]):
+class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     """Base service class providing common CRUD operations."""
     
-    def __init__(self, db: Session, model_class: type[ModelType]):
+    def __init__(self, db: Session = None, model_class: type[ModelType] = None):
         self.db = db
         self.model_class = model_class
     

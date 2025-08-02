@@ -209,17 +209,58 @@ interface StudentProgress {
 
 ## Parent Mobile App Features
 
-### 1. Child Progress Monitoring
+### 1. Course Enrollment & Management
+
+#### **Enhanced Course Enrollment**
+- **Feature**: Complete course enrollment process with facility selection
+- **UI Components**: Course browser, facility selector, pricing calculator, payment interface
+- **Functionality**:
+  - Browse available courses with age eligibility checking
+  - Select preferred facilities with location types (our-facility, client-location, virtual)
+  - Choose session types (private, group, school_group) with real-time pricing
+  - Apply coupon codes and calculate total costs
+  - Complete enrollment with payment tracking and session access control
+  - View enrollment history and manage multiple children
+
+```typescript
+// Enhanced Enrollment API Integration
+interface EnrollmentRequest {
+  user_id: string;
+  course_id: string;
+  facility_id?: string;
+  location_type: 'our-facility' | 'client-location' | 'virtual';
+  session_type: 'private' | 'group' | 'school_group';
+  age_group: string;
+  coupon_code?: string;
+  referral_source: 'Mobile App';
+  special_requirements?: string;
+}
+```
+
+#### **Enrollment Status & Payment Management**
+- **Feature**: Track enrollment status and manage payments for sessions
+- **UI Components**: Enrollment cards, payment status indicators, session access alerts
+- **Functionality**:
+  - Real-time enrollment status (active, suspended, completed)
+  - Payment status tracking (unpaid, partially_paid, fully_paid)
+  - Session access control based on payment thresholds (≥50% for session access)
+  - Outstanding balance alerts and payment reminders
+  - Facility information and contact details
+  - Course progress tracking with level/module/session counts
+
+### 2. Child Progress Monitoring
 
 #### **Overview Dashboard**
-- **Feature**: High-level view of child's learning progress
-- **UI Components**: Progress summaries, recent activity, alerts
+- **Feature**: High-level view of child's learning progress and enrollment status
+- **UI Components**: Progress summaries, recent activity, alerts, enrollment cards
 - **Functionality**:
-  - Summary cards for each enrolled child
+  - Summary cards for each enrolled child showing course enrollments
   - Recent lesson completions and grades
+  - Enrollment status and payment alerts
   - Upcoming assessments and milestones
   - Communication alerts from instructors
   - Schedule and attendance tracking
+  - Facility information and session access status
 
 #### **Detailed Progress Reports**
 - **Feature**: In-depth progress analysis and reporting
@@ -256,6 +297,21 @@ interface StudentProgress {
 ## Technical Implementation Requirements
 
 ### API Integration Points
+
+#### **Enrollment Management API**
+```typescript
+// Course discovery and enrollment
+GET /course-assignments/assignable-courses
+GET /course-assignments/student-age-eligibility/{user_id}/{course_id}
+GET /course-assignments/available-facilities/{course_id}
+POST /course-assignments/calculate-pricing
+POST /course-assignments/assign
+GET /course-assignments/user-assignments/{user_id}
+POST /course-assignments/bulk-assign
+GET /course-assignments/validate-facility-availability/{course_id}/{facility_id}
+GET /course-assignments/student-default-facility/{user_id}
+DELETE /course-assignments/remove/{user_id}/{course_id}
+```
 
 #### **Classroom Management API**
 ```typescript

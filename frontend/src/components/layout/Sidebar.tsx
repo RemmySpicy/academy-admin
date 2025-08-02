@@ -76,12 +76,6 @@ const navigationSections: NavSection[] = [
         icon: UserCheck
       },
       {
-        title: 'Partners',
-        href: '/admin/partners',
-        icon: Building2,
-        roles: ['super_admin', 'program_admin']
-      },
-      {
         title: 'Payments',
         href: '/admin/payments',
         icon: CreditCard
@@ -98,6 +92,11 @@ const navigationSections: NavSection[] = [
         title: 'Academy Admin',
         href: '/admin/academy/programs',
         icon: Building
+      },
+      {
+        title: 'Partners',
+        href: '/admin/partners',
+        icon: Building2
       }
     ]
   },
@@ -172,7 +171,7 @@ export function Sidebar({ className }: SidebarProps) {
           onClick={item.onClick}
           className={cn(
             "group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors w-full text-left",
-            "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+            "text-gray-700 hover:bg-white hover:text-gray-900 hover:shadow-sm"
           )}
           title={isCollapsed ? item.title : undefined}
         >
@@ -198,15 +197,15 @@ export function Sidebar({ className }: SidebarProps) {
         className={cn(
           "group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
           isActive
-            ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
-            : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+            ? "bg-blue-100 text-blue-900 shadow-sm"
+            : "text-gray-700 hover:bg-white hover:text-gray-900 hover:shadow-sm"
         )}
         title={isCollapsed ? item.title : undefined}
       >
         <Icon
           className={cn(
             "h-5 w-5 flex-shrink-0",
-            isActive ? "text-blue-700" : "text-gray-400 group-hover:text-gray-600"
+            isActive ? "text-blue-900" : "text-gray-400 group-hover:text-gray-600"
           )}
         />
         {!isCollapsed && (
@@ -219,13 +218,13 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <div
       className={cn(
-        "relative flex h-full flex-col bg-white border-r border-gray-200 transition-all duration-300",
+        "relative flex h-full flex-col bg-gray-50 border-r border-gray-200 transition-all duration-300",
         isCollapsed ? "w-16" : "w-64",
         className
       )}
     >
       {/* Header */}
-      <div className="flex h-16 items-center justify-between px-4 border-b border-gray-200">
+      <div className="flex h-16 items-center justify-between px-4 border-b border-gray-200 bg-white">
         {!isCollapsed && (
           <h1 className="text-xl font-bold text-gray-900">Academy Admin</h1>
         )}
@@ -271,7 +270,7 @@ export function Sidebar({ className }: SidebarProps) {
         <div className="pt-4 border-t border-gray-200">
           <button
             onClick={handleLogout}
-            className="group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors w-full text-left text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+            className="group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors w-full text-left text-gray-700 hover:bg-white hover:text-gray-900 hover:shadow-sm"
             title={isCollapsed ? 'Logout' : undefined}
           >
             <LogOut className="h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-gray-600" />

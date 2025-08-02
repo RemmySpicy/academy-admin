@@ -19,10 +19,16 @@ from app.features.parents.schemas.parent import (
     ParentSearchParams,
     ParentStatsResponse,
 )
+from app.features.students.schemas.unified_creation import (
+    UnifiedParentCreateRequest,
+    UnifiedParentCreateResponse,
+    UnifiedCreationErrorResponse,
+)
 
 from app.features.parents.services.parent_service import parent_service
 from app.features.parents.services.relationship_service import relationship_service
 from app.features.parents.services.atomic_creation_service import atomic_creation_service
+from app.features.students.services.unified_creation_service import unified_creation_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -42,7 +48,7 @@ async def create_parent(
     Creates both User account and Parent profile atomically.
     """
     # Check permissions
-    if not current_user.get("is_active"):
+    if not current_user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Inactive user"
@@ -56,7 +62,7 @@ async def create_parent(
             parent_data=parent_data,
             children_data=[],  # No children in simple parent creation
             program_context=program_context,
-            created_by=current_user["id"]
+            created_by=current_user.id
         )
         
         parent_profile = result["parent"]["profile"]
@@ -78,8 +84,9 @@ async def create_parent(
             emergency_contact_name=parent_profile.emergency_contact_name,
             emergency_contact_phone=parent_profile.emergency_contact_phone,
             occupation=parent_profile.occupation,
-            payment_responsibility=parent_profile.payment_responsibility,
+            is_primary_payer=parent_profile.is_primary_payer,
             is_active=parent_user.is_active,
+            program_id=program_context or "unknown",
             enrollment_date=parent_profile.enrollment_date.isoformat() if parent_profile.enrollment_date else None,
             created_at=parent_profile.created_at.isoformat(),
             updated_at=parent_profile.updated_at.isoformat()
@@ -123,31 +130,10 @@ async def list_parents(
             has_children=has_children
         )
         
-        # Build response with parent data
+        # Build response with parent data using the service method
         parent_items = []
         for parent in parents:
-            parent_data = ParentResponse(
-                id=str(parent.id),
-                user_id=str(parent.user.id),
-                username=parent.user.username,
-                email=parent.user.email,
-                first_name=parent.user.first_name,
-                last_name=parent.user.last_name,
-                salutation=parent.user.salutation,
-                phone=parent.user.phone,
-                date_of_birth=parent.user.date_of_birth.isoformat() if parent.user.date_of_birth else None,
-                referral_source=parent.user.referral_source,
-                profile_photo_url=parent.user.profile_photo_url,
-                address=parent.address,
-                emergency_contact_name=parent.emergency_contact_name,
-                emergency_contact_phone=parent.emergency_contact_phone,
-                occupation=parent.occupation,
-                payment_responsibility=parent.payment_responsibility,
-                is_active=parent.user.is_active,
-                enrollment_date=parent.enrollment_date.isoformat() if parent.enrollment_date else None,
-                created_at=parent.created_at.isoformat(),
-                updated_at=parent.updated_at.isoformat()
-            )
+            parent_data = parent_service._to_parent_response(db, parent)
             parent_items.append(parent_data)
         
         # Calculate pagination info
@@ -198,6 +184,62 @@ async def get_parent_stats(
         )
 
 
+@router.get("/in-program-by-children", response_model=ParentListResponse)
+async def get_parents_in_program_by_children(
+    current_user: Annotated[dict, Depends(get_current_active_user)],
+    db: Session = Depends(get_db),
+    program_context: Optional[str] = Depends(get_program_context),
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(20, ge=1, le=100, description="Items per page")
+):
+    """
+    Get parents in program based on their children's course enrollments (new assignment-based approach).
+    
+    This endpoint returns parents who are visible in the program based on their children's
+    course enrollments rather than direct program assignment. This supports the new
+    assignment-based workflow where parent program membership is determined by children's enrollments.
+    """
+    if not program_context:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Program context is required for this operation"
+        )
+    
+    try:
+        parents, total_count = parent_service.get_parents_in_program_by_children_enrollment(
+            db=db,
+            program_id=program_context,
+            page=page,
+            per_page=per_page
+        )
+        
+        # Build response with parent data using the service method
+        parent_items = []
+        for parent in parents:
+            parent_data = parent_service._to_parent_response(db, parent)
+            parent_items.append(parent_data)
+        
+        # Calculate pagination info
+        total_pages = (total_count + per_page - 1) // per_page
+        
+        return ParentListResponse(
+            items=parent_items,
+            total=total_count,
+            page=page,
+            per_page=per_page,
+            total_pages=total_pages,
+            has_next=page < total_pages,
+            has_prev=page > 1
+        )
+        
+    except Exception as e:
+        logger.error(f"Error listing parents by children enrollment: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error retrieving parents list by children enrollment"
+        )
+
+
 @router.get("/{parent_id}", response_model=ParentResponse)
 async def get_parent(
     parent_id: str,
@@ -241,8 +283,9 @@ async def get_parent(
             emergency_contact_name=parent.emergency_contact_name,
             emergency_contact_phone=parent.emergency_contact_phone,
             occupation=parent.occupation,
-            payment_responsibility=parent.payment_responsibility,
+            payment_responsibility=parent.is_primary_payer,
             is_active=parent.user.is_active,
+            program_id=program_context or "unknown",
             enrollment_date=parent.enrollment_date.isoformat() if parent.enrollment_date else None,
             created_at=parent.created_at.isoformat(),
             updated_at=parent.updated_at.isoformat()
@@ -272,7 +315,7 @@ async def update_parent(
     Allows partial updates of parent data and updates linked User account.
     """
     # Check permissions
-    if not current_user.get("is_active"):
+    if not current_user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Inactive user"
@@ -293,11 +336,11 @@ async def update_parent(
             )
         
         # Update parent using the service
-        updated_parent = parent_service.update_parent(
+        updated_parent = parent_service.update_parent_profile(
             db=db,
             parent_id=parent_id,
             parent_update=parent_data,
-            updated_by=current_user["id"],
+            updated_by=current_user.id,
             program_context=program_context
         )
         
@@ -324,8 +367,9 @@ async def update_parent(
             emergency_contact_name=updated_parent.emergency_contact_name,
             emergency_contact_phone=updated_parent.emergency_contact_phone,
             occupation=updated_parent.occupation,
-            payment_responsibility=updated_parent.payment_responsibility,
+            is_primary_payer=updated_parent.is_primary_payer,
             is_active=updated_parent.user.is_active,
+            program_id=program_context or "unknown",
             enrollment_date=updated_parent.enrollment_date.isoformat() if updated_parent.enrollment_date else None,
             created_at=updated_parent.created_at.isoformat(),
             updated_at=updated_parent.updated_at.isoformat()
@@ -390,10 +434,10 @@ async def delete_parent(
             )
         
         # Perform deletion using the service
-        success = parent_service.delete_parent(
+        success = parent_service.delete_parent_profile(
             db=db,
             parent_id=parent_id,
-            deleted_by=current_user["id"],
+            deleted_by=current_user.id,
             program_context=program_context
         )
         
@@ -486,7 +530,7 @@ async def create_parent_profile_only(
     child course enrollments. It separates profile creation from program assignment.
     """
     # Check permissions
-    if not current_user.get("is_active"):
+    if not current_user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Inactive user"
@@ -499,7 +543,7 @@ async def create_parent_profile_only(
             parent_data=parent_data,
             children_data=[],  # No children in profile-only creation
             program_context=None,  # No automatic program assignment
-            created_by=current_user["id"]
+            created_by=current_user.id
         )
         
         parent_profile = result["parent"]["profile"]
@@ -521,8 +565,9 @@ async def create_parent_profile_only(
             emergency_contact_name=parent_profile.emergency_contact_name,
             emergency_contact_phone=parent_profile.emergency_contact_phone,
             occupation=parent_profile.occupation,
-            payment_responsibility=parent_profile.payment_responsibility,
+            is_primary_payer=parent_profile.is_primary_payer,
             is_active=parent_user.is_active,
+            program_id=program_context or "unknown",
             enrollment_date=parent_profile.enrollment_date.isoformat() if parent_profile.enrollment_date else None,
             created_at=parent_profile.created_at.isoformat(),
             updated_at=parent_profile.updated_at.isoformat()
@@ -541,10 +586,10 @@ async def create_parent_profile_only(
 @router.post("/{parent_id}/assign-to-program")
 async def assign_parent_to_program(
     parent_id: str,
-    program_id: str = Query(..., description="Program ID to assign to"),
-    assignment_notes: Optional[str] = Query(None, description="Assignment notes"),
     current_user: Annotated[dict, Depends(get_current_active_user)],
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    program_id: str = Query(..., description="Program ID to assign to"),
+    assignment_notes: Optional[str] = Query(None, description="Assignment notes")
 ):
     """
     Assign a parent to a program (Step 2 of two-step workflow).
@@ -553,7 +598,7 @@ async def assign_parent_to_program(
     typically done when their children are enrolled in courses within that program.
     """
     # Check permissions
-    if not current_user.get("is_active"):
+    if not current_user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Inactive user"
@@ -569,10 +614,10 @@ async def assign_parent_to_program(
             )
         
         # Use the course assignment service to create program assignment
-        from app.features.students.services.course_assignment_service import course_assignment_service
+        from app.features.enrollments.services.enrollment_service import course_assignment_service
         
         assignment = course_assignment_service._ensure_program_assignment(
-            db, parent.user_id, program_id, current_user["id"]
+            db, parent.user_id, program_id, current_user.id
         )
         
         return {
@@ -598,95 +643,18 @@ async def assign_parent_to_program(
         )
 
 
-@router.get("/in-program-by-children", response_model=ParentListResponse)
-async def get_parents_in_program_by_children(
-    current_user: Annotated[dict, Depends(get_current_active_user)],
-    db: Session = Depends(get_db),
-    program_context: Optional[str] = Depends(get_program_context),
-    page: int = Query(1, ge=1, description="Page number"),
-    per_page: int = Query(20, ge=1, le=100, description="Items per page")
-):
-    """
-    Get parents in program based on their children's course enrollments (new assignment-based approach).
-    
-    This endpoint returns parents who are visible in the program based on their children's
-    course enrollments rather than direct program assignment. This supports the new
-    assignment-based workflow where parent program membership is determined by children's enrollments.
-    """
-    if not program_context:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Program context is required for this operation"
-        )
-    
-    try:
-        parents, total_count = parent_service.get_parents_in_program_by_children(
-            db=db,
-            program_id=program_context,
-            page=page,
-            per_page=per_page
-        )
-        
-        # Build response with parent data
-        parent_items = []
-        for parent in parents:
-            parent_data = ParentResponse(
-                id=str(parent.id),
-                user_id=str(parent.user.id),
-                username=parent.user.username,
-                email=parent.user.email,
-                first_name=parent.user.first_name,
-                last_name=parent.user.last_name,
-                salutation=parent.user.salutation,
-                phone=parent.user.phone,
-                date_of_birth=parent.user.date_of_birth.isoformat() if parent.user.date_of_birth else None,
-                referral_source=parent.user.referral_source,
-                profile_photo_url=parent.user.profile_photo_url,
-                address=parent.address,
-                emergency_contact_name=parent.emergency_contact_name,
-                emergency_contact_phone=parent.emergency_contact_phone,
-                occupation=parent.occupation,
-                payment_responsibility=parent.payment_responsibility,
-                is_active=parent.user.is_active,
-                enrollment_date=parent.enrollment_date.isoformat() if parent.enrollment_date else None,
-                created_at=parent.created_at.isoformat(),
-                updated_at=parent.updated_at.isoformat()
-            )
-            parent_items.append(parent_data)
-        
-        # Calculate pagination info
-        total_pages = (total_count + per_page - 1) // per_page
-        
-        return ParentListResponse(
-            items=parent_items,
-            total=total_count,
-            page=page,
-            per_page=per_page,
-            total_pages=total_pages,
-            has_next=page < total_pages,
-            has_prev=page > 1
-        )
-        
-    except Exception as e:
-        logger.error(f"Error listing parents by children enrollment: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error retrieving parents list by children enrollment"
-        )
-
-
 @router.post("/{parent_id}/assign-child-to-course")
 async def assign_parent_child_to_course(
     parent_id: str,
+    current_user: Annotated[dict, Depends(get_current_active_user)],
+    db: Session = Depends(get_db),
+    program_context: Optional[str] = Depends(get_program_context),
     child_user_id: str = Query(..., description="Child user ID to assign"),
     course_id: str = Query(..., description="Course ID to assign to"),
     assignment_type: Optional[str] = Query("parent_assigned", description="Assignment type"),
     credits_awarded: Optional[int] = Query(0, description="Credits to award"),
     assignment_notes: Optional[str] = Query(None, description="Assignment notes"),
-    referral_source: Optional[str] = Query(None, description="Referral source"),
-    current_user: Annotated[dict, Depends(get_current_active_user)],
-    db: Session = Depends(get_db),
-    program_context: Optional[str] = Depends(get_program_context)
+    referral_source: Optional[str] = Query(None, description="Referral source")
 ):
     """
     Assign a parent's child to a course (parent-initiated assignment).
@@ -695,7 +663,7 @@ async def assign_parent_child_to_course(
     makes the parent visible in the program through the parent-child relationship.
     """
     # Check permissions
-    if not current_user.get("is_active"):
+    if not current_user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Inactive user"
@@ -727,7 +695,7 @@ async def assign_parent_child_to_course(
             )
         
         # Enroll child in course using course assignment service
-        from app.features.students.services.course_assignment_service import course_assignment_service
+        from app.features.enrollments.services.enrollment_service import course_assignment_service
         
         assignment_details = {
             'assignment_type': assignment_type,
@@ -742,13 +710,13 @@ async def assign_parent_child_to_course(
             user_id=child_user_id,
             course_id=course_id,
             program_context=program_context,
-            assigned_by=current_user["id"],
+            assigned_by=current_user.id,
             assignment_details=assignment_details
         )
         
         # Also ensure parent is assigned to the program
         course_assignment_service._ensure_program_assignment(
-            db, parent.user_id, program_context, current_user["id"]
+            db, parent.user_id, program_context, current_user.id
         )
         
         return {
@@ -774,4 +742,83 @@ async def assign_parent_child_to_course(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error assigning child to course"
+        )
+
+
+# Unified Creation Workflows
+
+@router.post("/create-with-program",
+    response_model=UnifiedParentCreateResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create parent with automatic program association",
+    description="""
+    Create a parent with automatic program association and optional child relationships.
+    
+    This unified workflow:
+    1. Creates user account with parent role
+    2. Creates parent profile
+    3. Auto-assigns to program (from admin's program context) 
+    4. Optionally creates parent-child relationships
+    
+    Designed for program administrators to streamline parent creation.
+    """
+)
+async def create_parent_with_program(
+    request: UnifiedParentCreateRequest,
+    current_user: Annotated[dict, Depends(get_current_active_user)],
+    db: Session = Depends(get_db),
+    program_context: Optional[str] = Depends(get_program_context)
+):
+    """
+    Create a parent with automatic program association and optional child relationships.
+    
+    This is a unified workflow for program administrators that combines user creation,
+    parent profile creation, program assignment, and optional child relationships in
+    a single atomic transaction.
+    """
+    # Validate program context is available
+    if not program_context:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Program context is required for unified parent creation"
+        )
+    
+    # Validate admin has access to create users in this program
+    has_access = unified_creation_service.validate_program_admin_access(
+        db, current_user.id, program_context
+    )
+    
+    if not has_access:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions to create parents in this program"
+        )
+    
+    try:
+        # Prepare user data
+        user_data = request.user_data.model_dump()
+        user_data["password"] = request.password
+        
+        # Prepare parent data
+        parent_data = request.parent_data.model_dump()
+        
+        # Call unified creation service
+        result = unified_creation_service.create_parent_with_program(
+            db=db,
+            user_data=user_data,
+            parent_data=parent_data,
+            program_context=program_context,
+            child_student_ids=request.child_student_ids,
+            created_by=current_user.id
+        )
+        
+        return UnifiedParentCreateResponse(**result)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in unified parent creation: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unexpected error during parent creation"
         )

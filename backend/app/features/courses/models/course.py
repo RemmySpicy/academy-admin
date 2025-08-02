@@ -9,6 +9,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.features.common.models.base import BaseModel
 
+# Import for relationship commented out to avoid circular import
+# from app.features.facilities.models.facility_course_pricing import FacilityCoursePricing
+
 
 class Course(BaseModel):
     """
@@ -104,10 +107,10 @@ class Course(BaseModel):
     )
     
     # Pricing Configuration
-    pricing_matrix: Mapped[List[dict]] = mapped_column(
+    pricing_ranges: Mapped[List[dict]] = mapped_column(
         JSON,
         nullable=False,
-        comment="Pricing matrix with age_range, location_type, session_type, price",
+        comment="Pricing ranges per age group with price_from and price_to",
     )
     
     # Enrollment Configuration
@@ -189,6 +192,7 @@ class Course(BaseModel):
     # program = relationship("Program", back_populates="courses")
     curricula = relationship("Curriculum", back_populates="course", cascade="all, delete-orphan")
     enrollments = relationship("CourseEnrollment", back_populates="course", cascade="all, delete-orphan")
+    # facility_pricing = relationship("FacilityCoursePricing", back_populates="course", cascade="all, delete-orphan")
     
     # Indexes for performance
     __table_args__ = (
@@ -215,9 +219,9 @@ class Course(BaseModel):
         return self.status == 'published'
     
     @property
-    def total_pricing_options(self) -> int:
-        """Get total number of pricing options."""
-        return len(self.pricing_matrix) if self.pricing_matrix else 0
+    def total_pricing_ranges(self) -> int:
+        """Get total number of pricing ranges."""
+        return len(self.pricing_ranges) if self.pricing_ranges else 0
     
     @property
     def full_name(self) -> str:

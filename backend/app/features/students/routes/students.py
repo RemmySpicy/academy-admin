@@ -20,7 +20,13 @@ from app.features.students.schemas.student import (
     StudentBulkActionResponse,
     StudentStatsResponse,
 )
+from app.features.students.schemas.unified_creation import (
+    UnifiedStudentCreateRequest,
+    UnifiedStudentCreateResponse,
+    UnifiedCreationErrorResponse,
+)
 from app.features.students.services.student_service import student_service
+from app.features.students.services.unified_creation_service import unified_creation_service
 
 
 router = APIRouter()
@@ -153,14 +159,16 @@ async def get_student_stats(
 @router.get("/{student_id}", response_model=StudentResponse)
 async def get_student(
     student_id: str,
-    current_user: Annotated[dict, Depends(get_current_active_user)]
+    current_user: Annotated[dict, Depends(get_current_active_user)],
+    db: Session = Depends(get_db),
+    program_context: Optional[str] = Depends(get_program_context)
 ):
     """
     Get a specific student by ID.
     
     Returns detailed student information.
     """
-    student = student_service.get_student(student_id)
+    student = student_service.get_student(db, student_id, program_context)
     if not student:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -817,4 +825,86 @@ async def get_students_in_program_by_enrollment(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error listing students by enrollment: {str(e)}"
+        )
+
+
+# Unified Creation Workflows
+
+@router.post("/create-with-program", 
+    response_model=UnifiedStudentCreateResponse, 
+    status_code=status.HTTP_201_CREATED,
+    summary="Create student with automatic program association",
+    description="""
+    Create a student with automatic program association and optional course enrollment.
+    
+    This unified workflow:
+    1. Creates user account with student role
+    2. Creates student profile  
+    3. Auto-assigns to program (from admin's program context)
+    4. Optionally enrolls in specified course
+    
+    Designed for program administrators to streamline student creation.
+    """
+)
+async def create_student_with_program(
+    request: UnifiedStudentCreateRequest,
+    current_user: Annotated[dict, Depends(get_current_active_user)],
+    db: Session = Depends(get_db),
+    program_context: Optional[str] = Depends(get_program_context)
+):
+    """
+    Create a student with automatic program association and optional course enrollment.
+    
+    This is a unified workflow for program administrators that combines user creation,
+    student profile creation, program assignment, and optional course enrollment in
+    a single atomic transaction.
+    """
+    # Validate program context is available
+    if not program_context:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Program context is required for unified student creation"
+        )
+    
+    # Validate admin has access to create users in this program
+    has_access = unified_creation_service.validate_program_admin_access(
+        db, current_user["id"], program_context
+    )
+    
+    if not has_access:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions to create students in this program"
+        )
+    
+    try:
+        # Prepare user data
+        user_data = request.user_data.model_dump()
+        
+        # Add password if provided
+        if request.password:
+            user_data["password"] = request.password
+        
+        # Prepare student data  
+        student_data = request.student_data.model_dump()
+        
+        # Call unified creation service
+        result = unified_creation_service.create_student_with_program(
+            db=db,
+            user_data=user_data,
+            student_data=student_data,
+            program_context=program_context,
+            course_id=request.course_id,
+            created_by=current_user["id"]
+        )
+        
+        return UnifiedStudentCreateResponse(**result)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in unified student creation: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unexpected error during student creation"
         )

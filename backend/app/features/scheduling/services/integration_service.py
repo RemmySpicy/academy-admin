@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc, func
 
 from app.features.scheduling.models import ScheduledSession, SessionParticipant
-from app.features.students.models.course_enrollment import CourseEnrollment
+from app.features.enrollments.models.course_enrollment import CourseEnrollment
 from app.features.students.models.student import Student
 from app.features.facilities.models.facility import Facility
 from app.features.courses.models.course import Course

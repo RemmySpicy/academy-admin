@@ -18,11 +18,10 @@ import type {
 } from '@/lib/api/types';
 
 // Course Types
-export interface PricingEntry {
+export interface PricingRange {
   age_group: string;
-  location_type: string;
-  session_type: string;
-  price: number;
+  price_from: number;
+  price_to: number;
 }
 
 export interface Course {
@@ -39,7 +38,7 @@ export interface Course {
   age_groups: string[];
   location_types: string[];
   session_types: string[];
-  pricing_matrix: PricingEntry[];
+  pricing_ranges: PricingRange[];
   status: CurriculumStatus;
   instructor_id?: string;
   max_students?: number;
@@ -50,6 +49,9 @@ export interface Course {
   sequence: number;
   is_featured: boolean;
   is_certification_course: boolean;
+  payment_amount?: number;
+  total_students?: number;
+  completion_rate?: number;
   created_at: string;
   updated_at: string;
   created_by: string;
@@ -344,7 +346,7 @@ export interface CourseCreate {
   age_groups: string[];
   location_types: string[];
   session_types: string[];
-  pricing_matrix: PricingEntry[];
+  pricing_ranges: PricingRange[];
   instructor_id?: string;
   max_students?: number;
   min_students?: number;

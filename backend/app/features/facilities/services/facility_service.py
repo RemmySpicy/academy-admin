@@ -15,14 +15,14 @@ from app.features.facilities.schemas.facility import (
     FacilityStatsResponse,
     FacilityListResponse,
 )
-from app.features.courses.services.base_service import BaseService
+from app.features.common.services.base_service import BaseService
 
 
 class FacilityService(BaseService[Facility, FacilityCreate, FacilityUpdate]):
     """Service for facility operations."""
     
-    def __init__(self):
-        super().__init__(Facility)
+    def __init__(self, db: Session):
+        super().__init__(db, Facility)
     
     def create_facility(self, 
                        db: Session, 
@@ -31,25 +31,30 @@ class FacilityService(BaseService[Facility, FacilityCreate, FacilityUpdate]):
         """Create a new facility."""
         # Check for duplicate facility code if provided
         if facility_data.facility_code:
-            existing_facility = db.query(Facility).filter(
+            existing_facility = self.db.query(Facility).filter(
                 Facility.facility_code == facility_data.facility_code
             ).first()
             
             if existing_facility:
                 raise ValueError(f"Facility code '{facility_data.facility_code}' already exists")
         
-        # Create facility
-        facility = self.create(db, facility_data, created_by)
+        # Create facility data dict
+        facility_dict = facility_data.dict()
+        if created_by:
+            facility_dict['created_by'] = created_by
         
-        return self._to_facility_response(db, facility)
+        # Create facility
+        facility = self.create(**facility_dict)
+        
+        return self._to_facility_response(facility)
     
     def get_facility(self, db: Session, facility_id: str) -> Optional[FacilityResponse]:
         """Get facility by ID."""
-        facility = self.get(db, facility_id)
+        facility = self.get_by_id(facility_id)
         if not facility:
             return None
         
-        return self._to_facility_response(db, facility)
+        return self._to_facility_response(facility)
     
     def get_facilities(self, 
                       db: Session, 
@@ -58,7 +63,7 @@ class FacilityService(BaseService[Facility, FacilityCreate, FacilityUpdate]):
         """Get facilities with filtering, sorting, and pagination."""
         
         # Build base query
-        query = db.query(Facility)
+        query = self.db.query(Facility)
         
         # Apply program context filtering
         if program_context:
@@ -78,10 +83,14 @@ class FacilityService(BaseService[Facility, FacilityCreate, FacilityUpdate]):
             )
         
         if params.status:
-            query = query.filter(Facility.status == params.status)
+            # Handle both uppercase and lowercase status values
+            status_value = str(params.status)
+            query = query.filter(Facility.status.in_([status_value, status_value.upper()]))
         
         if params.facility_type:
-            query = query.filter(Facility.facility_type == params.facility_type)
+            # Handle both uppercase and lowercase facility type values
+            type_value = str(params.facility_type)
+            query = query.filter(Facility.facility_type.in_([type_value, type_value.upper()]))
         
         if params.program_id:
             query = query.filter(Facility.program_id == params.program_id)
@@ -106,7 +115,7 @@ class FacilityService(BaseService[Facility, FacilityCreate, FacilityUpdate]):
         facilities = query.offset(skip).limit(params.per_page).all()
         
         # Convert to response format
-        items = [self._to_facility_response(db, facility) for facility in facilities]
+        items = [self._to_facility_response(facility) for facility in facilities]
         
         # Calculate pagination metadata
         total_pages = (total + params.per_page - 1) // params.per_page
@@ -129,13 +138,13 @@ class FacilityService(BaseService[Facility, FacilityCreate, FacilityUpdate]):
                        facility_data: FacilityUpdate,
                        updated_by: Optional[str] = None) -> Optional[FacilityResponse]:
         """Update facility by ID."""
-        facility = self.get(db, facility_id)
+        facility = self.get_by_id(facility_id)
         if not facility:
             return None
         
         # Check for duplicate facility code if being updated
         if facility_data.facility_code and facility_data.facility_code != facility.facility_code:
-            existing_facility = db.query(Facility).filter(
+            existing_facility = self.db.query(Facility).filter(
                 Facility.facility_code == facility_data.facility_code,
                 Facility.id != facility_id
             ).first()
@@ -143,18 +152,23 @@ class FacilityService(BaseService[Facility, FacilityCreate, FacilityUpdate]):
             if existing_facility:
                 raise ValueError(f"Facility code '{facility_data.facility_code}' already exists")
         
-        # Update facility
-        updated_facility = self.update(db, facility, facility_data, updated_by)
+        # Update facility data dict
+        update_dict = facility_data.dict(exclude_unset=True)
+        if updated_by:
+            update_dict['updated_by'] = updated_by
         
-        return self._to_facility_response(db, updated_facility)
+        # Update facility
+        updated_facility = self.update(facility_id, **update_dict)
+        
+        return self._to_facility_response(updated_facility)
     
     def delete_facility(self, db: Session, facility_id: str) -> bool:
         """Delete facility by ID."""
-        facility = self.get(db, facility_id)
+        facility = self.get_by_id(facility_id)
         if not facility:
             return False
         
-        return self.delete(db, facility_id)
+        return self.delete(facility_id)
     
     def get_facility_stats(self, 
                           db: Session,
@@ -162,7 +176,7 @@ class FacilityService(BaseService[Facility, FacilityCreate, FacilityUpdate]):
         """Get facility statistics."""
         
         # Build base query
-        query = db.query(Facility)
+        query = self.db.query(Facility)
         
         # Apply program context filtering
         if program_context:
@@ -170,11 +184,11 @@ class FacilityService(BaseService[Facility, FacilityCreate, FacilityUpdate]):
         
         # Basic counts
         total_facilities = query.count()
-        active_facilities = query.filter(Facility.status == "active").count()
+        active_facilities = query.filter(Facility.status.in_(["active", "ACTIVE"])).count()
         inactive_facilities = total_facilities - active_facilities
         
         # Group by type
-        type_stats = db.query(
+        type_stats = self.db.query(
             Facility.facility_type,
             func.count(Facility.id).label('count')
         )
@@ -182,12 +196,12 @@ class FacilityService(BaseService[Facility, FacilityCreate, FacilityUpdate]):
             type_stats = type_stats.filter(Facility.program_id == program_context)
         
         facilities_by_type = {
-            str(row.facility_type): row.count 
+            str(row.facility_type).lower(): row.count 
             for row in type_stats.group_by(Facility.facility_type).all()
         }
         
         # Group by status
-        status_stats = db.query(
+        status_stats = self.db.query(
             Facility.status,
             func.count(Facility.id).label('count')
         )
@@ -195,12 +209,12 @@ class FacilityService(BaseService[Facility, FacilityCreate, FacilityUpdate]):
             status_stats = status_stats.filter(Facility.program_id == program_context)
         
         facilities_by_status = {
-            str(row.status): row.count 
+            str(row.status).lower(): row.count 
             for row in status_stats.group_by(Facility.status).all()
         }
         
         # Group by program
-        program_stats = db.query(
+        program_stats = self.db.query(
             Facility.program_id,
             func.count(Facility.id).label('count')
         )
@@ -213,7 +227,7 @@ class FacilityService(BaseService[Facility, FacilityCreate, FacilityUpdate]):
         }
         
         # Capacity and area statistics
-        capacity_stats = db.query(
+        capacity_stats = self.db.query(
             func.sum(Facility.capacity).label('total_capacity'),
             func.avg(Facility.capacity).label('avg_capacity'),
             func.sum(Facility.area_sqft).label('total_area'),
@@ -237,13 +251,13 @@ class FacilityService(BaseService[Facility, FacilityCreate, FacilityUpdate]):
             average_area=float(stats_row.avg_area or 0)
         )
     
-    def _to_facility_response(self, db: Session, facility: Facility) -> FacilityResponse:
+    def _to_facility_response(self, facility: Facility) -> FacilityResponse:
         """Convert facility model to response format."""
         return FacilityResponse(
             id=facility.id,
             name=facility.name,
             description=facility.description,
-            facility_type=facility.facility_type,
+            facility_type=facility.facility_type.lower() if facility.facility_type else None,
             address=facility.address,
             city=facility.city,
             state=facility.state,
@@ -251,7 +265,7 @@ class FacilityService(BaseService[Facility, FacilityCreate, FacilityUpdate]):
             country=facility.country,
             capacity=facility.capacity,
             area_sqft=facility.area_sqft,
-            status=facility.status,
+            status=facility.status.lower() if facility.status else None,
             equipment=facility.equipment,
             contact_phone=facility.contact_phone,
             contact_email=facility.contact_email,
@@ -269,5 +283,7 @@ class FacilityService(BaseService[Facility, FacilityCreate, FacilityUpdate]):
         )
 
 
-# Create a singleton instance
-facility_service = FacilityService()
+# Service factory function
+def get_facility_service(db: Session) -> FacilityService:
+    """Get facility service instance."""
+    return FacilityService(db)

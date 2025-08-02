@@ -207,6 +207,11 @@ class ParentResponse(ParentBase, TimestampMixin):
     children_count: int = Field(default=0, description="Number of children")
     primary_children_count: int = Field(default=0, description="Number of children where this is primary contact")
     
+    # Financial information (computed from children's enrollments)
+    outstanding_balance: Optional[float] = Field(default=0.0, description="Total outstanding balance from children's enrollments")
+    status: Optional[str] = Field(default="Inactive", description="Parent status based on children's enrollment activity")
+    last_payment_date: Optional[str] = Field(default="Never", description="Last payment date from children's enrollments")
+    
     # Audit information
     created_by: Optional[str] = Field(None, description="Created by user ID")
     updated_by: Optional[str] = Field(None, description="Updated by user ID")
@@ -291,12 +296,21 @@ class ParentSearchParams(BaseModel):
 
 
 class ParentStatsResponse(BaseModel):
-    """Schema for parent statistics response."""
+    """Schema for parent statistics response - updated for assignment-based architecture."""
     
-    total_parents: int = Field(..., description="Total number of parents")
-    parents_with_children: int = Field(..., description="Number of parents with children")
-    primary_payers: int = Field(..., description="Number of primary payers")
+    total_parents: int = Field(..., description="Total number of parent profiles")
+    parents_with_relationships: int = Field(..., description="Number of parents with child relationships")  
+    students_with_parents: int = Field(..., description="Number of students who have parent relationships")
+    total_parent_child_relationships: int = Field(..., description="Total parent-child relationships")
+    primary_payers: int = Field(..., description="Number of parents who are primary payers")
     parents_by_gender: Dict[str, int] = Field(..., description="Parents grouped by gender")
     parents_by_children_count: Dict[str, int] = Field(..., description="Parents grouped by number of children")
-    recent_enrollments: int = Field(..., description="Parents enrolled in last 30 days")
-    average_children_per_parent: float = Field(..., description="Average number of children per parent")
+    recent_parent_profiles: int = Field(..., description="Parent profiles created in last 30 days")
+    active_course_enrollments: int = Field(..., description="Active course enrollments in system")
+    average_relationships_per_parent: float = Field(..., description="Average parent-child relationships per parent")
+    
+    # Additional fields for frontend compatibility
+    active_parents: int = Field(..., description="Number of active parents (with children)")
+    inactive_parents: int = Field(..., description="Number of inactive parents (without children)")
+    parents_with_children: int = Field(..., description="Number of parents with children (mapped field)")
+    avg_children_per_parent: float = Field(..., description="Average children per parent (mapped field)")

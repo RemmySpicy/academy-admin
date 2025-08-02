@@ -9,19 +9,19 @@ from enum import Enum
 
 class FacilityTypeEnum(str, Enum):
     """Facility type enumeration for API."""
-    POOL = "POOL"
-    COURTS = "COURTS"
-    GYM = "GYM"
-    FIELD = "FIELD"
-    CLASSROOM = "CLASSROOM"
-    EXTERNAL = "EXTERNAL"
+    POOL = "pool"
+    COURTS = "courts"
+    GYM = "gym"
+    FIELD = "field"
+    CLASSROOM = "classroom"
+    EXTERNAL = "external"
 
 
 class FacilityStatusEnum(str, Enum):
     """Facility status enumeration for API."""
-    ACTIVE = "ACTIVE"
-    INACTIVE = "INACTIVE"
-    MAINTENANCE = "MAINTENANCE"
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    MAINTENANCE = "maintenance"
 
 
 class FacilityBase(BaseModel):

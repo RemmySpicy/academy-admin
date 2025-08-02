@@ -23,11 +23,11 @@ class ParentStatus(str, enum.Enum):
 
 class EnrollmentStatus(str, enum.Enum):
     """Enrollment status enumeration."""
-    ACTIVE = "active"
-    PAUSED = "paused"
-    COMPLETED = "completed"
-    WITHDRAWN = "withdrawn"
-    WAITLISTED = "waitlisted"
+    active = "active"
+    paused = "paused"
+    completed = "completed"
+    withdrawn = "withdrawn"
+    waitlisted = "waitlisted"
 
 
 class AttendanceStatus(str, enum.Enum):
@@ -75,6 +75,12 @@ class UserRole(str, enum.Enum):
     PARENT = "parent"
 
 
+class ProfileType(str, enum.Enum):
+    """User profile type enumeration."""
+    full_user = "full_user"
+    profile_only = "profile_only"
+
+
 class RelationshipType(str, enum.Enum):
     """Parent-child relationship type enumeration."""
     FATHER = "father"
@@ -88,10 +94,10 @@ class RelationshipType(str, enum.Enum):
 
 class Gender(str, enum.Enum):
     """Gender enumeration."""
-    MALE = "male"
-    FEMALE = "female"
-    OTHER = "other"
-    PREFER_NOT_TO_SAY = "prefer_not_to_say"
+    male = "male"
+    female = "female"
+    other = "other"
+    prefer_not_to_say = "prefer_not_to_say"
 
 
 class CommunicationPreference(str, enum.Enum):
@@ -106,55 +112,55 @@ class CommunicationPreference(str, enum.Enum):
 
 class CurriculumStatus(str, enum.Enum):
     """Curriculum status enumeration."""
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    DRAFT = "draft"
-    ARCHIVED = "archived"
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    DRAFT = "DRAFT"
+    ARCHIVED = "ARCHIVED"
 
 
 class DifficultyLevel(str, enum.Enum):
     """Difficulty level enumeration."""
-    BEGINNER = "beginner"
-    INTERMEDIATE = "intermediate"
-    ADVANCED = "advanced"
-    EXPERT = "expert"
+    BEGINNER = "BEGINNER"
+    INTERMEDIATE = "INTERMEDIATE"
+    ADVANCED = "ADVANCED"
+    EXPERT = "EXPERT"
 
 
 class EquipmentType(str, enum.Enum):
     """Equipment type enumeration."""
-    SAFETY = "safety"
-    INSTRUCTIONAL = "instructional"
-    ASSESSMENT = "assessment"
-    ENHANCEMENT = "enhancement"
+    SAFETY = "SAFETY"
+    INSTRUCTIONAL = "INSTRUCTIONAL"
+    ASSESSMENT = "ASSESSMENT"
+    ENHANCEMENT = "ENHANCEMENT"
 
 
 class RubricType(str, enum.Enum):
     """Assessment rubric type enumeration."""
-    FORMATIVE = "formative"
-    SUMMATIVE = "summative"
-    DIAGNOSTIC = "diagnostic"
+    FORMATIVE = "FORMATIVE"
+    SUMMATIVE = "SUMMATIVE"
+    DIAGNOSTIC = "DIAGNOSTIC"
 
 
 class MediaType(str, enum.Enum):
     """Media file type enumeration."""
-    VIDEO = "video"
-    AUDIO = "audio"
-    DOCUMENT = "document"
-    IMAGE = "image"
-    INTERACTIVE = "interactive"
+    VIDEO = "VIDEO"
+    AUDIO = "AUDIO"
+    DOCUMENT = "DOCUMENT"
+    IMAGE = "IMAGE"
+    INTERACTIVE = "INTERACTIVE"
 
 
 class ContentType(str, enum.Enum):
     """Content type enumeration for versioning."""
-    PROGRAM = "program"
-    COURSE = "course"
-    CURRICULUM = "curriculum"
-    LEVEL = "level"
-    MODULE = "module"
-    SECTION = "section"
-    LESSON = "lesson"
-    RUBRIC = "rubric"
-    EQUIPMENT = "equipment"
+    PROGRAM = "PROGRAM"
+    COURSE = "COURSE"
+    CURRICULUM = "CURRICULUM"
+    LEVEL = "LEVEL"
+    MODULE = "MODULE"
+    SECTION = "SECTION"
+    LESSON = "LESSON"
+    RUBRIC = "RUBRIC"
+    EQUIPMENT = "EQUIPMENT"
 
 
 class LessonType(str, enum.Enum):
@@ -167,10 +173,10 @@ class LessonType(str, enum.Enum):
 
 class AssessmentType(str, enum.Enum):
     """Assessment type enumeration."""
-    QUIZ = "quiz"
-    ASSIGNMENT = "assignment"
-    PRACTICAL = "practical"
-    PROJECT = "project"
+    QUIZ = "QUIZ"
+    ASSIGNMENT = "ASSIGNMENT"
+    PRACTICAL = "PRACTICAL"
+    PROJECT = "PROJECT"
 
 
 # Scheduling Management Enums
@@ -244,12 +250,6 @@ class MembershipType(str, enum.Enum):
     PARTNER = "partner"
 
 
-class ProfileType(str, enum.Enum):
-    """User profile type enumeration."""
-    FULL_USER = "full_user"
-    PROFILE_ONLY = "profile_only"
-
-
 # Program Assignment Enums
 
 class ProgramRole(str, enum.Enum):
@@ -261,6 +261,13 @@ class ProgramRole(str, enum.Enum):
 
 class AssignmentType(str, enum.Enum):
     """Course assignment type enumeration."""
-    DIRECT = "direct"
-    PARENT_ASSIGNED = "parent_assigned"
-    BULK_ASSIGNED = "bulk_assigned"
+    DIRECT = "DIRECT"
+    PARENT_ASSIGNED = "PARENT_ASSIGNED"
+    BULK_ASSIGNED = "BULK_ASSIGNED"
+
+
+class PaymentStatus(str, enum.Enum):
+    """Course enrollment payment status enumeration."""
+    UNPAID = "unpaid"
+    PARTIALLY_PAID = "partially_paid"
+    FULLY_PAID = "fully_paid"

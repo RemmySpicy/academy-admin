@@ -18,11 +18,16 @@ from app.features.facilities.schemas.facility import (
     FacilityStatsResponse,
     FacilityTypeEnum,
 )
-from app.features.facilities.services.facility_service import facility_service
+from app.features.facilities.services.facility_service import get_facility_service
 from app.features.common.models.enums import CurriculumStatus
 
+# Import facility course pricing routes
+from .facility_course_pricing import router as pricing_router
 
 router = APIRouter()
+
+# Include facility course pricing routes
+router.include_router(pricing_router, prefix="/pricing", tags=["facility-course-pricing"])
 
 # Create program filter dependency with authentication integration
 get_program_filter = create_program_filter_dependency(get_current_active_user)
@@ -45,6 +50,7 @@ async def create_facility(
         if program_context and not facility_data.program_id:
             facility_data.program_id = program_context
         
+        facility_service = get_facility_service(db)
         facility = facility_service.create_facility(
             db=db,
             facility_data=facility_data,
@@ -99,6 +105,7 @@ async def list_facilities(
             sort_order=sort_order
         )
         
+        facility_service = get_facility_service(db)
         facilities = facility_service.get_facilities(
             db=db,
             params=search_params,
@@ -126,6 +133,7 @@ async def get_facility_stats(
     Returns aggregated statistics about facilities.
     """
     try:
+        facility_service = get_facility_service(db)
         stats = facility_service.get_facility_stats(
             db=db,
             program_context=program_context
@@ -153,6 +161,7 @@ async def get_facility(
     Returns detailed facility information.
     """
     try:
+        facility_service = get_facility_service(db)
         facility = facility_service.get_facility(db=db, facility_id=facility_id)
         
         if not facility:
@@ -194,6 +203,7 @@ async def update_facility(
     """
     try:
         # Check if facility exists and user has access
+        facility_service = get_facility_service(db)
         existing_facility = facility_service.get_facility(db=db, facility_id=facility_id)
         
         if not existing_facility:
@@ -246,6 +256,7 @@ async def delete_facility(
     """
     try:
         # Check if facility exists and user has access
+        facility_service = get_facility_service(db)
         existing_facility = facility_service.get_facility(db=db, facility_id=facility_id)
         
         if not existing_facility:

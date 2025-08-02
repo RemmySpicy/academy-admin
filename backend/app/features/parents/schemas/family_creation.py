@@ -101,7 +101,7 @@ class ParentWithChildrenCreate(BaseModel):
             raise ValueError("Cannot create more than 10 children at once")
         return v
     
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def validate_organization_sponsored(cls, values):
         creation_type = values.get('creation_type')
         organization_id = values.get('organization_id')

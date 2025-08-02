@@ -71,7 +71,8 @@
       "Bash(mypy:*)",
       "Bash(./venv/bin/mypy --version)",
       "Bash(node:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(touch:*)"
     ],
     "deny": []
   }

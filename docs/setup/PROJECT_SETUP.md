@@ -53,3 +53,9 @@ All environments use PostgreSQL for consistency:
 ## Default User Accounts
 - **Super Admin**: `admin@academy.com` / `admin123`
 - **Program Admin**: `swim.admin@academy.com` / `swim123`
+
+## User Creation & Management
+- **✅ Auto Full Name Generation**: System automatically creates `full_name` from `first_name + " " + last_name`
+- **🔐 Program Admin Permissions**: Program admins can create student/parent users within their assigned programs
+- **🔧 Database Enum Consistency**: All enums aligned between Python code and database schema
+- **📋 Unified Creation Workflows**: Single-step user creation with automatic program association

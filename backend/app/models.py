@@ -23,8 +23,8 @@ from app.features.programs.models.program import Program
 # STUDENTS & PARENTS (CORE PROFILES)  
 # ============================================================================
 from app.features.students.models.student import Student
-from app.features.students.models.course_enrollment import CourseEnrollment
-from app.features.students.models.program_assignment import ProgramAssignment
+from app.features.enrollments.models.course_enrollment import CourseEnrollment
+from app.features.enrollments.models.program_assignment import ProgramAssignment
 from app.features.parents.models.parent import Parent
 from app.features.parents.models.parent_child_relationship import ParentChildRelationship
 

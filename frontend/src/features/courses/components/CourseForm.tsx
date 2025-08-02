@@ -44,10 +44,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Course, CourseCreate, CourseUpdate } from '../api/courseApiService';
+import { useProgramAgeGroups, useProgramDifficultyLevels, useProgramSessionTypes } from '@/features/programs/hooks';
 
 interface CourseFormProps {
   course?: Course; // For editing
-  onSubmit: (data: CourseCreate | CourseUpdate) => Promise<void>;
+  onSubmit: (data: any) => Promise<void>; // Generic to handle both create and update
   onCancel: () => void;
   isLoading?: boolean;
   className?: string;
@@ -66,12 +67,13 @@ const courseFormSchema = z.object({
   age_groups: z.array(z.string()).min(1, 'At least one age group is required'),
   location_types: z.array(z.string()).min(1, 'At least one location type is required'),
   session_types: z.array(z.string()).min(1, 'At least one session type is required'),
-  pricing_matrix: z.array(z.object({
-    age_range: z.string(),
-    location_type: z.string(),
-    session_type: z.string(),
-    price: z.coerce.number().min(0, 'Price cannot be negative'),
-  })).min(1, 'At least one price must be set'),
+  pricing_ranges: z.array(z.object({
+    age_group: z.string(),
+    price_from: z.coerce.number().min(0, 'Price cannot be negative'),
+    price_to: z.coerce.number().min(0, 'Price cannot be negative'),
+  })).min(1, 'At least one pricing range must be set').refine(data => {
+    return data.every(range => range.price_to >= range.price_from);
+  }, 'price_to must be greater than or equal to price_from'),
   instructor_id: z.string().optional(),
   max_students: z.coerce.number().optional(),
   min_students: z.coerce.number().optional(),
@@ -122,11 +124,13 @@ export function CourseForm({
 }: CourseFormProps) {
   const { currentProgram } = useProgramContext();
   
-  // Get program configuration
-  const { data: programConfig, isLoading: configLoading } = useProgramConfiguration(currentProgram?.id || '');
-  const { data: ageGroups, isLoading: ageGroupsLoading } = useProgramAgeGroups(currentProgram?.id || '');
-  const { data: difficultyLevels, isLoading: difficultyLoading } = useProgramDifficultyLevels(currentProgram?.id || '');
-  const { data: sessionTypes, isLoading: sessionTypesLoading } = useProgramSessionTypes(currentProgram?.id || '');
+  // Get program configuration from Academy Administration setup
+  const { data: ageGroups, isLoading: ageGroupsLoading } = useProgramAgeGroups(currentProgram?.id);
+  const { data: difficultyLevels, isLoading: difficultyLoading } = useProgramDifficultyLevels(currentProgram?.id);
+  const { data: sessionTypes, isLoading: sessionTypesLoading } = useProgramSessionTypes(currentProgram?.id);
+  
+  // Combined loading state for all configuration data
+  const configLoading = ageGroupsLoading || difficultyLoading || sessionTypesLoading;
   const [objectives, setObjectives] = useState<string[]>(course?.objectives || ['']);
   const [prerequisites, setPrerequisites] = useState<string[]>(course?.prerequisites || ['']);
   const [tags, setTags] = useState<string[]>(course?.tags || []);
@@ -134,7 +138,7 @@ export function CourseForm({
   const [selectedAgeGroups, setSelectedAgeGroups] = useState<string[]>(course?.age_groups || []);
   const [selectedLocationTypes, setSelectedLocationTypes] = useState<string[]>(course?.location_types || []);
   const [selectedSessionTypes, setSelectedSessionTypes] = useState<string[]>(course?.session_types || []);
-  const [pricingMatrix, setPricingMatrix] = useState<any[]>(course?.pricing_matrix || []);
+  const [pricingRanges, setPricingRanges] = useState<any[]>(course?.pricing_ranges || []);
 
   // Prepare options from program configuration
   const ageGroupOptions = ageGroups?.map(ag => ({ value: ag.id, label: ag.name })) || fallbackAgeRangeOptions;
@@ -156,7 +160,7 @@ export function CourseForm({
       age_groups: course?.age_groups || [],
       location_types: course?.location_types || [],
       session_types: course?.session_types || [],
-      pricing_matrix: course?.pricing_matrix || [],
+      pricing_ranges: course?.pricing_ranges || [],
       instructor_id: course?.instructor_id || '',
       max_students: course?.max_students || undefined,
       min_students: course?.min_students || undefined,
@@ -181,7 +185,7 @@ export function CourseForm({
         age_groups: selectedAgeGroups,
         location_types: selectedLocationTypes,
         session_types: selectedSessionTypes,
-        pricing_matrix: pricingMatrix,
+        pricing_ranges: pricingRanges,
         image_url: data.image_url || undefined,
         video_url: data.video_url || undefined,
         instructor_id: data.instructor_id || undefined,
@@ -244,36 +248,29 @@ export function CourseForm({
     }
   };
 
-  // Generate pricing matrix when age groups, locations, or session types change
+  // Generate pricing ranges when age groups change
   useEffect(() => {
-    if (selectedAgeGroups.length > 0 && selectedLocationTypes.length > 0 && selectedSessionTypes.length > 0) {
-      const newPricingMatrix = [];
+    if (selectedAgeGroups.length > 0) {
+      const newPricingRanges = [];
       for (const ageGroup of selectedAgeGroups) {
-        for (const locationType of selectedLocationTypes) {
-          for (const sessionType of selectedSessionTypes) {
-            // Check if this combination already exists in the current matrix
-            const existingEntry = pricingMatrix.find(
-              entry => entry.age_group === ageGroup && 
-                       entry.location_type === locationType && 
-                       entry.session_type === sessionType
-            );
-            
-            newPricingMatrix.push({
-              age_group: ageGroup,
-              location_type: locationType,
-              session_type: sessionType,
-              price: existingEntry ? existingEntry.price : 0
-            });
-          }
-        }
+        // Check if this age group already exists in the current ranges
+        const existingRange = pricingRanges.find(
+          range => range.age_group === ageGroup
+        );
+        
+        newPricingRanges.push({
+          age_group: ageGroup,
+          price_from: existingRange ? existingRange.price_from : 0,
+          price_to: existingRange ? existingRange.price_to : 0
+        });
       }
-      setPricingMatrix(newPricingMatrix);
-      form.setValue('pricing_matrix', newPricingMatrix);
+      setPricingRanges(newPricingRanges);
+      form.setValue('pricing_ranges', newPricingRanges);
     } else {
-      setPricingMatrix([]);
-      form.setValue('pricing_matrix', []);
+      setPricingRanges([]);
+      form.setValue('pricing_ranges', []);
     }
-  }, [selectedAgeGroups, selectedLocationTypes, selectedSessionTypes, form]);
+  }, [selectedAgeGroups, form]);
 
   // Update program_id when current program changes
   useEffect(() => {
@@ -282,11 +279,11 @@ export function CourseForm({
     }
   }, [currentProgram, form, course]);
 
-  const handlePricingChange = (index: number, price: number) => {
-    const updatedMatrix = [...pricingMatrix];
-    updatedMatrix[index].price = price;
-    setPricingMatrix(updatedMatrix);
-    form.setValue('pricing_matrix', updatedMatrix);
+  const handlePricingRangeChange = (index: number, field: 'price_from' | 'price_to', value: number) => {
+    const updatedRanges = [...pricingRanges];
+    updatedRanges[index][field] = value;
+    setPricingRanges(updatedRanges);
+    form.setValue('pricing_ranges', updatedRanges);
   };
 
   const formatCurrency = (value: string) => {
@@ -298,11 +295,26 @@ export function CourseForm({
     return parts.join('.');
   };
 
-  const handleCurrencyChange = (entryIndex: number, value: string) => {
-    // Remove commas and convert to number
-    const numericValue = parseFloat(value.replace(/,/g, '')) || 0;
-    handlePricingChange(entryIndex, numericValue);
-  };
+  // Currency change handler removed - now handled inline in pricing ranges UI
+
+  // Show loading state while fetching program configuration
+  if (configLoading && !currentProgram) {
+    return (
+      <div className="space-y-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <div className="animate-pulse space-y-4">
+                <div className="h-4 bg-gray-200 rounded w-48 mx-auto"></div>
+                <div className="h-4 bg-gray-200 rounded w-32 mx-auto"></div>
+              </div>
+              <p className="text-muted-foreground mt-4">Loading program configuration...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className={className ? `space-y-4 ${className}` : "space-y-4"}>
@@ -387,7 +399,9 @@ export function CourseForm({
                         </SelectContent>
                       </Select>
                       <FormDescription>
-                        Course difficulty level for students
+                        {difficultyLevels && difficultyLevels.length > 0 
+                          ? `Difficulty levels from ${currentProgram?.name || 'program'} configuration`
+                          : 'Using default difficulty levels (configure in Academy Administration)'}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -661,6 +675,11 @@ export function CourseForm({
                     </div>
                   ))}
                 </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {ageGroups && ageGroups.length > 0 
+                    ? `Age groups from ${currentProgram?.name || 'program'} configuration`
+                    : 'Using default age groups (configure in Academy Administration)'}
+                </p>
                 {form.formState.errors.age_groups && (
                   <p className="text-sm text-destructive mt-1">{form.formState.errors.age_groups.message}</p>
                 )}
@@ -736,6 +755,11 @@ export function CourseForm({
                     </div>
                   ))}
                 </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {sessionTypes && sessionTypes.length > 0 
+                    ? `Session types from ${currentProgram?.name || 'program'} configuration`
+                    : 'Using default session types (configure in Academy Administration)'}
+                </p>
                 {form.formState.errors.session_types && (
                   <p className="text-sm text-red-600 mt-1">{form.formState.errors.session_types.message}</p>
                 )}
@@ -762,55 +786,56 @@ export function CourseForm({
                 <Award className="h-5 w-5" />
                 Course Pricing Setup
               </CardTitle>
-              <p className="text-sm text-muted-foreground">Set prices for each age group, location, and session type combination</p>
+              <p className="text-sm text-muted-foreground">Set price ranges for each age group to give customers an idea of cost without exact pricing</p>
             </CardHeader>
             <CardContent>
-              {pricingMatrix.length > 0 ? (
+              {pricingRanges.length > 0 ? (
                 <div className="space-y-4">
-                  {selectedAgeGroups.map(ageGroup => (
-                    <div key={ageGroup} className="border rounded-lg p-4">
+                  {pricingRanges.map((range, index) => (
+                    <div key={range.age_group} className="border rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-3">
                         <div className="w-3 h-3 bg-primary rounded-full"></div>
                         <h4 className="font-semibold text-gray-900">
-                          {ageGroupOptions.find(opt => opt.value === ageGroup)?.label || ageGroup}
+                          {ageGroupOptions.find(opt => opt.value === range.age_group)?.label || range.age_group}
                         </h4>
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {selectedLocationTypes.map(locationType => (
-                          <div key={`${ageGroup}-${locationType}`} className="space-y-2">
-                            <h5 className="text-sm font-medium text-gray-700 border-b pb-1">
-                              {locationTypeOptions.find(opt => opt.value === locationType)?.label || locationType}
-                            </h5>
-                            {selectedSessionTypes.map(sessionType => {
-                              const entryIndex = pricingMatrix.findIndex(
-                                entry => entry.age_group === ageGroup && 
-                                        entry.location_type === locationType && 
-                                        entry.session_type === sessionType
-                              );
-                              const entry = pricingMatrix[entryIndex];
-                              
-                              return (
-                                <div key={`${ageGroup}-${locationType}-${sessionType}`} 
-                                     className="flex items-center justify-between bg-muted/50 rounded px-3 py-2">
-                                  <span className="text-sm text-gray-600">
-                                    {sessionTypeOptions.find(opt => opt.value === sessionType)?.label || sessionType}
-                                  </span>
-                                  <div className="flex items-center gap-1">
-                                    <span className="text-sm text-gray-500">₦</span>
-                                    <Input
-                                      type="text"
-                                      value={entry?.price ? formatCurrency(entry.price.toString()) : ''}
-                                      onChange={(e) => handleCurrencyChange(entryIndex, e.target.value)}
-                                      className="w-24 h-8 text-sm"
-                                      placeholder="0"
-                                    />
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ))}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-gray-700">From (₦)</Label>
+                          <Input
+                            type="text"
+                            value={range.price_from ? formatCurrency(range.price_from.toString()) : ''}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value.replace(/[^0-9.]/g, '')) || 0;
+                              handlePricingRangeChange(index, 'price_from', value);
+                            }}
+                            className="w-full"
+                            placeholder="0"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-gray-700">To (₦)</Label>
+                          <Input
+                            type="text"
+                            value={range.price_to ? formatCurrency(range.price_to.toString()) : ''}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value.replace(/[^0-9.]/g, '')) || 0;
+                              handlePricingRangeChange(index, 'price_to', value);
+                            }}
+                            className="w-full"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="mt-3 p-3 bg-muted/30 rounded-md">
+                        <p className="text-sm text-muted-foreground">
+                          <span className="font-medium">Price Range:</span> ₦{formatCurrency((range.price_from || 0).toString())} - ₦{formatCurrency((range.price_to || 0).toString())}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          This range will be displayed to customers for this age group. Exact prices are configured per facility.
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -820,22 +845,17 @@ export function CourseForm({
                   <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-4">
                     <Award className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Pricing Options Available</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Pricing Ranges Available</h3>
                   <p className="text-gray-600 mb-1">
-                    To set course pricing, please first select:
+                    To set course pricing ranges, please first select at least one age group above.
                   </p>
-                  <ul className="text-sm text-gray-500 space-y-1">
-                    <li>• At least one age group</li>
-                    <li>• At least one location type</li>
-                    <li>• At least one session type</li>
-                  </ul>
                   <p className="text-xs text-muted-foreground mt-4">
-                    Once you make your selections above, pricing options will appear here automatically.
+                    Pricing ranges give potential customers an idea of cost without revealing exact facility-specific prices.
                   </p>
                 </div>
               )}
-              {form.formState.errors.pricing_matrix && (
-                <p className="text-sm text-red-600 mt-3">{form.formState.errors.pricing_matrix.message}</p>
+              {form.formState.errors.pricing_ranges && (
+                <p className="text-sm text-red-600 mt-3">{form.formState.errors.pricing_ranges.message}</p>
               )}
             </CardContent>
           </Card>

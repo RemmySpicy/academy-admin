@@ -278,7 +278,7 @@ async def get_scheduling_integration_overview(
     """Get overview statistics for scheduling integration."""
     try:
         from app.features.scheduling.models import ScheduledSession
-        from app.features.students.models.course_enrollment import CourseEnrollment
+        from app.features.enrollments.models.course_enrollment import CourseEnrollment
         from app.features.common.models.enums import SessionStatus, EnrollmentStatus
         from sqlalchemy import and_, func
         

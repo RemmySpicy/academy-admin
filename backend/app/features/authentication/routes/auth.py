@@ -252,12 +252,50 @@ async def create_user(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Session = Depends(get_db)
 ):
-    """Create a new user (admin only)."""
-    if current_user.primary_role != "super_admin":
+    """Create a new user.
+    
+    Permissions:
+    - Super Admin: Can create users with any role
+    - Program Admin: Can create student/parent users (requires program context via X-Program-Context header)
+    - Program Coordinator: Can create student/parent users (requires program context via X-Program-Context header)
+    """
+    # Get program context from header for non-super admin users
+    from app.middleware.program_context import get_program_context
+    from fastapi import Request
+    from starlette.requests import Request as StarletteRequest
+    
+    # Check user permissions
+    is_super_admin = current_user.has_role("super_admin")
+    is_program_admin = current_user.has_role("program_admin")
+    is_program_coordinator = current_user.has_role("program_coordinator")
+    
+    # Check basic permission to create users
+    if not (is_super_admin or is_program_admin or is_program_coordinator):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
+            detail="Insufficient permissions to create users"
         )
+    
+    # Get program context from middleware if available
+    program_context = None
+    # Note: This endpoint doesn't have direct access to program_context dependency
+    # Program admins should use the /api/v1/users endpoint instead
+    
+    # For non-super admins, restrict role creation
+    if not is_super_admin:
+        # Only allow student/parent roles for program admins
+        admin_level_roles = {"super_admin", "program_admin", "program_coordinator", "tutor"}
+        user_level_roles = {"student", "parent"}
+        
+        if hasattr(user_data, 'role') and user_data.role in admin_level_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Program admins cannot create admin-level users. Use /api/v1/users endpoint with program context."
+            )
+        
+        # Default to student role if not specified
+        if not hasattr(user_data, 'role') or not user_data.role:
+            user_data.role = "student"
     
     # Check if username or email already exists
     existing_user = auth_service.get_user_by_username(db, user_data.username)
@@ -275,7 +313,13 @@ async def create_user(
         )
     
     try:
-        user = auth_service.create_user(db, user_data.dict())
+        # Create user with proper role handling
+        user_dict = user_data.dict()
+        # Ensure role is set
+        if 'role' not in user_dict or not user_dict['role']:
+            user_dict['role'] = 'student'
+        
+        user = auth_service.create_user(db, user_dict)
         return UserResponse(
             id=user.id,
             username=user.username,

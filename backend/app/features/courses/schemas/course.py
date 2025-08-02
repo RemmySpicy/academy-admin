@@ -14,13 +14,19 @@ from .common import (
 )
 
 
-class PricingEntry(BaseModel):
-    """Schema for individual pricing matrix entry."""
+class PricingRange(BaseModel):
+    """Schema for pricing range per age group."""
     
     age_group: str = Field(..., description="Age group (e.g., '6-12', '13-17')")
-    location_type: str = Field(..., description="Location type (our-facility, client-location, virtual)")
-    session_type: str = Field(..., description="Session type (group, private)")
-    price: float = Field(..., ge=0, description="Price in NGN")
+    price_from: float = Field(..., ge=0, description="Minimum price in NGN")
+    price_to: float = Field(..., ge=0, description="Maximum price in NGN")
+    
+    @validator('price_to')
+    def price_to_must_be_greater_than_price_from(cls, v, values):
+        """Ensure price_to is greater than or equal to price_from."""
+        if 'price_from' in values and v < values['price_from']:
+            raise ValueError('price_to must be greater than or equal to price_from')
+        return v
 
 
 class CourseBase(BaseModel):
@@ -38,7 +44,7 @@ class CourseBase(BaseModel):
     age_groups: List[str] = Field(..., min_items=1, description="Available age groups")
     location_types: List[str] = Field(..., min_items=1, description="Available location types")
     session_types: List[str] = Field(..., min_items=1, description="Available session types")
-    pricing_matrix: List[PricingEntry] = Field(..., min_items=1, description="Pricing matrix")
+    pricing_ranges: List[PricingRange] = Field(..., min_items=1, description="Pricing ranges")
     instructor_id: Optional[str] = Field(None, description="Assigned instructor ID")
     max_students: Optional[int] = Field(None, ge=1, description="Maximum students per session")
     min_students: Optional[int] = Field(None, ge=1, description="Minimum students per session")
@@ -74,7 +80,7 @@ class CourseUpdate(BaseModel):
     age_groups: Optional[List[str]] = Field(None, min_items=1, description="Available age groups")
     location_types: Optional[List[str]] = Field(None, min_items=1, description="Available location types")
     session_types: Optional[List[str]] = Field(None, min_items=1, description="Available session types")
-    pricing_matrix: Optional[List[PricingEntry]] = Field(None, min_items=1, description="Pricing matrix")
+    pricing_ranges: Optional[List[PricingRange]] = Field(None, min_items=1, description="Pricing ranges")
     instructor_id: Optional[str] = Field(None, description="Assigned instructor ID")
     max_students: Optional[int] = Field(None, ge=1, description="Maximum students per session")
     min_students: Optional[int] = Field(None, ge=1, description="Minimum students per session")
@@ -130,9 +136,9 @@ class CourseResponse(CourseBase, TimestampMixin):
                 "age_groups": ["6-12", "13-17"],
                 "location_types": ["our-facility", "client-location"],
                 "session_types": ["group", "private"],
-                "pricing_matrix": [
-                    {"age_group": "6-12", "location_type": "our-facility", "session_type": "group", "price": 15000},
-                    {"age_group": "6-12", "location_type": "our-facility", "session_type": "private", "price": 25000}
+                "pricing_ranges": [
+                    {"age_group": "6-12", "price_from": 15000, "price_to": 25000},
+                    {"age_group": "13-17", "price_from": 18000, "price_to": 30000}
                 ],
                 "max_students": 12,
                 "min_students": 6,

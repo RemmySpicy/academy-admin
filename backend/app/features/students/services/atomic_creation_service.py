@@ -79,7 +79,7 @@ class AtomicCreationService:
                     'full_name': student_data['full_name'],
                     'email': student_data.get('email'),  # Can be None for children
                     'phone': student_data.get('phone'),
-                    'profile_type': ProfileType.PROFILE_ONLY,
+                    'profile_type': ProfileType.profile_only,
                     'roles': ['student']
                 }
                 
@@ -178,7 +178,7 @@ class AtomicCreationService:
                     'full_name': parent_data['full_name'],
                     'email': parent_data['email'],
                     'phone': parent_data.get('phone'),
-                    'profile_type': ProfileType.FULL_USER,
+                    'profile_type': ProfileType.full_user,
                     'roles': ['parent']
                 }
                 
@@ -273,7 +273,7 @@ class AtomicCreationService:
                     'full_name': student_data['full_name'],
                     'email': student_data.get('email'),
                     'phone': student_data.get('phone'),
-                    'profile_type': ProfileType.PROFILE_ONLY,
+                    'profile_type': ProfileType.profile_only,
                     'roles': ['student']
                 }
                 
@@ -341,7 +341,7 @@ class AtomicCreationService:
         try:
             with self.db.begin():
                 # Determine profile type based on login credentials
-                profile_type = ProfileType.FULL_USER if create_login_credentials else ProfileType.PROFILE_ONLY
+                profile_type = ProfileType.full_user if create_login_credentials else ProfileType.profile_only
                 
                 # Create user account
                 user_data = {
@@ -417,7 +417,7 @@ class AtomicCreationService:
                         'full_name': student_data['full_name'],
                         'email': student_data.get('email'),
                         'phone': student_data.get('phone'),
-                        'profile_type': ProfileType.PROFILE_ONLY,
+                        'profile_type': ProfileType.profile_only,
                         'roles': ['student']
                     }
                     

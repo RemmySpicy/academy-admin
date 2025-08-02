@@ -141,6 +141,58 @@ The Program Configuration System operates at the **Academy Administration** leve
 - Status management (active, inactive, draft, archived)
 - Display order for organization
 
+### 5. Program Statistics & Analytics ✅ **NEW (2025-08-02)**
+
+**Purpose**: Comprehensive real-time statistics for program performance monitoring and resource planning.
+
+**Features**:
+- **📊 Real-time Data Aggregation**: Live statistics from courses, students, team, and facilities
+- **🎯 Production-Quality Error Handling**: Comprehensive error states with retry mechanisms
+- **🔄 Auto-refresh Capability**: Statistics refresh every 10 minutes with manual refresh option
+- **📈 Multi-dimensional Analytics**: Course status breakdown, student enrollment tracking, team assignments
+- **🛡️ Role-Based Access**: Statistics respect program context and user permissions
+
+**Statistics Categories**:
+```json
+{
+  "courses": {
+    "total": 7,           // All courses in program
+    "active": 4,          // Published courses (published status)
+    "inactive": 3         // Draft courses (draft status)
+  },
+  "students": {
+    "total": 7,           // All enrolled students
+    "active": 3,          // Currently active students
+    "inactive": 4         // Inactive/graduated/suspended students
+  },
+  "team": {
+    "total_members": 14   // Users assigned via user_program_assignments
+  },
+  "facilities": {
+    "total": 3            // Facilities associated with program
+  },
+  "configuration": {
+    "age_groups": 2,      // Number of configured age groups
+    "difficulty_levels": 3, // Number of difficulty levels
+    "session_types": 2,   // Number of session types
+    "default_duration": 45 // Default session duration (minutes)
+  }
+}
+```
+
+**Key Implementation Details**:
+- **Status Mapping**: `published` courses = active, `draft` courses = inactive
+- **Data Validation**: Comprehensive frontend validation with `isValidStatistics()` helper
+- **Safe Value Extraction**: `getStatValue()` helper prevents undefined property access
+- **Error Recovery**: Multiple error states with contextual messaging and retry buttons
+- **Performance**: Optimized queries with proper indexing for large datasets
+
+**Frontend Components**:
+- **StatisticRow Component**: Reusable statistic display with variant support (success/muted)
+- **Enhanced Loading States**: Skeleton placeholders during data fetching
+- **Comprehensive Error Handling**: Alert components with retry functionality
+- **Empty State Management**: Contextual messaging for different data states
+
 ## Configuration Components
 
 ### Frontend Configuration Managers
@@ -265,10 +317,29 @@ ProgramManagement
 
 ## Integration Points
 
-### Course Management Integration ✅ **IMPLEMENTED**
+### Course Management Integration ✅ **ENHANCED (2025-08-02)**
 
-**Integration Pattern**: Course creation validates against program configuration
+#### **Dynamic Configuration Loading** ✅ **NEW**
+Course forms now automatically load program configuration in real-time:
 
+```typescript
+// Frontend hooks that automatically fetch program configuration
+const { data: ageGroups, isLoading: ageGroupsLoading } = useProgramAgeGroups(currentProgram?.id);
+const { data: difficultyLevels, isLoading: difficultyLoading } = useProgramDifficultyLevels(currentProgram?.id);
+const { data: sessionTypes, isLoading: sessionTypesLoading } = useProgramSessionTypes(currentProgram?.id);
+
+// Smart fallback system
+const ageGroupOptions = ageGroups?.map(ag => ({ value: ag.id, label: ag.name })) || fallbackAgeRangeOptions;
+const difficultyOptions = difficultyLevels?.map(dl => ({ value: dl.id, label: dl.name })) || fallbackDifficultyOptions;
+```
+
+#### **User Experience Features** ✅ **NEW**
+- **Loading Indicators**: Shows "Loading from program..." during configuration fetch
+- **Source Transparency**: Displays "Age groups from Swimming Program configuration" vs "Using default age groups"
+- **Real-time Updates**: Configuration changes reflect immediately in course forms
+- **Graceful Degradation**: Falls back to defaults when program configuration unavailable
+
+#### **Validation Integration** ✅ **IMPLEMENTED**
 ```typescript
 // Course creation reads program configuration
 const programConfig = await programService.getConfiguration(programId);

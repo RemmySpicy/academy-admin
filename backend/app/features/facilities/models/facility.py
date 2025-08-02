@@ -175,6 +175,7 @@ class Facility(BaseModel):
     # Relationships
     # Note: Program relationship will be defined when needed
     # program = relationship("Program", back_populates="facilities")
+    course_pricing = relationship("FacilityCoursePricing", back_populates="facility", cascade="all, delete-orphan")
     
     # Indexes for performance
     __table_args__ = (

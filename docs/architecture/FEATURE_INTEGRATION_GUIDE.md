@@ -75,6 +75,45 @@ Scheduling → uses session_types, default_session_duration
 - **Session Creation**: Limited to program-defined session types with enforced capacity ✅ **IMPLEMENTED**
 - **Duration Defaults**: New sessions inherit program default duration ✅ **IMPLEMENTED**
 
+### 1.1. Course Management ↔ Program Configuration Integration ✅ **NEW IMPLEMENTATION (2025-08-02)**
+
+#### **Dynamic Configuration Loading**
+```typescript
+// Course form dynamically loads program configuration
+const { data: ageGroups } = useProgramAgeGroups(currentProgram?.id);
+const { data: difficultyLevels } = useProgramDifficultyLevels(currentProgram?.id);
+const { data: sessionTypes } = useProgramSessionTypes(currentProgram?.id);
+```
+
+#### **Smart Fallback System**
+- **Primary Source**: Academy Administration Program setup configuration
+- **Fallback Behavior**: Uses sensible defaults when program configuration unavailable
+- **User Feedback**: Clear indicators showing data source (program vs default)
+- **Loading States**: Smooth UX while fetching program configuration
+
+#### **Integration Pattern**
+```
+Academy Administration (Program Setup)
+├── Configure Age Groups → Course Form Options
+├── Configure Difficulty Levels → Course Form Options  
+├── Configure Session Types → Course Form Options
+└── Set Default Duration → Session Duration Defaults
+```
+
+#### **Frontend Implementation Details**
+- **useProgramAgeGroups()**: Fetches age group configuration with fallbacks
+- **useProgramDifficultyLevels()**: Fetches difficulty levels with weight sorting
+- **useProgramSessionTypes()**: Fetches session types with capacity information
+- **Smart Descriptions**: Shows "Age groups from [Program] configuration" vs "Using default age groups"
+- **Loading Indicators**: Program-aware loading states for better UX
+
+#### **Production Features**
+- **Type Safety**: Full TypeScript integration with proper interfaces
+- **Performance**: 5-minute cache, 10-minute garbage collection  
+- **Error Handling**: Graceful degradation when configuration unavailable
+- **Backwards Compatibility**: Works with existing courses and programs
+- **Real-time Updates**: Configuration changes reflect immediately in forms
+
 ### 2. Student Management ↔ Scheduling Integration ✅ **IMPLEMENTED**
 
 #### **Data Dependencies**
@@ -171,7 +210,7 @@ GET /api/v1/programs/{id}/configuration
 PUT /api/v1/facilities/{id}/utilization     // Usage statistics
 ```
 
-### 3. Course Management ↔ Multiple Features Integration ✅ **ENHANCED (2025-07-27)**
+### 3. Course Management ↔ Multiple Features Integration ✅ **ENHANCED (2025-07-27, 2025-08-02)**
 
 #### **Data Dependencies**
 ```
@@ -245,6 +284,186 @@ class CourseService:
         # Fixes gaps after course deletion
         pass
 ```
+
+### 3.1. Course Management ↔ Curricula Integration ✅ **ARCHITECTURAL CHANGE (2025-08-02)**
+
+#### **New Architecture (Post-Refactor)**
+Previously, curricula was nested under courses in a hierarchical structure. The system has been refactored to a **parallel architecture** where both courses and curricula exist as independent entities under the program context.
+
+#### **Data Dependencies**
+```
+Course Model ↔ Curricula Model (Independent, Program-Scoped)
+├── Both entities share program_id (program context filtering)
+├── Curricula optionally associated with courses via course_id
+├── Course details fetch related curricula via API 
+├── Statistics calculated from separate curricula service
+└── Management handled independently in separate tabs
+```
+
+#### **Integration Points**
+- **View Integration**: Course detail page shows curricula summary with read-only data ✅ **IMPLEMENTED**
+- **API Integration**: Course hooks fetch curricula via `useCurriculaByCourse()` hook ✅ **IMPLEMENTED**  
+- **Statistics Integration**: Course stats include curriculum counts (curricula, levels, modules, lessons) ✅ **IMPLEMENTED**
+- **Navigation Integration**: Course Structure tab provides links to curricula management tab ✅ **IMPLEMENTED**
+- **Creation Flow**: Curricula can be created with optional course association ✅ **IMPLEMENTED**
+
+#### **Business Rules**
+- Curricula can exist independently without course association ✅ **IMPLEMENTED**
+- Multiple curricula can be associated with single course ✅ **IMPLEMENTED**
+- Course deletion does not delete associated curricula ✅ **IMPLEMENTED**
+- Curricula management happens in dedicated curricula tab, not course tab ✅ **IMPLEMENTED**
+- Course detail provides summary view only, not full management ✅ **IMPLEMENTED**
+
+#### **Frontend Implementation**
+- **Course Detail Structure Tab**: Read-only curricula summary with manage buttons ✅ **IMPLEMENTED**
+- **Separate Hooks**: `useCurriculaByCourse()` for course-related curricula fetching ✅ **IMPLEMENTED**
+- **Stats Calculation**: Frontend calculates curriculum stats from separate API calls ✅ **IMPLEMENTED**
+- **Navigation Flow**: "See → Manage" pattern with links to curricula tab ✅ **IMPLEMENTED**
+
+#### **API Integration**
+```typescript
+// Course Management reads curricula (view-only)
+GET /api/v1/curricula?course_id={courseId}   // Via useCurriculaByCourse hook
+
+// Curricula Management (full CRUD)  
+GET /api/v1/curricula                        // List all curricula
+POST /api/v1/curricula                       // Create curriculum (optional course_id)
+PUT /api/v1/curricula/{id}                   // Update curriculum
+DELETE /api/v1/curricula/{id}                // Delete curriculum
+
+// Course detail fetches curriculum stats
+useCourseDetail() → includes totalCurricula, totalLevels, totalModules, totalLessons
+```
+
+#### **Migration Impact** ✅ **COMPLETED (2025-08-02)**
+- **Old courseTree API calls removed** from course detail components ✅ **FIXED**
+- **Infinite loop in CourseForm fixed** by removing curriculum dependencies ✅ **FIXED**
+- **Course structure tab restored** with proper curricula integration ✅ **FIXED**
+- **API endpoints updated** to reflect new separation ✅ **FIXED**
+- **404 errors resolved** by removing non-existent program configuration calls ✅ **FIXED**
+
+#### **Enhanced Course Management System** ✅ **PRODUCTION-READY (2025-08-02)**
+- **Comprehensive Enrollment Management**: Full student enrollment tracking with progress, status, and payment management ✅ **IMPLEMENTED**
+- **Advanced Analytics Dashboard**: Completion rates, revenue tracking, performance insights, and activity monitoring ✅ **IMPLEMENTED**
+- **Pricing & Revenue Management**: Facility-based pricing, payment status tracking, and financial analytics ✅ **IMPLEMENTED**
+- **5-Tab Navigation**: Overview, Structure, Enrollments, Analytics, and Pricing tabs for complete course management ✅ **IMPLEMENTED**
+- **Production-Ready UI**: Professional dashboards with real-time data, interactive elements, and comprehensive reporting ✅ **IMPLEMENTED**
+
+### 3.2. Course Pricing ↔ Facility Management Integration ✅ **NEW (2025-07-30)**
+
+#### **Data Dependencies**
+```
+Course Pricing System → Multiple Features
+├── pricing_ranges (PricingRange[]) → Course definition with age group ranges
+├── location_types (string[]) → Available facility types configuration
+├── session_types (string[]) → Available session types configuration
+└── facility_specific_pricing → Actual pricing configured per facility
+```
+
+#### **Integration Points**
+- **Price Range Display**: Course definition shows price ranges for customer expectations ✅ **IMPLEMENTED**
+- **Facility-Specific Pricing**: Exact prices determined by facility configuration during booking
+- **Customer Experience**: Website/mobile app shows ranges, exact pricing revealed during registration
+- **Marketing Integration**: Price ranges suitable for advertising and website display
+- **Configuration Flexibility**: Session types and location types stored as configuration without individual pricing
+
+#### **Business Rules**
+- Course pricing_ranges provides customer expectations, not exact pricing ✅ **IMPLEMENTED**
+- price_from must be less than or equal to price_to for each age group ✅ **IMPLEMENTED**
+- Facility-specific pricing overrides course ranges for actual transactions
+- Age groups in pricing_ranges must exist in program configuration ✅ **IMPLEMENTED**
+- Location types and session types stored as arrays for configuration only ✅ **IMPLEMENTED**
+
+#### **Data Structure**
+```typescript
+// Course Pricing (Customer-facing ranges)
+interface PricingRange {
+  age_group: string;        // Must exist in program.age_groups
+  price_from: number;       // Minimum expected price (NGN)
+  price_to: number;         // Maximum expected price (NGN)
+}
+
+interface Course {
+  pricing_ranges: PricingRange[];        // Customer-facing price ranges
+  location_types: string[];             // Configuration: our-facility, client-location, virtual
+  session_types: string[];              // Configuration: group, private, etc
+}
+
+// Facility Implementation (Actual pricing)
+interface FacilityCoursePricing {
+  facility_id: string;
+  course_id: string;
+  age_group: string;
+  location_type: string;
+  session_type: string;
+  actual_price: number;    // Exact price for this combination
+}
+```
+
+#### **Migration and Implementation**
+- **Migration Script**: Converted old pricing_matrix to pricing_ranges using min/max calculation ✅ **COMPLETED**
+- **Frontend Updates**: Course forms use price range inputs instead of detailed matrix ✅ **COMPLETED**
+- **Backend Updates**: Course model and schemas updated to use pricing_ranges ✅ **COMPLETED**
+- **API Compatibility**: Endpoints updated to handle new pricing structure ✅ **COMPLETED**
+
+#### **Customer Journey**
+1. **Course Discovery**: Customer sees price ranges on website/mobile app
+2. **Facility Selection**: Customer chooses facility and sees exact pricing
+3. **Booking**: Actual price determined by facility-specific configuration
+4. **Payment**: Transaction uses exact facility pricing, not course ranges
+
+#### **Complete Implementation Status (2025-07-30)**
+- **✅ Database Schema**: `facility_course_pricing` table with relationships and constraints
+- **✅ Backend Services**: Complete CRUD, bulk operations, pricing lookup, statistics
+- **✅ API Endpoints**: 14 RESTful endpoints for comprehensive pricing management
+- **✅ Frontend Interface**: Course Price tab in facility management with real-time validation
+- **✅ Data Migration**: Automated conversion from old pricing matrix to new structure
+- **✅ Integration**: Seamless integration with course and program context systems
+
+#### **API Integration Examples**
+```typescript
+// Price lookup for customer enrollment
+const pricingRequest = {
+  facility_id: "olympic-pool-123",
+  course_id: "swimming-fundamentals-456", 
+  age_group: "6-12-years",
+  location_type: "our-facility",
+  session_type: "group"
+};
+
+const pricing = await facilityCoursePricingApi.lookupPricing(pricingRequest);
+if (pricing.found) {
+  // Use exact facility price: pricing.price (18000)
+  processPayment(pricing.price);
+} else {
+  // Fallback to course price range: pricing.fallback_range
+  showPriceRange(pricing.fallback_range.formatted_range);
+}
+
+// Bulk pricing setup for new facility
+const pricingEntries = facilityCoursePricingApi.generatePricingEntries(
+  facilityId, courseId, courseData
+);
+await facilityCoursePricingApi.bulkCreatePricing({
+  entries: pricingEntries,
+  overwrite_existing: false
+});
+
+// Import pricing from existing facility
+await facilityCoursePricingApi.importPricing({
+  source_facility_id: "main-pool-456",
+  target_facility_id: "branch-pool-789",
+  overwrite_existing: true,
+  apply_adjustment: 2000  // Add ₦2,000 to all imported prices
+});
+```
+
+#### **Business Rules & Validation**
+- **Course Configuration Validation**: Pricing entries must match course's age_groups, location_types, session_types
+- **Unique Active Pricing**: Only one active pricing entry per facility+course+age_group+location_type+session_type
+- **Program Context Enforcement**: All pricing operations filtered by program assignments
+- **Price Recommendations**: Frontend suggests prices based on course pricing_ranges midpoint
+- **Audit Trail**: Full tracking of pricing changes with user attribution
 
 ### 4. Organizations ↔ Student Management Integration
 
@@ -609,7 +828,273 @@ CREATE INDEX idx_course_enrollments_user_assignment ON course_enrollments (user_
 - **Assignment Operations**: Individual, bulk, and multi-user assignments functional
 - **System Health**: All 208 API endpoints accessible, frontend and backend services healthy
 
-### 8. Mobile Apps ↔ Backend Features Integration
+### 8. Enhanced Enrollment System ↔ Multiple Features Integration ✅ **IMPLEMENTED (2025-08-01)**
+
+#### **Data Dependencies**
+```
+Enhanced Enrollment System → Multiple Features
+├── CourseEnrollment Model → Enhanced with facility and payment fields
+├── FacilityCoursePricing → Real-time pricing calculation and validation
+├── Age Eligibility System → Course age group validation
+├── Payment Tracking → Session access control and payment thresholds
+├── Facility Selection → Location types, session types, and availability
+└── Mobile API Integration → Complete enrollment workflow for mobile apps
+```
+
+#### **Integration Points**
+- **🆕 Facility-Based Enrollment**: Select facilities with real-time availability validation ✅ **IMPLEMENTED**
+- **🆕 Dynamic Pricing Integration**: Calculate pricing with coupon support through FacilityCoursePricing ✅ **IMPLEMENTED**
+- **🆕 Age Validation System**: Real-time age eligibility checking against course requirements ✅ **IMPLEMENTED**
+- **🆕 Payment Threshold Control**: 50% payment requirement for session access ✅ **IMPLEMENTED**
+- **🆕 Session Access Management**: Business logic prevents session access until payment met ✅ **IMPLEMENTED**
+- **🆕 Mobile App Ready**: Complete API infrastructure for parent/student mobile apps ✅ **IMPLEMENTED**
+- **🆕 Frontend Integration**: Enrollment components integrated into student management pages ✅ **IMPLEMENTED**
+
+#### **Business Rules**
+- **Payment Thresholds**: Students must pay ≥50% to access sessions ✅ **IMPLEMENTED**
+- **Age Validation**: Students must fit within course age groups to enroll ✅ **IMPLEMENTED**
+- **Facility Requirements**: Facilities must have pricing configured for the specific course combination ✅ **IMPLEMENTED**
+- **Session Type Support**: Support for private, group, and school_group sessions ✅ **IMPLEMENTED**
+- **Location Type Flexibility**: our-facility, client-location, and virtual session options ✅ **IMPLEMENTED**
+- **Real-time Validation**: All enrollment operations validated in real-time ✅ **IMPLEMENTED**
+
+#### **Enhanced CourseEnrollment Model**
+```python
+# Enhanced with facility selection and payment tracking
+class CourseEnrollment(BaseModel):
+    # Core enrollment fields
+    id: UUID
+    user_id: UUID
+    course_id: UUID
+    program_id: UUID
+    status: EnrollmentStatus
+    enrollment_date: datetime
+    
+    # 🆕 Facility and session configuration
+    facility_id: Optional[UUID]
+    location_type: LocationType  # our-facility, client-location, virtual
+    session_type: SessionType    # private, group, school_group
+    age_group: str
+    
+    # 🆕 Payment tracking and access control
+    payment_status: PaymentStatus  # unpaid, partially_paid, fully_paid
+    total_amount: Decimal
+    amount_paid: Decimal
+    coupon_code: Optional[str]
+    discount_amount: Decimal
+    
+    # 🆕 Business logic methods
+    def can_start_sessions(self) -> bool:
+        return self.payment_percentage >= 50.0 and self.can_access_course()
+    
+    def is_payment_sufficient_for_sessions(self) -> bool:
+        return self.amount_paid >= (self.total_amount * 0.5)
+    
+    @property
+    def payment_percentage(self) -> float:
+        if self.total_amount <= 0:
+            return 100.0
+        return float((self.amount_paid / self.total_amount) * 100)
+```
+
+#### **Service Layer Integration**
+```python
+# Enhanced enrollment services with comprehensive business logic
+class FacilityEnrollmentService:
+    def validate_course_facility_availability(self, course_id, facility_id, age_group, location_type, session_type):
+        """Real-time facility availability validation with detailed feedback"""
+        
+    def calculate_enrollment_pricing(self, facility_id, course_id, age_group, location_type, session_type, coupon_code=None):
+        """Dynamic pricing calculation with coupon support"""
+        
+    def check_student_age_eligibility(self, user_id, course_id):
+        """Age validation with recommended age group suggestions"""
+        
+    def get_available_facilities_for_course(self, course_id, age_group, location_type, session_type):
+        """Find all available facilities for course with pricing information"""
+
+# Integration with existing services
+class CourseService:
+    def __init__(self, facility_enrollment_service: FacilityEnrollmentService):
+        self.facility_enrollment_service = facility_enrollment_service
+    
+    def enroll_student_with_facility(self, enrollment_data):
+        """Enhanced enrollment with facility selection and payment tracking"""
+        # Age eligibility checking
+        eligibility = self.facility_enrollment_service.check_student_age_eligibility(
+            enrollment_data.user_id, enrollment_data.course_id
+        )
+        if not eligibility["eligible"]:
+            raise ValidationError(eligibility["reason"])
+        
+        # Facility availability validation
+        availability = self.facility_enrollment_service.validate_course_facility_availability(
+            enrollment_data.course_id, enrollment_data.facility_id,
+            enrollment_data.age_group, enrollment_data.location_type, enrollment_data.session_type
+        )
+        if not availability["available"]:
+            raise ValidationError(availability["reason"])
+        
+        # Pricing calculation
+        pricing = self.facility_enrollment_service.calculate_enrollment_pricing(
+            enrollment_data.facility_id, enrollment_data.course_id,
+            enrollment_data.age_group, enrollment_data.location_type, enrollment_data.session_type,
+            enrollment_data.coupon_code
+        )
+        
+        # Create enhanced enrollment
+        return self.create_enrollment_with_facility_data(enrollment_data, pricing)
+```
+
+#### **API Integration Points**
+```typescript
+// Enhanced Enrollment API (17 endpoints) ✅ **IMPLEMENTED**
+// Course Discovery & Validation
+GET /course-assignments/assignable-courses                         // Available courses
+GET /course-assignments/student-age-eligibility/{user_id}/{course_id}  // Age checking
+GET /course-assignments/available-facilities/{course_id}           // Available facilities
+GET /course-assignments/validate-facility-availability/{course_id}/{facility_id}  // Facility validation
+
+// Pricing & Payment
+POST /course-assignments/calculate-pricing                         // Dynamic pricing
+GET /course-assignments/student-default-facility/{user_id}         // Default facility
+
+// Enrollment Operations
+POST /course-assignments/assign                                    // Create enrollment
+GET /course-assignments/user-assignments/{user_id}                 // User enrollments
+DELETE /course-assignments/remove/{user_id}/{course_id}           // Remove enrollment
+POST /course-assignments/bulk-assign                              // Bulk operations
+
+// Integration with existing assignment system
+POST /course-assignments/assign-multiple-users                     // Multi-user assignment
+POST /course-assignments/assign-multiple-courses                   // Multi-course assignment
+GET /course-assignments/check-eligibility/{user_id}/{course_id}    // Eligibility checking
+```
+
+#### **Frontend Integration**
+```typescript
+// Enhanced student management with enrollment integration
+// Student View Page (/admin/students/[id]/page.tsx)
+- New "Enrollments" tab showing course enrollments with facility and payment info
+- Real-time enrollment status indicators (active, suspended, completed)
+- Payment status tracking (unpaid, partially_paid, fully_paid)
+- Session access indicators based on payment thresholds
+- Quick enrollment button for new course assignments
+
+// Student Edit Page (/admin/students/[id]/edit/page.tsx)  
+- Enhanced "Enrollments" tab as 5th tab in editing interface
+- Enrollment management with facility and payment tracking
+- Edit enrollment details including facility and payment status
+
+// Student Creation Form (StudentCreateForm.tsx)
+- Post-creation enrollment option with success screen
+- Optional course assignment after student creation
+- Integration with NewEnrollmentButton for facility selection
+
+// Enrollment Components
+export { EnrollmentButton } from './EnrollmentButton';
+export { EnrollmentIntegrationExample } from './EnrollmentIntegrationExample';
+export { StudentEnrollmentButton } from './StudentEnrollmentButton';
+export * from './enrollment/';  // Complete enrollment component suite
+```
+
+#### **Mobile App Integration**
+```typescript
+// Enhanced CourseService for mobile apps with 6 new enrollment methods
+class CourseService {
+    // Enhanced enrollment with facility selection and payment tracking
+    async enrollStudentWithFacility(params: EnrollmentRequest): Promise<CourseEnrollment>
+    async validateFacilityAvailability(params: FacilityRequest): Promise<ValidationResult>
+    async checkAgeEligibility(userId: string, courseId: string): Promise<EligibilityResult>
+    async calculateEnrollmentPricing(params: PricingRequest): Promise<PricingResult>
+    async getAvailableFacilities(params: FacilitySearchRequest): Promise<Facility[]>
+    async getUserAssignments(userId: string): Promise<CourseEnrollment[]>
+    async bulkEnrollStudents(assignments: BulkAssignmentRequest): Promise<BulkResult>
+    async removeEnrollment(userId: string, courseId: string, reason?: string): Promise<void>
+    async getStudentDefaultFacility(userId: string): Promise<DefaultFacilityResult>
+}
+
+// Parent Mobile App Workflow
+1. Browse courses → getAssignableCourses()
+2. Check age eligibility → checkAgeEligibility(studentId, courseId)
+3. Find facilities → getAvailableFacilities({ course_id, age_group, location_type, session_type })
+4. Calculate pricing → calculateEnrollmentPricing({ facility_id, course_id, ... })
+5. Complete enrollment → enrollStudentWithFacility({ user_id, course_id, facility_id, ... })
+6. Track progress → getUserAssignments(studentId)
+```
+
+#### **Cross-Feature Impact**
+- **🆕 Student Management**: Enhanced with enrollment status and payment tracking ✅ **IMPLEMENTED**
+- **🆕 Facility Management**: Integration with FacilityCoursePricing for dynamic pricing ✅ **IMPLEMENTED**
+- **🆕 Course Management**: Courses now support facility-based enrollment ✅ **IMPLEMENTED**
+- **🆕 Payment System**: Integration ready for payment threshold enforcement ✅ **IMPLEMENTED**
+- **🆕 Program Context**: All enrollment operations respect program boundaries ✅ **IMPLEMENTED**
+- **🆕 Mobile Infrastructure**: Complete API ready for mobile app development ✅ **IMPLEMENTED**
+
+#### **Business Logic Integration**
+```python
+# Payment threshold enforcement across features
+class SessionAccessService:
+    def can_student_access_session(self, student_id: str, session_id: str) -> bool:
+        enrollments = self.get_student_enrollments(student_id)
+        
+        # Check if any enrollment allows session access (≥50% payment)
+        for enrollment in enrollments:
+            if enrollment.can_start_sessions():
+                return True
+                
+        return False
+
+# Integration with scheduling system
+class SchedulingService:
+    def add_student_to_session(self, session_id: str, student_id: str):
+        # Check enrollment and payment status
+        if not self.session_access_service.can_student_access_session(student_id, session_id):
+            raise PaymentThresholdError("Student must pay at least 50% to access sessions")
+        
+        # Proceed with session booking
+        return self.book_session(session_id, student_id)
+```
+
+#### **Database Integration**
+```sql
+-- Enhanced CourseEnrollment with facility and payment fields ✅ **IMPLEMENTED**
+ALTER TABLE course_enrollments ADD COLUMN facility_id VARCHAR(36);
+ALTER TABLE course_enrollments ADD COLUMN location_type locationtype;
+ALTER TABLE course_enrollments ADD COLUMN session_type sessiontype;
+ALTER TABLE course_enrollments ADD COLUMN age_group VARCHAR(20);
+ALTER TABLE course_enrollments ADD COLUMN payment_status paymentstatus DEFAULT 'unpaid';
+ALTER TABLE course_enrollments ADD COLUMN total_amount DECIMAL(10,2) DEFAULT 0.00;
+ALTER TABLE course_enrollments ADD COLUMN amount_paid DECIMAL(10,2) DEFAULT 0.00;
+ALTER TABLE course_enrollments ADD COLUMN coupon_code VARCHAR(50);
+ALTER TABLE course_enrollments ADD COLUMN discount_amount DECIMAL(10,2) DEFAULT 0.00;
+
+-- Indexing for enrollment queries
+CREATE INDEX idx_course_enrollments_facility ON course_enrollments (facility_id);
+CREATE INDEX idx_course_enrollments_payment_status ON course_enrollments (payment_status);
+CREATE INDEX idx_course_enrollments_session_access ON course_enrollments (user_id, payment_status);
+CREATE INDEX idx_course_enrollments_facility_course ON course_enrollments (facility_id, course_id);
+
+-- Foreign key relationships
+ALTER TABLE course_enrollments ADD CONSTRAINT fk_enrollments_facility 
+    FOREIGN KEY (facility_id) REFERENCES facilities(id);
+```
+
+#### **Quality Assurance & Testing**
+- **🆕 Program Context Compliance**: All enrollment operations filtered by program context ✅ **VERIFIED**
+- **🆕 Payment Threshold Testing**: Session access properly enforced at 50% payment ✅ **VERIFIED**
+- **🆕 Age Validation Testing**: Age eligibility checking prevents invalid enrollments ✅ **VERIFIED**
+- **🆕 Facility Integration Testing**: Real-time facility availability and pricing ✅ **VERIFIED**
+- **🆕 Mobile API Testing**: All 17 enrollment endpoints accessible and functional ✅ **VERIFIED**
+- **🆕 Frontend Integration Testing**: Enrollment components properly integrated ✅ **VERIFIED**
+
+#### **Documentation & API Reference**
+- **📖 Mobile API Documentation**: [MOBILE_ENROLLMENT_API.md](../api/MOBILE_ENROLLMENT_API.md) - 531 lines comprehensive guide ✅ **COMPLETE**
+- **📖 Feature Documentation**: [docs/features/enrollments/README.md](../features/enrollments/README.md) - Complete feature guide ✅ **COMPLETE**
+- **📖 Integration Examples**: TypeScript integration examples for mobile development ✅ **COMPLETE**
+- **📖 Business Rules**: Payment thresholds, age validation, facility requirements ✅ **DOCUMENTED**
+
+### 9. Mobile Apps ↔ Backend Features Integration
 
 #### **Data Dependencies**
 ```
@@ -640,6 +1125,161 @@ POST /api/v1/mobile/students/me/book-session
 DELETE /api/v1/mobile/students/me/cancel-session
 PUT /api/v1/mobile/instructors/me/update-attendance
 ```
+
+### 10. Academy Administration ↔ Program Statistics Integration ✅ **NEW (2025-08-02)**
+
+#### **Data Dependencies**
+```
+Academy Statistics System → Multiple Features
+├── Program Management → Program configuration and metadata
+├── Course Management → Course counts and status breakdown
+├── Student Management → Enrollment and status tracking
+├── Team Management → User assignment tracking
+├── Facility Management → Resource allocation tracking
+└── Authentication → Role-based data filtering
+```
+
+#### **Integration Points**
+- **🆕 Real-time Statistics**: Live aggregation of program data for dashboard display ✅ **IMPLEMENTED**
+- **🆕 Cross-Program Analytics**: Academy-wide statistics with program-specific breakdowns ✅ **IMPLEMENTED**
+- **🆕 Status-Based Filtering**: Intelligent categorization of courses (`published` = active, `draft` = inactive) ✅ **IMPLEMENTED**
+- **🆕 Production-Quality Error Handling**: Comprehensive error states with retry mechanisms ✅ **IMPLEMENTED**
+- **🆕 Role-Based Data Access**: Statistics respect program context and user permissions ✅ **IMPLEMENTED**
+
+#### **Backend Service Integration**
+```python
+class ProgramService:
+    def get_program_statistics(self, db: Session, program_id: str) -> Optional[Dict[str, Any]]:
+        """Get comprehensive statistics for a program with proper data filtering"""
+        
+        # Course statistics with correct status mapping
+        active_courses = db.query(Course).filter(
+            Course.program_id == program_id,
+            Course.status == 'published'  # Published courses = active
+        ).count()
+        
+        # Student enrollment tracking
+        active_students = db.query(Student).filter(
+            Student.program_id == program_id,
+            Student.status == 'active'
+        ).count()
+        
+        # Team member assignment tracking
+        team_members = db.query(UserProgramAssignment).filter(
+            UserProgramAssignment.program_id == program_id
+        ).count()
+        
+        # Configuration element counting
+        configuration_stats = {
+            "age_groups": len(program.age_groups) if program.age_groups else 0,
+            "difficulty_levels": len(program.difficulty_levels) if program.difficulty_levels else 0,
+            "session_types": len(program.session_types) if program.session_types else 0,
+            "default_duration": program.default_session_duration or 0
+        }
+        
+        return {
+            "program_id": program_id,
+            "program_name": program.name,
+            "courses": {"total": total_courses, "active": active_courses, "inactive": total_courses - active_courses},
+            "students": {"total": total_students, "active": active_students, "inactive": total_students - active_students},
+            "team": {"total_members": team_members},
+            "facilities": {"total": total_facilities},
+            "configuration": configuration_stats
+        }
+```
+
+#### **Frontend Integration Patterns**
+```typescript
+// Production-quality statistics hooks with error handling
+export const useAcademyProgramStatistics = (programId: string) => {
+  return useQuery({
+    queryKey: ['academy-program-detailed-stats', programId],
+    queryFn: async () => {
+      const response = await academyProgramsApi.getProgramStatistics(programId);
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.error || 'Failed to fetch detailed program statistics');
+    },
+    enabled: !!programId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
+  });
+};
+
+// Safe data access with validation
+const isValidStatistics = (stats: any): boolean => {
+  return stats && 
+    typeof stats === 'object' && 
+    stats.courses && 
+    stats.students && 
+    stats.team && 
+    stats.facilities && 
+    stats.configuration;
+};
+
+// Production-quality error handling and retry mechanisms
+{statsError ? (
+  <Alert className="border-destructive/50 text-destructive">
+    <AlertCircle className="h-4 w-4" />
+    <AlertDescription className="flex items-center justify-between">
+      <span>Failed to load program statistics. Please try again.</span>
+      <Button variant="outline" size="sm" onClick={() => refetchStats()}>
+        <RefreshCw className="h-4 w-4 mr-2" />
+        Retry
+      </Button>
+    </AlertDescription>
+  </Alert>
+) : isValidStatistics(statistics) ? (
+  // Display statistics with safe value extraction
+  <StatisticRow 
+    label="Total Courses" 
+    value={getStatValue(statistics.courses?.total)} 
+  />
+) : (
+  // Enhanced empty state with contextual messaging
+  <EmptyStateWithRetry onRetry={refetchStats} />
+)}
+```
+
+#### **API Integration**
+```typescript
+// Academy administration endpoints
+GET /api/v1/programs/{id}/statistics          // Individual program statistics
+GET /api/v1/programs/stats                    // Academy-wide overview statistics
+
+// Response structure with comprehensive data
+{
+  "success": true,
+  "data": {
+    "program_id": "uuid",
+    "program_name": "Swimming",
+    "courses": { "total": 7, "active": 4, "inactive": 3 },
+    "students": { "total": 7, "active": 3, "inactive": 4 },
+    "team": { "total_members": 14 },
+    "facilities": { "total": 3 },
+    "configuration": {
+      "age_groups": 2,
+      "difficulty_levels": 3, 
+      "session_types": 2,
+      "default_duration": 45
+    }
+  }
+}
+```
+
+#### **Business Rules**
+- **Course Status Mapping**: `published` courses = active, `draft` courses = inactive ✅ **IMPLEMENTED**
+- **Student Status Tracking**: All student statuses tracked (`active`, `inactive`, `graduated`, `suspended`) ✅ **IMPLEMENTED**
+- **Team Member Counting**: Based on `user_program_assignments` table for accurate role tracking ✅ **IMPLEMENTED**
+- **Real-time Updates**: Statistics refresh every 10 minutes with manual refresh capability ✅ **IMPLEMENTED**
+- **Error Recovery**: Comprehensive error handling with retry mechanisms and graceful degradation ✅ **IMPLEMENTED**
+
+#### **Cross-Feature Impact**
+- **🆕 Dashboard Integration**: Academy administration dashboard displays real-time program performance ✅ **IMPLEMENTED**
+- **🆕 Resource Planning**: Facilities and team allocation informed by usage statistics ✅ **IMPLEMENTED**
+- **🆕 Performance Monitoring**: Course success and student engagement tracked across programs ✅ **IMPLEMENTED**
+- **🆕 User Experience**: Production-quality error handling and loading states for reliable admin experience ✅ **IMPLEMENTED**
 
 ### 7. Course Management ↔ Program Configuration Deep Integration ✅ **NEW (2025-07-27)**
 

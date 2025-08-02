@@ -7,11 +7,12 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { User, Users, Building2, AlertCircle, CheckCircle } from 'lucide-react';
+import { User, Users, Building2, AlertCircle, CheckCircle, BookOpen } from 'lucide-react';
 
 // Import reusable components
 import { PersonSearchAndSelect, OrganizationSelector, SimpleFormField as FormField } from '@/components/ui/forms';
 import { useProgramContext } from '@/hooks/useProgramContext';
+import { NewEnrollmentButton } from './EnrollmentButton';
 
 // Types
 interface StudentData {
@@ -90,6 +91,8 @@ export default function StudentCreateForm({ onSuccess, onCancel }: StudentCreate
   const [selectedOrganization, setSelectedOrganization] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [createdStudent, setCreatedStudent] = useState<any>(null);
+  const [showEnrollmentOption, setShowEnrollmentOption] = useState(false);
 
   // Handlers
   const handleStudentDataChange = (field: keyof StudentData, value: string) => {
@@ -295,10 +298,9 @@ export default function StudentCreateForm({ onSuccess, onCancel }: StudentCreate
 
       const result = await response.json();
       
-      // Call success callback if provided
-      if (onSuccess) {
-        onSuccess();
-      }
+      // Store created student data and show enrollment option
+      setCreatedStudent(result.student || result);
+      setShowEnrollmentOption(true);
       
     } catch (error) {
       console.error('Creation error:', error);
@@ -756,26 +758,70 @@ export default function StudentCreateForm({ onSuccess, onCancel }: StudentCreate
         </Alert>
       )}
 
+      {/* Success Section with Enrollment Option */}
+      {showEnrollmentOption && createdStudent && (
+        <Card className="bg-green-50 border-green-200">
+          <CardHeader>
+            <CardTitle className="flex items-center text-green-800">
+              <CheckCircle className="h-5 w-5 mr-2" />
+              Student Created Successfully!
+            </CardTitle>
+            <CardDescription className="text-green-600">
+              {createdStudent.first_name} {createdStudent.last_name} has been added to the system.
+              Would you like to enroll them in a course?
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <div className="text-sm">
+                  <strong>Next Step:</strong> Enroll {createdStudent.first_name} in courses with facility selection and payment tracking.
+                </div>
+                <div className="text-xs text-gray-600">
+                  You can also do this later from the student's profile page.
+                </div>
+              </div>
+              <div className="flex space-x-3">
+                <Button variant="outline" onClick={() => onSuccess && onSuccess()}>
+                  Skip for Now
+                </Button>
+                <NewEnrollmentButton
+                  onEnrollmentComplete={(assignment) => {
+                    console.log('Enrollment completed:', assignment);
+                    // Call success callback after enrollment
+                    if (onSuccess) {
+                      onSuccess();
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Action Buttons */}
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
-        </Button>
-        <Button 
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          className="min-w-32"
-        >
-          {isSubmitting ? (
-            <>Creating...</>
-          ) : (
-            <>
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Create Student
-            </>
-          )}
-        </Button>
-      </div>
+      {!showEnrollmentOption && (
+        <div className="flex justify-between">
+          <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="min-w-32"
+          >
+            {isSubmitting ? (
+              <>Creating...</>
+            ) : (
+              <>
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Create Student
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -49,7 +49,7 @@ class User(BaseModel):
     # Profile type to distinguish between full users and child profiles
     profile_type: Mapped[ProfileType] = mapped_column(
         nullable=False,
-        default=ProfileType.FULL_USER,
+        default=ProfileType.full_user,
         comment="Type of profile (full_user or profile_only)",
     )
     
@@ -66,10 +66,12 @@ class User(BaseModel):
         comment="User's last name",
     )
     
-    @property
-    def full_name(self) -> str:
-        """Get user's full name by combining first and last name."""
-        return f"{self.first_name} {self.last_name}".strip()
+    # Full name field - required by database schema
+    full_name: Mapped[str] = mapped_column(
+        String(200),
+        nullable=False,
+        comment="User's full name",
+    )
     
     # Authorization - Support multiple roles
     roles: Mapped[List[str]] = mapped_column(
@@ -300,11 +302,11 @@ class User(BaseModel):
     
     def is_full_user(self) -> bool:
         """Check if this is a full user account with login credentials."""
-        return self.profile_type == ProfileType.FULL_USER
+        return self.profile_type == ProfileType.full_user
     
     def is_profile_only(self) -> bool:
         """Check if this is a profile-only account (child profile)."""
-        return self.profile_type == ProfileType.PROFILE_ONLY
+        return self.profile_type == ProfileType.profile_only
     
     def can_login(self) -> bool:
         """Check if user can log in (has credentials)."""
@@ -318,7 +320,7 @@ class User(BaseModel):
         self.username = username
         self.email = email
         self.password_hash = password_hash
-        self.profile_type = ProfileType.FULL_USER
+        self.profile_type = ProfileType.full_user
     
     # Organization Methods
     

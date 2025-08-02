@@ -47,6 +47,7 @@ class ParentApiService {
 
   /**
    * Get paginated list of parents with search and filtering
+   * Uses program-context aware endpoint that only shows parents with direct assignment OR children in program
    */
   async getAll(
     searchParams: ParentSearchParams = {},
@@ -63,7 +64,10 @@ class ParentApiService {
       ),
     });
 
-    return httpClient.get<ParentListResponse>(`${API_ENDPOINTS.parents.list}?${params}`);
+    // Use the program-context aware endpoint that filters parents by:
+    // 1. Parents with direct program assignment, OR
+    // 2. Parents with children enrolled in the program
+    return httpClient.get<ParentListResponse>(`${API_ENDPOINTS.parents.list}/in-program-by-children?${params}`);
   }
 
   /**

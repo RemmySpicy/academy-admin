@@ -10,11 +10,12 @@ from sqlalchemy import and_, or_
 from app.features.authentication.models.user import User
 from app.features.authentication.services.auth_service import auth_service
 from app.features.organizations.models import Organization, OrganizationMembership
+from app.features.organizations.schemas.partner_admin_schemas import PartnerAdminCreate, PartnerAdminUpdate
 from app.features.common.models.enums import UserRole, OrganizationStatus, MembershipType, ProfileType
 from app.features.common.services.base_service import BaseService
 
 
-class PartnerAdminService(BaseService[User]):
+class PartnerAdminService(BaseService[User, PartnerAdminCreate, PartnerAdminUpdate]):
     """Service for managing partner organization admin users."""
     
     def __init__(self, db: Session):
@@ -89,7 +90,7 @@ class PartnerAdminService(BaseService[User]):
             "profile_photo_url": admin_data.get("profile_photo_url"),
             "roles": [UserRole.PROGRAM_ADMIN.value],  # Give them program admin role for their org
             "primary_role": UserRole.PROGRAM_ADMIN.value,
-            "profile_type": ProfileType.FULL_USER,
+            "profile_type": ProfileType.full_user,
             "is_active": True,
             "created_by": created_by,
             "updated_by": created_by

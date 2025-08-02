@@ -233,7 +233,7 @@ class ProgramService(BaseService[Program, ProgramCreate, ProgramUpdate]):
         # Count courses in this program
         active_courses = db.query(Course).filter(
             Course.program_id == program_id,
-            Course.status == 'active'
+            Course.status == 'published'
         ).count()
         
         total_courses = db.query(Course).filter(

@@ -51,6 +51,25 @@
 - Address, emergency contact, medical info (JSON fields)
 - `created_at`, `updated_at` (TIMESTAMP)
 
+#### **course_enrollments** ✅ **ENHANCED (2025-07-31)**
+- `id` (UUID, PK)
+- `user_id` (UUID, FK → users.id)
+- `course_id` (UUID, FK → courses.id)
+- `program_id` (UUID, FK → programs.id) ⭐ **Program Context**
+- `facility_id` (UUID, FK → facilities.id) ⭐ **🆕 Facility Assignment**
+- `session_type` (VARCHAR) ⭐ **🆕 Session Configuration**
+- `location_type` (VARCHAR) ⭐ **🆕 Location Configuration**
+- `age_group` (VARCHAR) ⭐ **🆕 Age Group Classification**
+- `status` (ENUM: active, paused, completed, withdrawn)
+- `enrollment_date` (DATE)
+- `completion_date` (DATE)
+- `progress_percentage` (INTEGER)
+- `credits_awarded` (INTEGER)
+- `assignment_type` (ENUM: direct, parent_assigned, bulk_assigned)
+- `assignment_notes` (TEXT)
+- `assigned_by` (UUID, FK → users.id)
+- `created_at`, `updated_at` (TIMESTAMP)
+
 #### **facilities**
 - `id` (UUID, PK)
 - `program_id` (UUID, FK → programs.id) ⭐ **Program Context**
@@ -61,6 +80,23 @@
 - `amenities` (JSON) - Array of amenities
 - `status` (ENUM: active, maintenance, inactive)
 - `created_at`, `updated_at` (TIMESTAMP)
+
+#### **facility_course_pricing** ✅ **NEW (2025-07-30)**
+- `id` (UUID, PK)
+- `facility_id` (UUID, FK → facilities.id)
+- `course_id` (UUID, FK → courses.id)
+- `program_id` (UUID, FK → programs.id) ⭐ **Program Context**
+- `age_group` (VARCHAR) - Age group classification
+- `location_type` (VARCHAR) - Location type (our-facility, client-location, virtual)
+- `session_type` (VARCHAR) - Session type (group, private, etc.)
+- `price` (DECIMAL) - Actual price in NGN
+- `is_active` (BOOLEAN)
+- `effective_date` (DATE)
+- `end_date` (DATE)
+- `created_by` (UUID, FK → users.id)
+- `updated_by` (UUID, FK → users.id)
+- `created_at`, `updated_at` (TIMESTAMP)
+- **UNIQUE INDEX**: `facility_id, course_id, age_group, location_type, session_type, is_active` (where is_active = true)
 
 ### Course Hierarchy (Program-Scoped)
 
@@ -126,6 +162,8 @@
 - `002_simple_curriculum_tables.py` - Course hierarchy tables
 - `003_create_facilities_table_simple.py` - Facility management
 - `a6986e2e95a0_add_user_program_assignments_table.py` - Program assignments
+- **🆕 2025-07-30**: `facility_course_pricing` table creation
+- **🆕 2025-07-31**: `course_enrollments` enhancement with facility assignment fields
 
 ## Data Isolation
 
@@ -140,3 +178,30 @@
 - Optimized queries with program context
 - Connection pooling for concurrent access
 - Query optimization for large datasets
+
+## 🏢 **Multi-Facility Course System (2025-07-31)**
+
+### **Enhanced Schema Features**
+- **Facility-Specific Enrollments**: Each course enrollment assigned to specific facility
+- **Session Configuration Storage**: Session type, location type, age group per enrollment
+- **Multi-Facility Support**: Students can enroll in same course at different facilities
+- **Pricing Matrix Integration**: Links to facility-specific course pricing
+
+### **Key Relationships**
+```sql
+-- Course enrollment with facility assignment
+course_enrollments.facility_id → facilities.id
+course_enrollments.user_id → users.id (students/parents)
+course_enrollments.course_id → courses.id
+
+-- Facility-specific pricing
+facility_course_pricing.facility_id → facilities.id
+facility_course_pricing.course_id → courses.id
+facility_course_pricing(age_group, location_type, session_type) matches course_enrollments
+```
+
+### **Data Integrity Constraints**
+- **Unique Active Pricing**: Only one active price per facility+course+configuration combination
+- **Enrollment Validation**: Course enrollment configurations must have corresponding pricing entries
+- **Program Context**: All facility and pricing operations scoped by program assignments
+- **Assignment Tracking**: Full audit trail for who assigned students to facilities and when

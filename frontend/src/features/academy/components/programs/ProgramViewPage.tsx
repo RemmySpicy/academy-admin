@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   BookOpen, 
   Users, 
@@ -21,7 +22,9 @@ import {
   Settings,
   UserCheck,
   Clock,
-  Target
+  Target,
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
 import { useAcademyProgram, useAcademyProgramStatistics } from '../../hooks';
 import { cn } from '@/lib/utils';
@@ -45,13 +48,65 @@ const statusColors = {
  * 
  * Full-page program details view with enhanced configuration display
  */
+// Helper function to safely get statistics values
+const getStatValue = (value: number | undefined | null): number => {
+  return typeof value === 'number' && !isNaN(value) ? value : 0;
+};
+
+// Helper function to validate statistics structure
+const isValidStatistics = (stats: any): boolean => {
+  return stats && 
+    typeof stats === 'object' && 
+    stats.courses && 
+    stats.students && 
+    stats.team && 
+    stats.facilities && 
+    stats.configuration;
+};
+
+// Component for displaying statistics row with better UX
+const StatisticRow = ({ label, value, variant = 'default' }: { 
+  label: string; 
+  value: number; 
+  variant?: 'default' | 'success' | 'muted' 
+}) => {
+  const getVariantClasses = () => {
+    switch (variant) {
+      case 'success':
+        return 'text-green-600';
+      case 'muted':
+        return 'text-gray-500';
+      default:
+        return 'font-semibold';
+    }
+  };
+
+  return (
+    <div className="flex justify-between items-center">
+      <span className="text-gray-600">{label}</span>
+      <span className={getVariantClasses()}>
+        {value}
+        {value === 0 && (
+          <span className="text-xs text-gray-400 ml-1">(None)</span>
+        )}
+      </span>
+    </div>
+  );
+};
+
 export function ProgramViewPage() {
   const params = useParams();
   const router = useRouter();
   const programId = params.id as string;
 
   const { data: program, isLoading, error } = useAcademyProgram(programId);
-  const { data: statistics, isLoading: statsLoading } = useAcademyProgramStatistics(programId);
+  const { 
+    data: statistics, 
+    isLoading: statsLoading, 
+    error: statsError, 
+    refetch: refetchStats 
+  } = useAcademyProgramStatistics(programId);
+
 
   usePageTitle(
     program ? `${program.name} - Program Details` : 'Program Details',
@@ -397,7 +452,23 @@ export function ProgramViewPage() {
                 </Card>
               ))}
             </div>
-          ) : statistics ? (
+          ) : statsError ? (
+            <Alert className="border-destructive/50 text-destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="flex items-center justify-between">
+                <span>Failed to load program statistics. Please try again.</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => refetchStats()}
+                  className="ml-4"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
+              </AlertDescription>
+            </Alert>
+          ) : isValidStatistics(statistics) ? (
             <div className="grid gap-6 md:grid-cols-2">
               {/* Courses Statistics */}
               <Card>
@@ -409,18 +480,20 @@ export function ProgramViewPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Total Courses</span>
-                      <span className="font-semibold">{statistics.courses.total}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Active Courses</span>
-                      <span className="font-semibold text-green-600">{statistics.courses.active}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Inactive Courses</span>
-                      <span className="font-semibold text-gray-500">{statistics.courses.inactive}</span>
-                    </div>
+                    <StatisticRow 
+                      label="Total Courses" 
+                      value={getStatValue(statistics.courses?.total)} 
+                    />
+                    <StatisticRow 
+                      label="Active Courses" 
+                      value={getStatValue(statistics.courses?.active)} 
+                      variant="success"
+                    />
+                    <StatisticRow 
+                      label="Inactive Courses" 
+                      value={getStatValue(statistics.courses?.inactive)} 
+                      variant="muted"
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -435,18 +508,20 @@ export function ProgramViewPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Total Students</span>
-                      <span className="font-semibold">{statistics.students.total}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Active Students</span>
-                      <span className="font-semibold text-green-600">{statistics.students.active}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Inactive Students</span>
-                      <span className="font-semibold text-gray-500">{statistics.students.inactive}</span>
-                    </div>
+                    <StatisticRow 
+                      label="Total Students" 
+                      value={getStatValue(statistics.students?.total)} 
+                    />
+                    <StatisticRow 
+                      label="Active Students" 
+                      value={getStatValue(statistics.students?.active)} 
+                      variant="success"
+                    />
+                    <StatisticRow 
+                      label="Inactive Students" 
+                      value={getStatValue(statistics.students?.inactive)} 
+                      variant="muted"
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -461,14 +536,14 @@ export function ProgramViewPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Team Members</span>
-                      <span className="font-semibold">{statistics.team.total_members}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Facilities</span>
-                      <span className="font-semibold">{statistics.facilities.total}</span>
-                    </div>
+                    <StatisticRow 
+                      label="Team Members" 
+                      value={getStatValue(statistics.team?.total_members)} 
+                    />
+                    <StatisticRow 
+                      label="Facilities" 
+                      value={getStatValue(statistics.facilities?.total)} 
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -483,21 +558,26 @@ export function ProgramViewPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Age Groups</span>
-                      <span className="font-semibold">{statistics.configuration.age_groups}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Difficulty Levels</span>
-                      <span className="font-semibold">{statistics.configuration.difficulty_levels}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Session Types</span>
-                      <span className="font-semibold">{statistics.configuration.session_types}</span>
-                    </div>
-                    <div className="flex justify-between">
+                    <StatisticRow 
+                      label="Age Groups" 
+                      value={getStatValue(statistics.configuration?.age_groups)} 
+                    />
+                    <StatisticRow 
+                      label="Difficulty Levels" 
+                      value={getStatValue(statistics.configuration?.difficulty_levels)} 
+                    />
+                    <StatisticRow 
+                      label="Session Types" 
+                      value={getStatValue(statistics.configuration?.session_types)} 
+                    />
+                    <div className="flex justify-between items-center">
                       <span className="text-gray-600">Default Duration</span>
-                      <span className="font-semibold">{statistics.configuration.default_duration} min</span>
+                      <span className="font-semibold">
+                        {getStatValue(statistics.configuration?.default_duration)} min
+                        {getStatValue(statistics.configuration?.default_duration) === 0 && (
+                          <span className="text-xs text-gray-400 ml-1">(Not set)</span>
+                        )}
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -507,7 +587,20 @@ export function ProgramViewPage() {
             <div className="text-center py-12">
               <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Statistics Available</h3>
-              <p className="text-gray-600">Unable to load program statistics at this time.</p>
+              <p className="text-gray-600 mb-4">
+                {statistics ? 
+                  'The statistics data structure is incomplete or invalid.' : 
+                  'No statistics data found for this program.'
+                }
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => refetchStats()}
+                className="mx-auto"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh Statistics
+              </Button>
             </div>
           )}
         </TabsContent>

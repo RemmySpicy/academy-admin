@@ -86,6 +86,7 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
         if not course_data.sequence:
             course_data.sequence = self._get_next_sequence_for_program(db, course_data.program_id)
         
+        
         # Create course
         course = self.create(db, course_data, created_by)
         
@@ -127,6 +128,7 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
             program = db.query(Program).filter(Program.id == course_data.program_id).first()
             if not program:
                 raise ValueError(f"Program with ID '{course_data.program_id}' not found")
+        
         
         # Update course
         updated_course = self.update(db, course, course_data, updated_by)
@@ -611,7 +613,7 @@ class CourseService(BaseService[Course, CourseCreate, CourseUpdate]):
             age_groups=course.age_groups or [],
             location_types=course.location_types or [],
             session_types=course.session_types or [],
-            pricing_matrix=course.pricing_matrix or [],
+            pricing_ranges=course.pricing_ranges or [],
             instructor_id=course.instructor_id,
             max_students=course.max_students,
             min_students=course.min_students,

@@ -41,7 +41,7 @@ from app.features.courses.schemas.progression import (
 from app.features.common.services.base import BaseService
 
 
-class ProgressionService(BaseService[CurriculumProgressionSettings]):
+class ProgressionService(BaseService[CurriculumProgressionSettings, dict, dict]):
     """Service for managing curriculum progression system."""
     
     def __init__(self):

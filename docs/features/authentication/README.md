@@ -6,6 +6,8 @@ Academy Admin uses JWT (JSON Web Token) based authentication with the following 
 - **Backend**: FastAPI with PyJWT and Passlib for secure authentication
 - **Frontend**: Next.js with custom authentication context
 - **Database**: PostgreSQL users table with hashed passwords
+- **🆕 Enhanced User Creation**: Auto-generation of `full_name` from `first_name + last_name`
+- **🔐 Role-Based Permissions**: Program admins can create users within their assigned programs
 
 ## 🚀 Quick Start
 
@@ -89,11 +91,16 @@ admin_user = User(
     username="admin",
     email="admin@academy.com",
     password_hash=hash_password("admin123"),
-    full_name="Administrator",
+    full_name="Administrator",  # Auto-generated from first_name + last_name in user creation
     role="super_admin",
     is_active=True
 )
 ```
+
+**🔧 Recent Fixes (2025-01-29):**
+- **Auto Full Name**: Service layer now automatically generates `full_name` field during user creation
+- **Permission Updates**: Program admins can create student/parent users within their programs
+- **Enum Consistency**: Database enums synchronized with Python enum values
 
 ## 🔒 Security Features
 
@@ -140,8 +147,12 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 ## 👥 User Roles
 
 ### Current Role System
-- **admin**: Full access to all features
-- **user**: Standard user access (future implementation)
+- **super_admin**: Full access to all features including cross-program operations
+- **program_admin**: Can manage users within assigned programs (enhanced 2025-01-29)
+- **program_coordinator**: Program-specific access with student focus
+- **tutor**: Read-only access within assigned programs
+- **student**: Student-specific access to personal data
+- **parent**: Parent-specific access to children's data
 
 ### Role-Based Access (Future)
 ```python

@@ -113,6 +113,13 @@ class Student(BaseModel):
         comment="Reference to user account for mobile app access",
     )
     
+    program_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("programs.id"),
+        nullable=False,
+        comment="Program this student profile belongs to",
+    )
+    
     referral_source: Mapped[Optional[str]] = mapped_column(
         String(100),
         nullable=True,
@@ -125,8 +132,9 @@ class Student(BaseModel):
         comment="Date when student was first enrolled",
     )
     
-    status: Mapped[StudentStatus] = mapped_column(
-        default=StudentStatus.ACTIVE,
+    status: Mapped[str] = mapped_column(
+        String(20),
+        default="active",
         nullable=False,
         comment="Current student status",
     )
@@ -191,6 +199,7 @@ class Student(BaseModel):
         Index("idx_students_enrollment_date", "enrollment_date"),
         Index("idx_students_full_name", "first_name", "last_name"),
         Index("idx_students_user_id", "user_id"),
+        Index("idx_students_program_id", "program_id"),
         # Program membership is now tracked via ProgramAssignment and CourseEnrollment
     )
     

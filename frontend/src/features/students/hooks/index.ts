@@ -12,6 +12,9 @@ import {
   StudentBulkAction
 } from '../types';
 
+// Export enrollment hooks
+export * from './useEnrollmentApi';
+
 // Query keys
 export const STUDENT_QUERY_KEYS = {
   all: ['students'] as const,

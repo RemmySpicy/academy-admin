@@ -1,22 +1,55 @@
 # Facility Management Feature
 
 ## Overview
-Complete facility management system for physical academy locations with program-centric architecture supporting pools, courts, gyms, fields, and specialized equipment tracking.
+Comprehensive facility management system with program-centric architecture and course pricing integration. Manages physical facilities, equipment, and course-specific pricing configurations.
 
 ## Current Implementation Status ✅
 
-### **Fully Implemented**
-- Physical facility management (pools, courts, gyms, fields, classrooms, labs)
-- Program context filtering for all facility operations
-- Equipment and amenities tracking
-- Role-based access control for facility management
-- RESTful API with automatic program scoping
-- Frontend facility management interface
+### **Fully Implemented & Deployed (2025-07-30)**
+- **Physical Facility Management**: Complete CRUD operations for facilities ✅ **PRODUCTION-READY**
+- **Equipment & Specifications**: Detailed facility equipment and specifications management ✅ **DEPLOYED**
+- **Operating Hours & Contact Management**: Comprehensive facility operational details ✅ **DEPLOYED**
+- **🆕 Course Pricing System**: Facility-specific course pricing configuration ✅ **NEW (2025-07-30)**
+- **Program Context Filtering**: All facility operations scoped by program assignments ✅ **ACTIVE**
+- **Multi-Tab Interface**: Organized facility management with specialized tabs ✅ **ENHANCED**
+
+### **🎯 Latest Feature (2025-07-30): Facility Course Pricing**
+Complete implementation of facility-specific course pricing that determines actual customer charges:
+
+- **✅ Database Schema**: `facility_course_pricing` table with full relationships
+- **✅ Backend Services**: Complete CRUD, bulk operations, pricing lookup APIs
+- **✅ Frontend Interface**: Course Price tab in facility management
+- **✅ API Integration**: 14 endpoints for comprehensive pricing management
+- **✅ Real-time Validation**: Course configuration awareness and price recommendations
 
 ### **Architecture**
 
+#### **🏗️ Facility-Centric Design**
+Facilities serve as the physical infrastructure foundation with integrated course pricing:
+
+```
+Programs (academy-wide)
+└── Facilities (program-scoped)
+    ├── Physical Properties (location, capacity, equipment)
+    ├── Operational Details (hours, contacts, specifications)
+    └── Course Pricing Matrix (actual customer prices)
+        └── Per course/age group/location type/session type combinations
+```
+
+#### **📊 Two-Tier Pricing System**
+```
+Course Definition (Marketing Layer)
+├── pricing_ranges: Price ranges for customer expectations
+└── location_types, session_types: Configuration arrays
+
+Facility Implementation (Transaction Layer)
+├── facility_course_pricing: Actual prices customers pay
+└── Specific pricing per facility+course+age_group+location+session combination
+```
+
 #### **Database Schema**
 ```sql
+# Core Facilities Table
 facilities (program-scoped)
 ├── id (UUID, PK)
 ├── program_id (UUID, FK → programs.id) ⭐ Program Context
@@ -24,18 +57,54 @@ facilities (program-scoped)
 ├── facility_type (ENUM: pool, court, gym, field, classroom, lab)
 ├── capacity (INTEGER)
 ├── equipment (JSON) - Array of equipment items
-├── amenities (JSON) - Array of amenities
+├── specifications (JSON) - Activity-specific specifications
+├── operating_hours (JSON) - Hours by day of week
 ├── status (ENUM: active, maintenance, inactive)
 └── created_at, updated_at (TIMESTAMP)
+
+# 🆕 Course Pricing Table (NEW 2025-07-30)
+facility_course_pricing
+├── id (UUID, PK)
+├── facility_id (UUID, FK → facilities.id) CASCADE DELETE
+├── course_id (UUID, FK → courses.id) CASCADE DELETE
+├── age_group (VARCHAR) - Must match course age_groups
+├── location_type (VARCHAR) - Must match course location_types  
+├── session_type (VARCHAR) - Must match course session_types
+├── price (INTEGER) - Actual price in NGN
+├── is_active (BOOLEAN) - Active pricing entry
+├── notes (TEXT) - Additional pricing notes
+├── created_by, updated_by (UUID, FK → users.id)
+└── created_at, updated_at (TIMESTAMP)
+
+# Unique constraint: No duplicate active pricing combinations
+UNIQUE (facility_id, course_id, age_group, location_type, session_type) 
+WHERE is_active = true
 ```
 
 #### **API Endpoints** (Program Context Filtered)
+
+##### **Core Facility Management**
 - `GET /api/v1/facilities/` - List facilities for current program
 - `POST /api/v1/facilities/` - Create facility in current program
 - `GET /api/v1/facilities/{id}` - Get facility (program access validated)
 - `PUT /api/v1/facilities/{id}` - Update facility (program scoped)
 - `DELETE /api/v1/facilities/{id}` - Delete facility (program scoped)
 - `GET /api/v1/facilities/stats/` - Facility statistics (program filtered)
+
+##### **🆕 Course Pricing Management (NEW 2025-07-30)**
+- `GET /api/v1/facilities/pricing/` - List all pricing entries with filtering
+- `POST /api/v1/facilities/pricing/` - Create new pricing entry
+- `GET /api/v1/facilities/pricing/{id}` - Get specific pricing entry
+- `PUT /api/v1/facilities/pricing/{id}` - Update pricing entry
+- `DELETE /api/v1/facilities/pricing/{id}` - Delete pricing entry
+- `GET /api/v1/facilities/pricing/facility/{id}/pricing` - All pricing for facility
+- `GET /api/v1/facilities/pricing/course/{id}/pricing` - All pricing for course
+- `POST /api/v1/facilities/pricing/lookup` - Price lookup for enrollment
+- `GET /api/v1/facilities/pricing/facility/{id}/matrix` - Complete pricing matrix
+- `POST /api/v1/facilities/pricing/bulk-create` - Bulk create pricing entries
+- `POST /api/v1/facilities/pricing/bulk-update` - Bulk update pricing entries
+- `POST /api/v1/facilities/pricing/import` - Import pricing from other facility
+- `GET /api/v1/facilities/pricing/stats` - Pricing statistics and coverage
 
 All endpoints automatically filter by program context via `X-Program-Context` header.
 

@@ -15,12 +15,15 @@ import {
   Calendar,
   MapPin,
   User,
+  Users,
   AlertCircle,
   Activity,
   Clock,
   BookOpen,
   Award,
-  FileText
+  FileText,
+  Heart,
+  Eye
 } from 'lucide-react';
 import { ParentChildManager } from '@/features/students/components';
 import { 
@@ -31,6 +34,7 @@ import {
 } from '@/features/students/hooks/useUserRelationships';
 import { StudentScheduleManager } from '@/features/scheduling/components/StudentScheduleManager';
 import { StudentFinancialManager } from '@/features/payments/components/StudentFinancialManager';
+import { StudentEnrollmentButton } from '@/features/students/components/EnrollmentButton';
 
 // Mock data - this will be replaced with real API calls
 const mockStudent = {
@@ -255,6 +259,7 @@ export default function StudentDetailPage() {
       <Tabs defaultValue="profile" className="space-y-4">
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="enrollments">Enrollments</TabsTrigger>
           <TabsTrigger value="children">Children</TabsTrigger>
           <TabsTrigger value="progress">Progress</TabsTrigger>
           <TabsTrigger value="attendance">Attendance</TabsTrigger>
@@ -375,6 +380,97 @@ export default function StudentDetailPage() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        </TabsContent>
+
+        {/* Enrollments Tab */}
+        <TabsContent value="enrollments" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Course Enrollments</h2>
+              <p className="text-gray-600">Manage student course assignments and enrollment status</p>
+            </div>
+            <StudentEnrollmentButton
+              student={{
+                id: student.id,
+                full_name: `${student.first_name} ${student.last_name}`,
+                email: student.email,
+                roles: ['student']
+              }}
+              onEnrollmentComplete={(assignment) => {
+                console.log('Enrollment completed:', assignment);
+                // Refresh enrollments data here
+              }}
+            />
+          </div>
+
+          {/* Current Enrollments */}
+          <div className="grid gap-4">
+            {enrollments.map((enrollment) => (
+              <Card key={enrollment.id}>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <BookOpen className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg">{enrollment.program}</h3>
+                        <p className="text-gray-600">{enrollment.level} • Instructor: {enrollment.instructor}</p>
+                        <p className="text-sm text-gray-500">
+                          {new Date(enrollment.start_date).toLocaleDateString()} - {new Date(enrollment.end_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right space-y-2">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(enrollment.status)}`}>
+                        {enrollment.status.charAt(0).toUpperCase() + enrollment.status.slice(1)}
+                      </span>
+                      <div className="text-sm text-gray-600">
+                        {enrollment.sessions_attended}/{enrollment.total_sessions} sessions
+                      </div>
+                      <div className="w-32">
+                        <div className="flex justify-between text-xs mb-1">
+                          <span>Progress</span>
+                          <span>{Math.round((enrollment.sessions_attended / enrollment.total_sessions) * 100)}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full" 
+                            style={{ width: `${(enrollment.sessions_attended / enrollment.total_sessions) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            
+            {enrollments.length === 0 && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center py-8">
+                    <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No Course Enrollments</h3>
+                    <p className="text-gray-600 mb-4">This student is not currently enrolled in any courses.</p>
+                    <StudentEnrollmentButton
+                      student={{
+                        id: student.id,
+                        full_name: `${student.first_name} ${student.last_name}`,
+                        email: student.email,
+                        roles: ['student']
+                      }}
+                      variant="default"
+                      onEnrollmentComplete={(assignment) => {
+                        console.log('Enrollment completed:', assignment);
+                        // Refresh enrollments data here
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </TabsContent>
 

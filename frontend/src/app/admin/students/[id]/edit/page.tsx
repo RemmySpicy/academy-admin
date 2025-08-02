@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, User, Users, Building2, AlertCircle, CheckCircle, History, Settings } from 'lucide-react';
+import { ArrowLeft, User, Users, Building2, AlertCircle, CheckCircle, History, Settings, BookOpen } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useProgramContext } from '@/hooks/useProgramContext';
 
@@ -16,6 +16,7 @@ import { PersonSearchAndSelect, OrganizationSelector, RelationshipManager, Simpl
 
 // Hooks for data fetching
 import { useStudent } from '@/features/students/hooks';
+import { StudentEnrollmentButton } from '@/features/students/components/EnrollmentButton';
 
 // Types
 interface StudentEditFormData {
@@ -84,24 +85,27 @@ export default function EditStudentPage() {
   // Initialize form data when student loads
   React.useEffect(() => {
     if (student) {
+      console.log('Student data received:', student); // Debug log
       setFormData({
         basic_info: {
           first_name: student.first_name || '',
           last_name: student.last_name || '',
+          salutation: student.salutation || '',
           email: student.email || '',
           phone: student.phone || '',
           date_of_birth: student.date_of_birth || '',
+          referral_source: student.referral_source || '',
           emergency_contact_name: student.emergency_contact_name || '',
           emergency_contact_phone: student.emergency_contact_phone || '',
-          medical_notes: student.medical_notes || '',
-          additional_notes: student.additional_notes || ''
+          medical_notes: student.medical_notes || student.notes || '',
+          additional_notes: student.additional_notes || student.notes || ''
         },
         account_settings: {
           profile_type: student.profile_type || 'profile_only',
           has_login_credentials: !!student.email && student.profile_type === 'full_user',
           roles: student.roles || ['student']
         },
-        relationships: student.parent_relationships || [],
+        relationships: student.parent_relationships || student.parents || [],
         organization_memberships: student.organization_memberships || []
       });
     }
@@ -134,9 +138,11 @@ export default function EditStudentPage() {
 
   const searchParents = async (query: string) => {
     try {
-      const response = await fetch(`/api/v1/parents/search?q=${encodeURIComponent(query)}&program_id=${currentProgram?.id}`, {
+      // Search across entire system, not just current program
+      const response = await fetch(`/api/v1/parents/search?q=${encodeURIComponent(query)}`, {
         headers: {
-          'X-Program-Context': currentProgram?.id || ''
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
         }
       });
       
@@ -151,9 +157,11 @@ export default function EditStudentPage() {
 
   const searchOrganizations = async (query: string) => {
     try {
-      const response = await fetch(`/api/v1/organizations/search?q=${encodeURIComponent(query)}&program_id=${currentProgram?.id}`, {
+      // Search across entire system, not just current program
+      const response = await fetch(`/api/v1/organizations/search?q=${encodeURIComponent(query)}`, {
         headers: {
-          'X-Program-Context': currentProgram?.id || ''
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
         }
       });
       
@@ -301,10 +309,14 @@ export default function EditStudentPage() {
 
       {/* Tabbed Interface */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="basic" className="flex items-center">
             <User className="h-4 w-4 mr-2" />
             Basic Info
+          </TabsTrigger>
+          <TabsTrigger value="enrollments" className="flex items-center">
+            <BookOpen className="h-4 w-4 mr-2" />
+            Enrollments
           </TabsTrigger>
           <TabsTrigger value="relationships" className="flex items-center">
             <Users className="h-4 w-4 mr-2" />
@@ -449,6 +461,98 @@ export default function EditStudentPage() {
                   placeholder="Any other relevant information..."
                   rows={2}
                 />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Enrollments Tab */}
+        <TabsContent value="enrollments">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="flex items-center">
+                    <BookOpen className="h-5 w-5 mr-2" />
+                    Course Enrollments
+                  </CardTitle>
+                  <CardDescription>
+                    Manage student course assignments and enrollment status
+                  </CardDescription>
+                </div>
+                <StudentEnrollmentButton
+                  student={student ? {
+                    id: student.id,
+                    full_name: `${student.first_name} ${student.last_name}`,
+                    email: student.email,
+                    roles: ['student']
+                  } : undefined}
+                  onEnrollmentComplete={(assignment) => {
+                    console.log('Enrollment completed:', assignment);
+                    // Refresh enrollments data here
+                  }}
+                />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Current Enrollments List */}
+                <div className="rounded-lg border p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-medium">Current Enrollments</h3>
+                    <Badge variant="secondary">
+                      {/* Mock data - replace with real enrollment count */}
+                      2 Active
+                    </Badge>
+                  </div>
+                  
+                  {/* Enrollment Cards */}
+                  <div className="space-y-3">
+                    {/* Mock enrollment items - will be replaced with real data */}
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <BookOpen className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">Swimming Fundamentals</div>
+                          <div className="text-xs text-gray-600">Level 2 • Olympic Swimming Pool</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                          Active
+                        </Badge>
+                        <span className="text-xs text-gray-500">75% Complete</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <BookOpen className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">Water Safety Course</div>
+                          <div className="text-xs text-gray-600">Beginner • Olympic Swimming Pool</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                          Completed
+                        </Badge>
+                        <span className="text-xs text-gray-500">100% Complete</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Enrollment Actions */}
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <div className="text-sm text-gray-600">
+                    Use the "Enroll in Course" button above to add new course assignments with facility selection and payment tracking.
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

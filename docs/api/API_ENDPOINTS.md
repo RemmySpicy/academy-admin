@@ -15,6 +15,25 @@
 - `POST /api/v1/auth/logout` - User logout
 - `GET /api/v1/auth/me` - Get current user with role and program assignments
 
+## 🆕 Unified User Creation Workflows ✅ (DEPLOYED - 2025-01-29)
+**Streamlined workflows for program administrators - 2 new endpoints**
+
+### Unified Student Creation
+- `POST /api/v1/students/create-with-program` - **NEW**: Create student with automatic program association and optional course enrollment
+
+### Unified Parent Creation  
+- `POST /api/v1/parents/create-with-program` - **NEW**: Create parent with automatic program association and optional child relationships
+
+**Key Features:**
+- Single atomic transaction for complete user setup
+- Automatic program assignment from admin's context
+- Proper error handling and rollback on failures
+- Validation of admin permissions
+- Optional immediate course enrollment for students
+- Optional child relationship creation for parents
+- **✅ Auto-Generated Full Name**: System automatically generates `full_name` from `first_name + " " + last_name`
+- **🔐 Program Admin Access**: Program admins can create student/parent users within their assigned programs
+
 ## 🆕 Course Assignment System ✅ (DEPLOYED - 2025-01-28)
 **Two-step workflow for student/parent creation and course assignment - 12 endpoints**
 
@@ -40,12 +59,93 @@
 **📖 Complete Documentation**: [`docs/api/COURSE_ASSIGNMENT_API.md`](COURSE_ASSIGNMENT_API.md)  
 **🔧 Deployment Status**: ✅ All endpoints deployed and accessible via `/docs`
 
-## Program Management ✅
+## Program Management ✅ **ENHANCED (2025-08-02)**
+
+### Core Program Operations
 - `GET /api/v1/programs/` - List programs (role-filtered)
 - `POST /api/v1/programs/` - Create program (Super Admin only)
-- `GET /api/v1/programs/{id}` - Get specific program
-- `PUT /api/v1/programs/{id}` - Update program
+- `GET /api/v1/programs/{id}` - **ENHANCED**: Get specific program with configuration data
+- `PUT /api/v1/programs/{id}` - Update program (includes configuration fields)
 - `DELETE /api/v1/programs/{id}` - Delete program (Super Admin only)
+
+### 🆕 Configuration Integration ✅ **NEW (2025-08-02)**
+Program responses now include configuration fields for cross-feature integration:
+
+```json
+{
+  "id": "program-uuid",
+  "name": "Swimming Program",
+  "program_code": "SWIM", 
+  "age_groups": [
+    {"id": "6-8", "name": "6-8 years", "from_age": 6, "to_age": 8},
+    {"id": "9-12", "name": "9-12 years", "from_age": 9, "to_age": 12}
+  ],
+  "difficulty_levels": [
+    {"id": "beginner", "name": "Beginner", "weight": 1},
+    {"id": "intermediate", "name": "Intermediate", "weight": 2}
+  ],
+  "session_types": [
+    {"id": "private", "name": "Private", "capacity": 1},
+    {"id": "group", "name": "Group", "capacity": 6}
+  ],
+  "default_session_duration": 45
+}
+```
+
+**Configuration Fields**:
+- `age_groups`: Age range definitions for course/curriculum targeting
+- `difficulty_levels`: Progression structure with sortable weights  
+- `session_types`: Available session types with capacity limits
+- `default_session_duration`: Default duration for new sessions (15-300 minutes)
+
+### 🆕 Program Statistics ✅ **NEW (2025-08-02)**
+- `GET /api/v1/programs/{id}/statistics` - **NEW**: Get comprehensive program statistics
+
+**Response Structure**:
+```json
+{
+  "success": true,
+  "data": {
+    "program_id": "8482438e-34b1-42fa-8653-7688866a012b",
+    "program_name": "Swimming",
+    "courses": {
+      "total": 7,
+      "active": 4,
+      "inactive": 3
+    },
+    "students": {
+      "total": 7,
+      "active": 3,
+      "inactive": 4
+    },
+    "team": {
+      "total_members": 14
+    },
+    "facilities": {
+      "total": 3
+    },
+    "configuration": {
+      "age_groups": 2,
+      "difficulty_levels": 3,
+      "session_types": 2,
+      "default_duration": 45
+    }
+  }
+}
+```
+
+**Statistics Breakdown**:
+- **Courses**: Total count and breakdown by status (`published` = active, `draft` = inactive)
+- **Students**: Total enrollment and status breakdown (`active`, `inactive`, `graduated`, `suspended`)
+- **Team**: Count of users assigned to the program via `user_program_assignments`
+- **Facilities**: Total facilities associated with the program
+- **Configuration**: Counts of configured program elements (age groups, difficulty levels, etc.)
+
+**Use Cases**:
+- Academy administration dashboard overviews
+- Program performance monitoring
+- Resource allocation planning
+- Cross-program comparison analytics
 
 ## Course Management ✅ (Program Context Filtered)
 - `GET /api/v1/courses/` - List courses (program-filtered)
@@ -54,12 +154,50 @@
 - `PUT /api/v1/courses/{id}` - Update course (program scoped)
 - `DELETE /api/v1/courses/{id}` - Delete course (program scoped)
 
+**🔄 Updated Pricing Model (2025-07-30)**: Courses now use `pricing_ranges` instead of fixed pricing matrix
+- **Price Ranges**: Each age group has price_from and price_to for customer expectations
+- **Facility Integration**: Actual customer prices configured per facility in facility course pricing system
+- **Marketing Focus**: Course prices serve as ranges for website/app display, not transaction amounts
+
 ## Facility Management ✅ (Program Context Filtered)
+### Core Facility Operations
 - `GET /api/v1/facilities/` - List facilities (program-filtered)
 - `POST /api/v1/facilities/` - Create facility (program context enforced)
 - `GET /api/v1/facilities/{id}` - Get facility (program access validated)
 - `PUT /api/v1/facilities/{id}` - Update facility (program scoped)
 - `DELETE /api/v1/facilities/{id}` - Delete facility (program scoped)
+- `GET /api/v1/facilities/stats/` - Facility statistics (program filtered)
+
+### 🆕 Facility Course Pricing System ✅ (NEW - 2025-07-30)
+**Complete facility-specific course pricing that determines actual customer charges - 14 endpoints**
+
+#### Pricing Management (6 endpoints)
+- `GET /api/v1/facility-course-pricing/` - List pricing entries with filtering & pagination
+- `POST /api/v1/facility-course-pricing/` - Create new pricing entry
+- `GET /api/v1/facility-course-pricing/{id}` - Get specific pricing entry
+- `PUT /api/v1/facility-course-pricing/{id}` - Update pricing entry
+- `DELETE /api/v1/facility-course-pricing/{id}` - Delete pricing entry
+- `GET /api/v1/facility-course-pricing/stats` - Pricing statistics and coverage
+
+#### Facility & Course Pricing Queries (4 endpoints)
+- `GET /api/v1/facility-course-pricing/facility/{facility_id}/pricing` - All pricing for facility
+- `GET /api/v1/facility-course-pricing/course/{course_id}/pricing` - All pricing for course
+- `POST /api/v1/facility-course-pricing/lookup` - Price lookup for enrollment
+- `GET /api/v1/facility-course-pricing/facility/{facility_id}/matrix` - Complete pricing matrix
+
+#### Bulk Operations (4 endpoints)
+- `POST /api/v1/facility-course-pricing/bulk-create` - Bulk create pricing entries
+- `POST /api/v1/facility-course-pricing/bulk-update` - Bulk update pricing entries
+- `POST /api/v1/facility-course-pricing/import` - Import pricing from other facility
+- `GET /api/v1/facility-course-pricing/stats` - Pricing statistics and coverage
+
+**Key Features:**
+- **Two-Tier Pricing**: Course price ranges (marketing) + facility actual prices (transactions)
+- **Configuration Validation**: Ensures pricing matches course age_groups, location_types, session_types
+- **Real-time Price Lookup**: Instant pricing for customer enrollment workflows
+- **Bulk Management**: Import/export pricing between facilities for operational efficiency
+- **Program Context Filtering**: All pricing operations scoped by program assignments
+- **Comprehensive Coverage**: Statistics and matrix views for pricing management
 
 ## Scheduling System ✅ (Program Context Filtered)
 ### Session Management
@@ -84,9 +222,19 @@
 - `GET /api/v1/scheduling/integration/facilities/{facility_id}/utilization` - Facility reports
 
 ## Students Management ✅ (Program Context Filtered - 19 endpoints)
+**🔧 Fixed (2025-01-29)**: Multiple critical fixes applied
+- **Schema Fix**: Auto-generation of `full_name` from `first_name + last_name` in user creation
+- **Permission Fix**: Program admins can now create student/parent users within their programs
+- **Service Layer Fix**: Updated to use subquery-based course enrollment filtering (resolves PostgreSQL DISTINCT issues)
+- **Method Name Fix**: Corrected service method calls in parent routes (eliminates 500 errors)
+- **Enum Alignment**: Database enums now match Python enum values for consistency
 ### Standard Operations
 - `GET /api/v1/students/` - List students with pagination and filtering  
-- `GET /api/v1/students/stats` - Student statistics and demographics
+- `GET /api/v1/students/stats` - **UPDATED**: Student statistics (assignment-based architecture) 
+  - Total student profiles and active enrollments
+  - Course enrollment counts (active/paused)  
+  - Parent-child relationship statistics
+  - Age/gender distribution and recent trends
 - `GET /api/v1/students/{student_id}` - Get specific student by ID
 - `PUT /api/v1/students/{student_id}` - Update student information
 - `DELETE /api/v1/students/{student_id}` - Delete student (Super Admin only)
@@ -111,9 +259,14 @@
 - `GET /api/v1/students/me/parents` - Get student's parent/guardian contacts
 
 ## Parents Management ✅ (Program Context Filtered - 5 endpoints)
+**🔧 Fixed (2025-01-29)**: Service method name corrections and permission updates
 ### Standard Operations
 - `GET /api/v1/parents/` - List parents with family info
-- `GET /api/v1/parents/stats` - Parent statistics
+- `GET /api/v1/parents/stats` - **UPDATED**: Parent statistics (relationship-focused architecture)
+  - Total parent profiles and relationship counts
+  - Parent-child relationship statistics  
+  - Payment responsibility and family size distribution
+  - Gender distribution and recent profile trends
 - `GET /api/v1/parents/{parent_id}` - Get specific parent
 - `PUT /api/v1/parents/{parent_id}` - Update parent
 - `DELETE /api/v1/parents/{parent_id}` - Delete parent (Super Admin only)
@@ -147,11 +300,49 @@
 - **X-Bypass-Program-Filter**: `true` - Super admin bypass
 
 ## API Summary
-- **Total Endpoints**: 208 registered and accessible
+- **Total Endpoints**: 222 registered and accessible
+- **🆕 Facility Course Pricing**: 14 endpoints (newly implemented 2025-07-30)
 - **Course Assignment System**: 12 endpoints (newly implemented)
-- **Student Management**: 19 endpoints (enhanced with two-step workflow)
-- **Parent Management**: 5 endpoints (enhanced with assignment-based operations)
+- **Student Management**: 19 endpoints (enhanced with two-step workflow + critical fixes)
+- **Parent Management**: 5 endpoints (enhanced with assignment-based operations + method fixes)
 - **System Status**: ✅ All services healthy and deployed
+- **Recent Fixes**: ✅ User creation schema, program admin permissions, service methods, enum alignment
+- **🆕 Latest Updates (2025-07-31)**: ✅ Updated statistics architecture for assignment-based system + facility-course enrollment system
+- **Latest Feature**: ✅ Multi-facility course availability system with assignment-based enrollments
+
+## 🏢 **Facility-Course Assignment System** ✅ **NEW (2025-07-31)**
+Course enrollments now include facility assignments for multi-facility course availability:
+
+### **Enhanced Course Enrollment Fields**
+- `facility_id`: Assigned facility for enrollment
+- `session_type`: Type of session (group, private, etc.)
+- `location_type`: Location type (our-facility, client-location, virtual)
+- `age_group`: Age group classification
+
+### **Multi-Facility Course Availability**
+Different facilities can offer different courses based on their capabilities:
+- **Olympic Swimming Pool**: All courses available
+- **Community Pool Center**: Basic courses only  
+- **Aqua Sport Complex**: Premium/advanced courses
+
+### **Student Assignment Distribution**
+- **5 Students** with **8 Active Enrollments** across **3 Facilities**
+- Students can enroll in courses at multiple facilities
+- Each enrollment specifies facility, session type, and location type
+
+### **API Integration**
+```json
+// Enhanced course enrollment with facility assignment
+{
+  "student_id": "STU-2025-001",
+  "course_id": "swimming-fundamentals",
+  "facility_id": "olympic-pool-123",
+  "session_type": "group",
+  "location_type": "our-facility",
+  "age_group": "6-12-years",
+  "status": "active"
+}
+```
 
 ## Test Data Available
 - **5 Programs**: Robotics, AI/ML, Web Dev, Sports, Arts

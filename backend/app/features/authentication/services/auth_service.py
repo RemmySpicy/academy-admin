@@ -84,6 +84,23 @@ class AuthService:
         # Hash password
         password_hash = self.get_password_hash(user_data["password"])
         
+        # Auto-generate full_name from first_name and last_name if not provided
+        if "full_name" not in user_data:
+            first_name = user_data.get("first_name", "").strip()
+            last_name = user_data.get("last_name", "").strip()
+            
+            # Generate full_name with proper spacing
+            if first_name and last_name:
+                full_name = f"{first_name} {last_name}"
+            elif first_name:
+                full_name = first_name
+            elif last_name:
+                full_name = last_name
+            else:
+                raise ValueError("Either first_name, last_name, or full_name must be provided")
+        else:
+            full_name = user_data["full_name"]
+        
         # Create user instance
         db_user = User(
             username=user_data["username"],
@@ -91,6 +108,7 @@ class AuthService:
             password_hash=password_hash,
             first_name=user_data["first_name"],
             last_name=user_data["last_name"],
+            full_name=full_name,
             salutation=user_data.get("salutation"),
             phone=user_data.get("phone"),
             date_of_birth=user_data.get("date_of_birth"),

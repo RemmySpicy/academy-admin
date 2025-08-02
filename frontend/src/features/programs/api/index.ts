@@ -8,6 +8,34 @@ import { httpClient } from '@/lib/api/httpClient';
 import { API_ENDPOINTS } from '@/lib/constants';
 import { Program } from '@/store/types';
 
+// Program configuration types
+export interface AgeGroup {
+  id: string;
+  name: string;
+  from_age: number;
+  to_age: number;
+}
+
+export interface DifficultyLevel {
+  id: string;
+  name: string;
+  weight: number;
+}
+
+export interface SessionType {
+  id: string;
+  name: string;
+  capacity: number;
+}
+
+// Extended program interface with configuration
+export interface ProgramWithConfig extends Program {
+  age_groups?: AgeGroup[];
+  difficulty_levels?: DifficultyLevel[];
+  session_types?: SessionType[];
+  default_session_duration?: number;
+}
+
 export interface ProgramsApiResponse {
   programs: Program[];
   total: number;
@@ -69,7 +97,7 @@ export const programsApi = {
   /**
    * Get a single program by ID
    */
-  getProgram: async (id: string): Promise<Program> => {
+  getProgram: async (id: string): Promise<ProgramWithConfig> => {
     const response = await httpClient.get(API_ENDPOINTS.programs.get(id));
     if (response.success && response.data) {
       return response.data;

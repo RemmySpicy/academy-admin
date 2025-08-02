@@ -20,7 +20,7 @@ from .schemas import (
     FacilitySearchParams,
     FacilityStatsResponse,
 )
-from .services import FacilityService, facility_service
+from .services import FacilityService, get_facility_service
 
 __all__ = [
     "Facility",
@@ -31,5 +31,5 @@ __all__ = [
     "FacilitySearchParams",
     "FacilityStatsResponse",
     "FacilityService",
-    "facility_service",
+    "get_facility_service",
 ]

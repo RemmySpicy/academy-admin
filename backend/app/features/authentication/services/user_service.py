@@ -10,7 +10,7 @@ from sqlalchemy import func, and_, or_, desc, asc
 from app.features.authentication.models.user import User
 from app.features.authentication.models.user_relationship import UserRelationship
 from app.features.authentication.models.user_program_assignment import UserProgramAssignment
-from app.features.students.models.course_enrollment import CourseEnrollment
+from app.features.enrollments.models.course_enrollment import CourseEnrollment
 from app.features.students.models.student import Student
 from app.features.common.models.enums import UserRole, RelationshipType, EnrollmentStatus
 from app.features.courses.services.base_service import BaseService
@@ -38,6 +38,23 @@ class UserService(BaseService[User, dict, dict]):
             raise ValueError("Password is required")
             
         password_hash = hash_password(password)
+        
+        # Auto-generate full_name from first_name and last_name if not provided
+        if "full_name" not in user_data:
+            first_name = user_data.get("first_name", "").strip()
+            last_name = user_data.get("last_name", "").strip()
+            
+            # Generate full_name with proper spacing
+            if first_name and last_name:
+                full_name = f"{first_name} {last_name}"
+            elif first_name:
+                full_name = first_name
+            elif last_name:
+                full_name = last_name
+            else:
+                raise ValueError("Either first_name, last_name, or full_name must be provided")
+                
+            user_data["full_name"] = full_name
         
         # Set up the user data
         user_dict = {

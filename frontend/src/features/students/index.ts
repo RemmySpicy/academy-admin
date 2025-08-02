@@ -6,16 +6,18 @@
  * This module handles:
  * - Student profile management
  * - Parent-student relationships
- * - Student enrollment
+ * - Student enrollment with facility selection
+ * - Course assignments with real-time pricing
  * - Progress tracking
  * - Family account management
+ * - Multi-step enrollment workflow
  */
 
-// Components - empty for now
-// export * from './components';
+// Components
+export * from './components';
 
-// Hooks - empty for now
-// export * from './hooks';
+// Hooks
+export * from './hooks';
 
 // Types
 export * from './types';

@@ -285,6 +285,23 @@ npm run quality:academy        # Full Academy Admin checks
 npm run test:feature [name]     # Test your specific feature
 ```
 
+### 🔧 **Recent Critical Fixes (2025-01-29)**
+**All new development must follow these patterns to avoid common issues:**
+
+#### **User Creation Best Practices**
+- **Auto Full Name**: Always rely on service layer to generate `full_name` from `first_name + last_name`
+- **Permission Validation**: Use proper role checks for user creation operations
+- **Enum Consistency**: Ensure Python enums match database enum values exactly
+
+#### **Service Method Naming**
+- **Consistent Naming**: Use descriptive method names that match actual implementations
+- **Route-Service Alignment**: Verify route handlers call correct service methods
+- **Error Handling**: Implement proper error responses for missing methods
+
+#### **Database Query Patterns**
+- **Avoid DISTINCT Issues**: Use subquery filtering instead of JOIN + DISTINCT for program context
+- **Proper Filtering**: Filter by relationships rather than obsolete direct foreign keys
+
 ### ✅ **Code Review Checklist**
 
 **Program Management Features**:
@@ -295,6 +312,10 @@ npm run test:feature [name]     # Test your specific feature
 - [ ] Handles loading state when no program context
 - [ ] Uses `usePageTitle()` hook
 - [ ] Follows layout architecture (action buttons beside section headers)
+- [ ] **NEW**: User creation uses auto `full_name` generation
+- [ ] **NEW**: Permission checks validate role-based user creation access
+- [ ] **NEW**: Service methods use correct names matching implementations
+- [ ] **NEW**: Database queries avoid obsolete `program_id` direct references
 
 **Academy Admin Features**:
 - [ ] Wrapped in `SuperAdminRoute`
@@ -456,6 +477,227 @@ const { data } = useFeatureDetails(selectedId, {
   enabled: !!selectedId && !!currentProgram,
 });
 ```
+
+## 🔧 **Program Configuration Integration Patterns** ✅ **NEW (2025-08-02)**
+
+When building features that need to integrate with Academy Administration Program configurations, follow these established patterns.
+
+### 🎯 **Configuration Integration Requirements**
+
+Features that create or manage program-specific data MUST integrate with program configuration:
+
+- **Course Management**: Age groups, difficulty levels, session types
+- **Curriculum Building**: Difficulty levels for progression structure
+- **Scheduling System**: Session types with capacity limits
+- **Student Assessment**: Difficulty levels for appropriate testing
+- **Facility Management**: Session types for capacity planning
+
+### ✅ **Dynamic Configuration Loading Pattern**
+
+#### **1. Program Configuration Hooks**
+
+Create hooks that automatically fetch configuration from Academy Administration:
+
+```typescript
+// /src/features/programs/hooks/useProgram.ts
+export function useProgramAgeGroups(programId?: string) {
+  const config = useProgramConfiguration(programId);
+  return {
+    ...config,
+    data: config.data?.age_groups || [],
+  };
+}
+
+export function useProgramDifficultyLevels(programId?: string) {
+  const config = useProgramConfiguration(programId);
+  return {
+    ...config,
+    data: config.data?.difficulty_levels || [],
+  };
+}
+
+export function useProgramSessionTypes(programId?: string) {
+  const config = useProgramConfiguration(programId);
+  return {
+    ...config,
+    data: config.data?.session_types || [],
+  };
+}
+```
+
+#### **2. Smart Fallback System**
+
+Always provide sensible defaults when program configuration is unavailable:
+
+```typescript
+// ✅ CORRECT - Smart fallback with user feedback
+const { data: ageGroups, isLoading: ageGroupsLoading } = useProgramAgeGroups(currentProgram?.id);
+const { data: difficultyLevels, isLoading: difficultyLoading } = useProgramDifficultyLevels(currentProgram?.id);
+
+// Create options with fallbacks
+const ageGroupOptions = ageGroups?.map(ag => ({ 
+  value: ag.id, 
+  label: ag.name 
+})) || fallbackAgeRangeOptions;
+
+const difficultyOptions = difficultyLevels?.map(dl => ({ 
+  value: dl.id, 
+  label: dl.name 
+})) || fallbackDifficultyOptions;
+```
+
+#### **3. User Experience Guidelines**
+
+Provide clear feedback about configuration sources:
+
+```typescript
+// Loading indicators
+{ageGroupsLoading && <div className="text-sm text-muted-foreground">Loading from program...</div>}
+
+// Source transparency
+{ageGroups?.length > 0 ? (
+  <div className="text-xs text-muted-foreground">
+    Age groups from {currentProgram?.name} configuration
+  </div>
+) : (
+  <div className="text-xs text-muted-foreground">
+    Using default age groups • <Link to="/admin/academy/programs">Setup program configuration</Link>
+  </div>
+)}
+```
+
+### 🔄 **Performance Best Practices**
+
+#### **Configuration Caching**
+```typescript
+// Use staleTime for configuration data (changes infrequently)
+export function useProgramConfiguration(programId?: string) {
+  return useQuery({
+    queryKey: ['program-configuration', programId],
+    queryFn: () => programApi.getProgram(programId!),
+    enabled: !!programId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000,   // 10 minutes
+  });
+}
+```
+
+#### **Real-time Updates**
+```typescript
+// Configuration changes should reflect immediately
+const queryClient = useQueryClient();
+
+const updateProgramConfig = useMutation({
+  mutationFn: programApi.updateProgram,
+  onSuccess: () => {
+    // Invalidate all program configuration queries
+    queryClient.invalidateQueries({ queryKey: ['program-configuration'] });
+  },
+});
+```
+
+### 🏗️ **TypeScript Integration**
+
+Define proper interfaces for configuration data:
+
+```typescript
+// /src/features/programs/api/index.ts
+export interface AgeGroup {
+  id: string;
+  name: string;
+  from_age: number;
+  to_age: number;
+}
+
+export interface DifficultyLevel {
+  id: string;
+  name: string;
+  weight: number;
+}
+
+export interface SessionType {
+  id: string;
+  name: string;
+  capacity: number;
+}
+
+export interface ProgramConfiguration {
+  age_groups: AgeGroup[];
+  difficulty_levels: DifficultyLevel[];
+  session_types: SessionType[];
+  default_session_duration: number;
+}
+```
+
+### 🧪 **Integration Testing**
+
+Test configuration integration thoroughly:
+
+```typescript
+describe('Feature Program Configuration Integration', () => {
+  test('uses program configuration when available', async () => {
+    const mockProgram = {
+      id: 'program-123',
+      age_groups: [{ id: 'custom', name: 'Custom Age Group', from_age: 5, to_age: 10 }]
+    };
+    
+    // Mock program configuration
+    mockUseQuery.mockReturnValue({
+      data: mockProgram,
+      isLoading: false,
+      error: null
+    });
+    
+    render(<FeatureForm />);
+    
+    expect(screen.getByText('Custom Age Group')).toBeInTheDocument();
+    expect(screen.getByText('Age groups from Test Program configuration')).toBeInTheDocument();
+  });
+  
+  test('falls back to defaults when configuration unavailable', async () => {
+    mockUseQuery.mockReturnValue({
+      data: null,
+      isLoading: false,
+      error: null
+    });
+    
+    render(<FeatureForm />);
+    
+    expect(screen.getByText('6-8 years')).toBeInTheDocument(); // Default
+    expect(screen.getByText('Using default age groups')).toBeInTheDocument();
+  });
+});
+```
+
+### 📋 **Implementation Checklist**
+
+When adding program configuration integration:
+
+- [ ] **Create Configuration Hooks**: Use the established hook pattern
+- [ ] **Add TypeScript Interfaces**: Define proper types for configuration data
+- [ ] **Implement Smart Fallbacks**: Provide defaults when configuration unavailable
+- [ ] **Add Loading States**: Show loading indicators during configuration fetch
+- [ ] **Provide Source Transparency**: Tell users where configuration comes from
+- [ ] **Add Performance Optimization**: Use appropriate caching strategies
+- [ ] **Write Integration Tests**: Test both configuration and fallback scenarios
+- [ ] **Update Documentation**: Document new integration patterns
+- [ ] **Add Error Handling**: Handle configuration fetch failures gracefully
+
+### 🎯 **Integration Examples**
+
+#### **Course Management Integration** ✅ **REFERENCE IMPLEMENTATION**
+See `/frontend/src/features/courses/components/CourseForm.tsx` for the complete reference implementation showing:
+- Dynamic configuration loading with `useProgramAgeGroups`, `useProgramDifficultyLevels`, `useProgramSessionTypes`
+- Smart fallback system with sensible defaults
+- User experience with loading states and source transparency
+- Type-safe configuration handling
+
+#### **Future Integration Patterns**
+Use the course management integration as a template for:
+- **Curriculum Builder**: Difficulty levels for progression structure
+- **Session Scheduling**: Session types with capacity validation
+- **Assessment Creation**: Difficulty levels for appropriate testing
+- **Student Enrollment**: Age groups for course eligibility
 
 ---
 

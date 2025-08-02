@@ -70,8 +70,10 @@ ALTER TABLE users ALTER COLUMN profile_type SET DEFAULT 'FULL_USER'::profiletype
 
 **Prevention:**
 - Always verify enum values match between Python and PostgreSQL
-- Use consistent casing across all enum definitions
+- **STANDARD (2025-01-29): Use lowercase values for all enums**
 - Test enum operations after migrations
+
+**Note:** As of 2025-01-29, all enums have been standardized to use lowercase values (e.g., `"active"`, `"inactive"`) for consistency between Python and PostgreSQL.
 
 ### 2. OrganizationStatus Enum Issues
 

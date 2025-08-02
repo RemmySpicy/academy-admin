@@ -26,6 +26,7 @@ The Academy Admin system uses program-centric architecture where programs define
 - Access: Assigned programs only
 - Landing: `/admin` (program dashboard)
 - Capabilities: Full management within assigned programs
+- **🆕 Enhanced (2025-01-29)**: Can create student/parent users within assigned programs
 
 #### **Program Coordinator** (`program_coordinator`)
 - Access: Assigned programs only
@@ -47,6 +48,55 @@ The Academy Admin system uses program-centric architecture where programs define
 - Role-based data isolation
 - Program assignment validation
 
+## Current Implementation (Updated 2025-07-31)
+
+### **Program-User Relationships**
+The system has evolved from direct `program_id` fields to a more flexible assignment-based model:
+
+#### **ProgramAssignment Model**
+- **Purpose**: Links users to programs with specific roles
+- **Key Fields**: `user_id`, `program_id`, `role_in_program`, `is_active`
+- **Benefits**: Supports multiple program memberships and cross-program operations
+
+#### **Course Enrollment Filtering with Facility Assignments**
+For models like `Student` and `Parent`:
+- **Program Context**: Determined by course enrollments (`CourseEnrollment.program_id`)
+- **Facility Context**: Enhanced with facility assignments (`CourseEnrollment.facility_id`)
+- **Filtering Method**: JOIN with `CourseEnrollment` table including facility information
+- **Query Pattern**: `JOIN CourseEnrollment ON Student.id = CourseEnrollment.user_id WHERE CourseEnrollment.program_id = program_context`
+
+#### **🏢 Multi-Facility Course Assignments (NEW 2025-07-31)**
+Enhanced course enrollment system supports facility-specific assignments:
+- **Facility Assignment**: Each course enrollment includes specific facility assignment
+- **Session Configuration**: Session type, location type, and age group stored per enrollment
+- **Multi-Facility Support**: Students can enroll in same course at different facilities
+- **Capability-Based Availability**: Different facilities offer different course subsets
+
+#### **Service Layer Implementation**
+```python
+# Recommended approach: Direct model filtering (Student model has program_id)
+if program_context:
+    query = query.filter(Student.program_id == program_context)
+
+# Previous approach: Subquery-based filtering (now replaced)
+# if program_context:
+#     student_ids_subquery = db.query(CourseEnrollment.user_id)\
+#                              .filter(CourseEnrollment.program_id == program_context)\
+#                              .distinct()\
+#                              .subquery()
+#     query = query.filter(Student.id.in_(
+#         db.query(student_ids_subquery.c.user_id)
+#     ))
+
+# Enhanced facility-aware enrollment filtering
+def get_student_facility_enrollments(db: Session, student_id: str, program_context: str):
+    return db.query(CourseEnrollment)\
+             .filter(CourseEnrollment.user_id == student_id)\
+             .filter(CourseEnrollment.program_id == program_context)\
+             .join(Facility, CourseEnrollment.facility_id == Facility.id)\
+             .all()
+```
+
 ## Development Rules
 
 ### **Before Adding New Features**
@@ -56,10 +106,11 @@ The Academy Admin system uses program-centric architecture where programs define
 4. **Follow correct route structure?**
 
 ### **Mandatory Feature Requirements**
-- Models: Include `program_id` foreign key
-- Services: Accept `program_context` parameter
-- Routes: Use program context dependency injection
-- Tests: Include program context filtering tests
+- **Models**: User-program relationships with direct `program_id` fields for students, flexible assignments for other models
+- **Services**: Accept `program_context` parameter with appropriate filtering method (direct or enrollment-based)
+- **Routes**: Use program context dependency injection
+- **Tests**: Include program context filtering tests
+- **🆕 Facility Integration**: Support facility-specific operations within program context
 
 ## Quality Assurance
 - `npm run program-context:lint` - Validate program context compliance

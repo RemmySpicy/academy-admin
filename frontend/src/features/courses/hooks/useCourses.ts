@@ -251,24 +251,26 @@ export const useCourseManagement = (params: CourseSearchParams = {}) => {
 // Hook for course detail page with tree data
 export const useCourseDetail = (id: string) => {
   const course = useCourse(id);
-  const courseTree = useCourseTree(id);
-  const curricula = useCourseCurricula(id);
+  // Remove old courseTree and curricula calls - curricula is now separate
+  // const courseTree = useCourseTree(id);
+  // const curricula = useCourseCurricula(id);
   const updateCourse = useUpdateCourse();
   const deleteCourse = useDeleteCourse();
   
   return {
     // Core data
     course: course.data,
-    courseTree: courseTree.data,
-    curricula: curricula.data?.items || [],
+    // Remove old hierarchy data
+    courseTree: null,
+    curricula: [],
     
     // Loading states
-    isLoading: course.isLoading || courseTree.isLoading,
-    isCurriculaLoading: curricula.isLoading,
+    isLoading: course.isLoading,
+    isCurriculaLoading: false,
     
     // Error states
-    error: course.error || courseTree.error,
-    curriculaError: curricula.error,
+    error: course.error,
+    curriculaError: null,
     
     // Mutations
     updateCourse,
@@ -277,18 +279,13 @@ export const useCourseDetail = (id: string) => {
     // Actions
     refetch: () => {
       course.refetch();
-      courseTree.refetch();
-      curricula.refetch();
+      // Remove old refetch calls
     },
     
-    // Computed values
-    totalCurricula: courseTree.data?.curricula.length || 0,
-    totalLevels: courseTree.data?.curricula.reduce((sum, c) => sum + c.levels.length, 0) || 0,
-    totalModules: courseTree.data?.curricula.reduce((sum, c) => 
-      sum + c.levels.reduce((levelSum, l) => levelSum + l.modules.length, 0), 0) || 0,
-    totalLessons: courseTree.data?.curricula.reduce((sum, c) => 
-      sum + c.levels.reduce((levelSum, l) => 
-        levelSum + l.modules.reduce((moduleSum, m) => 
-          moduleSum + m.sections.reduce((sectionSum, s) => sectionSum + s.lessons.length, 0), 0), 0), 0) || 0,
+    // Computed values - reset to 0 since curricula is separate now
+    totalCurricula: 0,
+    totalLevels: 0,
+    totalModules: 0,
+    totalLessons: 0,
   };
 };

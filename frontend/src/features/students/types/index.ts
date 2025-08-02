@@ -2,6 +2,9 @@
  * Student-related types and interfaces
  */
 
+// Export enrollment types
+export * from './enrollment';
+
 export interface Student {
   id: string;
   student_id: string;

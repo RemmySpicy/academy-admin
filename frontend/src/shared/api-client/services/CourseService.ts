@@ -103,19 +103,174 @@ export class CourseService {
   }
 
   /**
-   * Enroll student in course
+   * Enhanced enrollment with facility selection and payment tracking
    */
-  async enrollStudent(courseId: string, studentId: string): Promise<ApiResponse<CourseEnrollment>> {
-    return this.http.post<CourseEnrollment>(`/courses/${courseId}/enroll`, {
-      student_id: studentId,
+  async enrollStudentWithFacility(params: {
+    user_id: string;
+    course_id: string;
+    facility_id?: string;
+    location_type: 'our-facility' | 'client-location' | 'virtual';
+    session_type: 'private' | 'group' | 'school_group';
+    age_group: string;
+    coupon_code?: string;
+    assignment_type?: string;
+    credits_awarded?: number;
+    assignment_notes?: string;
+    referral_source?: string;
+    special_requirements?: string;
+    notes?: string;
+  }): Promise<ApiResponse<CourseEnrollment>> {
+    return this.http.post<CourseEnrollment>('/course-assignments/assign', params);
+  }
+
+  /**
+   * Remove course enrollment
+   */
+  async removeEnrollment(userId: string, courseId: string, reason?: string): Promise<ApiResponse<void>> {
+    return this.http.delete<void>(`/course-assignments/remove/${userId}/${courseId}`, {
+      data: { reason },
     });
   }
 
   /**
-   * Unenroll student from course
+   * Validate facility availability for course enrollment
    */
-  async unenrollStudent(courseId: string, studentId: string): Promise<ApiResponse<void>> {
-    return this.http.delete<void>(`/courses/${courseId}/enroll/${studentId}`);
+  async validateFacilityAvailability(params: {
+    course_id: string;
+    facility_id: string;
+    age_group: string;
+    location_type: string;
+    session_type: string;
+  }): Promise<ApiResponse<{
+    available: boolean;
+    facility_name: string;
+    reason?: string;
+    price?: number;
+    pricing_notes?: string;
+    course_name?: string;
+    course_description?: string;
+    supported_age_groups?: string[];
+    supported_location_types?: string[];
+    supported_session_types?: string[];
+    suggestion?: string;
+  }>> {
+    const { course_id, facility_id, ...queryParams } = params;
+    return this.http.get(`/course-assignments/validate-facility-availability/${course_id}/${facility_id}`, {
+      params: queryParams,
+    });
+  }
+
+  /**
+   * Check student age eligibility for course
+   */
+  async checkAgeEligibility(userId: string, courseId: string): Promise<ApiResponse<{
+    eligible: boolean;
+    reason?: string;
+    student_age?: number;
+    course_age_groups?: string[];
+    applicable_age_groups: string[];
+    recommended_age_group?: string;
+  }>> {
+    return this.http.get(`/course-assignments/student-age-eligibility/${userId}/${courseId}`);
+  }
+
+  /**
+   * Get available facilities for a course
+   */
+  async getAvailableFacilities(params: {
+    course_id: string;
+    age_group: string;
+    location_type: string;
+    session_type: string;
+  }): Promise<ApiResponse<Array<{
+    facility_id: string;
+    facility_name: string;
+    address?: string;
+    price: number;
+    pricing_notes?: string;
+    contact_phone?: string;
+    operating_hours?: Record<string, any>;
+  }>>> {
+    const { course_id, ...queryParams } = params;
+    return this.http.get(`/course-assignments/available-facilities/${course_id}`, {
+      params: queryParams,
+    });
+  }
+
+  /**
+   * Calculate pricing for enrollment
+   */
+  async calculateEnrollmentPricing(params: {
+    facility_id: string;
+    course_id: string;
+    age_group: string;
+    location_type: string;
+    session_type: string;
+    coupon_code?: string;
+  }): Promise<ApiResponse<{
+    base_price: number;
+    discount_amount: number;
+    total_amount: number;
+    coupon_code?: string;
+    coupon_valid: boolean;
+    coupon_message: string;
+    payment_thresholds: Record<string, number>;
+  }>> {
+    return this.http.post('/course-assignments/calculate-pricing', params);
+  }
+
+  /**
+   * Get student's default facility
+   */
+  async getStudentDefaultFacility(userId: string): Promise<ApiResponse<{
+    facility_id?: string;
+    facility_name?: string;
+    last_used_date?: string;
+    location_type?: string;
+    session_type?: string;
+  }>> {
+    return this.http.get(`/course-assignments/student-default-facility/${userId}`);
+  }
+
+  /**
+   * Get user's course assignments
+   */
+  async getUserAssignments(userId: string): Promise<ApiResponse<CourseEnrollment[]>> {
+    return this.http.get(`/course-assignments/user-assignments/${userId}`, {
+      useCache: true,
+      cacheTTL: 2 * 60 * 1000, // 2 minutes
+    });
+  }
+
+  /**
+   * Get courses available for assignment
+   */
+  async getAssignableCourses(): Promise<ApiResponse<Course[]>> {
+    return this.http.get('/course-assignments/assignable-courses', {
+      useCache: true,
+      cacheTTL: 5 * 60 * 1000, // 5 minutes
+    });
+  }
+
+  /**
+   * Bulk enrollment operations
+   */
+  async bulkEnrollStudents(assignments: Array<{
+    user_id: string;
+    course_id: string;
+    facility_id?: string;
+    location_type: string;
+    session_type: string;
+    age_group: string;
+    coupon_code?: string;
+  }>): Promise<ApiResponse<{
+    total_processed: number;
+    total_successful: number;
+    total_failed: number;
+    successful_assignments: any[];
+    failed_assignments: any[];
+  }>> {
+    return this.http.post('/course-assignments/bulk-assign', { assignments });
   }
 
   /**

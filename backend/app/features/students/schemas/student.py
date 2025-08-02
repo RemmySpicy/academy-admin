@@ -9,10 +9,10 @@ from pydantic import BaseModel, Field, EmailStr, validator
 from app.features.students.schemas.common import (
     GenderEnum,
     SalutationEnum,
-    StatusEnum,
     PaginatedResponse,
     TimestampMixin,
 )
+from app.features.common.models.enums import StudentStatus
 
 
 class StudentBase(BaseModel):
@@ -94,7 +94,7 @@ class StudentCreate(StudentBase):
     program_id: str = Field(..., description="Program ID this student belongs to")
     referral_source: Optional[str] = Field(None, max_length=100, description="How student heard about academy")
     enrollment_date: date = Field(..., description="Date of enrollment")
-    status: StatusEnum = Field(default=StatusEnum.ACTIVE, description="Student status")
+    status: str = Field(default="active", description="Student status")
     
     # Address information
     address: Optional[StudentAddressBase] = Field(None, description="Student address")
@@ -132,7 +132,7 @@ class StudentUpdate(BaseModel):
     # Academy information
     referral_source: Optional[str] = Field(None, max_length=100)
     enrollment_date: Optional[date] = Field(None)
-    status: Optional[StatusEnum] = Field(None)
+    status: Optional[StudentStatus] = Field(None)
     
     # Address information
     address: Optional[StudentAddressBase] = Field(None)
@@ -188,7 +188,7 @@ class StudentResponse(StudentBase, TimestampMixin):
     program_name: Optional[str] = Field(None, description="Program name")
     referral_source: Optional[str] = Field(None, description="How student heard about academy")
     enrollment_date: date = Field(..., description="Date of enrollment")
-    status: StatusEnum = Field(..., description="Student status")
+    status: str = Field(..., description="Student status")
     
     # Address information
     address: Optional[Dict[str, Any]] = Field(None, description="Student address")
@@ -205,6 +205,17 @@ class StudentResponse(StudentBase, TimestampMixin):
     
     # Additional information
     notes: Optional[str] = Field(None, description="Additional notes")
+    
+    # Enrollment information (populated from course_enrollments)
+    facility_name: Optional[str] = Field(None, description="Facility name where student is enrolled")
+    course_name: Optional[str] = Field(None, description="Course name student is enrolled in")
+    current_level: Optional[int] = Field(None, description="Current level/stage in course")
+    current_module: Optional[int] = Field(None, description="Current module within level")
+    completed_sessions: Optional[int] = Field(None, description="Number of completed sessions")
+    total_sessions: Optional[int] = Field(None, description="Total sessions in course")
+    payment_status: Optional[str] = Field(None, description="Payment status (fully_paid, partially_paid, not_paid)")
+    progress_percentage: Optional[float] = Field(None, description="Course progress percentage")
+    outstanding_balance: Optional[float] = Field(None, description="Outstanding balance for course")
     
     # Audit information
     created_by: Optional[str] = Field(None, description="Created by user ID")
@@ -275,7 +286,7 @@ class StudentSearchParams(BaseModel):
     """Parameters for student search."""
     
     search: Optional[str] = Field(None, min_length=1, max_length=255, description="Search query")
-    status: Optional[StatusEnum] = Field(None, description="Filter by status")
+    status: Optional[StudentStatus] = Field(None, description="Filter by status")
     program_id: Optional[str] = Field(None, description="Filter by program ID")
     enrollment_date_from: Optional[date] = Field(None, description="Filter by enrollment date from")
     enrollment_date_to: Optional[date] = Field(None, description="Filter by enrollment date to")
@@ -305,13 +316,24 @@ class StudentBulkActionResponse(BaseModel):
 
 
 class StudentStatsResponse(BaseModel):
-    """Schema for student statistics response."""
+    """Schema for student statistics response - updated for assignment-based architecture."""
     
-    total_students: int = Field(..., description="Total number of students")
-    active_students: int = Field(..., description="Number of active students")
-    inactive_students: int = Field(..., description="Number of inactive students")
-    pending_students: int = Field(..., description="Number of pending students")
-    suspended_students: int = Field(..., description="Number of suspended students")
+    total_students: int = Field(..., description="Total number of student profiles")
+    students_with_enrollments: int = Field(..., description="Number of students with active course enrollments")
+    active_course_enrollments: int = Field(..., description="Total active course enrollments in system")
+    paused_course_enrollments: int = Field(..., description="Total paused course enrollments in system")
+    recent_student_profiles: int = Field(..., description="Student profiles created in last 30 days")
+    
+    # Individual status counts for frontend compatibility
+    active_students: int = Field(0, description="Number of active students")
+    pending_students: int = Field(0, description="Number of pending students")
+    inactive_students: int = Field(0, description="Number of inactive students")
+    suspended_students: int = Field(0, description="Number of suspended students")
+    
+    # Detailed breakdowns
+    students_by_status: Dict[str, int] = Field(..., description="Students grouped by status")
     students_by_gender: Dict[str, int] = Field(..., description="Students grouped by gender")
     students_by_age_group: Dict[str, int] = Field(..., description="Students grouped by age ranges")
-    recent_enrollments: int = Field(..., description="Students enrolled in last 30 days")
+    students_with_parent_relationships: int = Field(..., description="Number of students who have parent relationships")
+    total_parent_child_relationships: int = Field(..., description="Total parent-child relationships")
+    average_enrollments_per_student: float = Field(..., description="Average course enrollments per student")

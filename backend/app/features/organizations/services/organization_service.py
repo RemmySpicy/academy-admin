@@ -7,12 +7,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 
 from app.features.organizations.models import Organization, OrganizationMembership
+from app.features.organizations.schemas.organization_schemas import OrganizationCreate, OrganizationUpdate
 from app.features.authentication.models import User
 from app.features.common.models.enums import OrganizationStatus, MembershipType
 from app.features.common.services.base_service import BaseService
 
 
-class OrganizationService(BaseService[Organization]):
+class OrganizationService(BaseService[Organization, OrganizationCreate, OrganizationUpdate]):
     """Service for managing organizations and their memberships."""
     
     def __init__(self, db: Session):

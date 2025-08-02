@@ -367,7 +367,7 @@ export default function CoursesPage() {
                 </Card>
               ))}
             </div>
-          ) : currentData?.items && currentData.items.length > 0 ? (
+          ) : currentData && 'items' in currentData && currentData.items && currentData.items.length > 0 ? (
             <>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {currentData.items.map((course) => (
@@ -382,9 +382,9 @@ export default function CoursesPage() {
                 ))}
               </div>
               
-              {currentData && currentData.total_pages > 1 && (
+              {currentData && 'total_pages' in currentData && currentData.total_pages && currentData.total_pages > 1 && (
                 <Pagination
-                  currentPage={currentData.page}
+                  currentPage={('page' in currentData && currentData.page) || 1}
                   totalPages={currentData.total_pages}
                   onPageChange={handlePageChange}
                 />

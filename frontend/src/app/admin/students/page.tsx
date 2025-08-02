@@ -326,12 +326,20 @@ export default function StudentsParentsPage() {
                     Search and filter students by name, email, status, or program
                   </CardDescription>
                 </div>
-                <Button asChild>
-                  <Link href="/admin/students/new">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Student
-                  </Link>
-                </Button>
+                <div className="flex space-x-2">
+                  <Button asChild>
+                    <Link href="/admin/students/new">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Student
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/admin/students/add">
+                      <Search className="h-4 w-4 mr-2" />
+                      Add Student
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -659,12 +667,20 @@ export default function StudentsParentsPage() {
                     Search and filter parents by name, email, status, or children connections
                   </CardDescription>
                 </div>
-                <Button asChild>
-                  <Link href="/admin/parents/new">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Parent
-                  </Link>
-                </Button>
+                <div className="flex space-x-2">
+                  <Button asChild>
+                    <Link href="/admin/parents/new">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Parent
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/admin/parents/add">
+                      <Search className="h-4 w-4 mr-2" />
+                      Add Parent
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
