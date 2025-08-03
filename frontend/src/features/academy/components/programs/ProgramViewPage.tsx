@@ -108,6 +108,7 @@ export function ProgramViewPage() {
   } = useAcademyProgramStatistics(programId);
 
 
+
   usePageTitle(
     program ? `${program.name} - Program Details` : 'Program Details',
     program ? `View details and configuration for ${program.name}` : 'Loading program details...'
@@ -251,48 +252,58 @@ export function ProgramViewPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {statsLoading ? (
-                        <Skeleton className="h-8 w-8 mx-auto" />
-                      ) : (
-                        statistics?.courses?.active || 0
-                      )}
-                    </div>
-                    <div className="text-sm text-gray-600">Active Courses</div>
+                {statsError ? (
+                  <div className="text-center py-4">
+                    <p className="text-red-600 text-sm mb-2">Failed to load statistics</p>
+                    <Button onClick={() => refetchStats()} size="sm" variant="outline">
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Retry
+                    </Button>
                   </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">
-                      {statsLoading ? (
-                        <Skeleton className="h-8 w-8 mx-auto" />
-                      ) : (
-                        statistics?.students?.total || 0
-                      )}
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {statsLoading ? (
+                          <Skeleton className="h-8 w-8 mx-auto" />
+                        ) : (
+                          statistics?.courses?.active ?? 0
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-600">Active Courses</div>
                     </div>
-                    <div className="text-sm text-gray-600">Total Students</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">
-                      {statsLoading ? (
-                        <Skeleton className="h-8 w-8 mx-auto" />
-                      ) : (
-                        statistics?.team?.total_members || 0
-                      )}
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">
+                        {statsLoading ? (
+                          <Skeleton className="h-8 w-8 mx-auto" />
+                        ) : (
+                          statistics?.students?.total ?? 0
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-600">Total Students</div>
                     </div>
-                    <div className="text-sm text-gray-600">Team Members</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-orange-600">
-                      {statsLoading ? (
-                        <Skeleton className="h-8 w-8 mx-auto" />
-                      ) : (
-                        statistics?.facilities?.total || 0
-                      )}
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-purple-600">
+                        {statsLoading ? (
+                          <Skeleton className="h-8 w-8 mx-auto" />
+                        ) : (
+                          statistics?.team?.total_members ?? 0
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-600">Team Members</div>
                     </div>
-                    <div className="text-sm text-gray-600">Facilities</div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600">
+                        {statsLoading ? (
+                          <Skeleton className="h-8 w-8 mx-auto" />
+                        ) : (
+                          statistics?.facilities?.total ?? 0
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-600">Facilities</div>
+                    </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>

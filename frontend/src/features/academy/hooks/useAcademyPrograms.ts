@@ -180,8 +180,12 @@ export const useAcademyProgramStatistics = (id: string) => {
       const response = await academyProgramsApi.getProgramStatistics(id);
       
       if (response.success) {
-        return response.data;
+        // Backend returns {"success": true, "data": {...}} but httpClient wraps this again
+        // So we get response.data.data for the actual statistics
+        const data = response.data?.data || response.data;
+        return data;
       }
+      
       throw new Error(response.error || 'Failed to fetch detailed program statistics');
     },
     enabled: !!id,

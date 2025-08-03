@@ -27,7 +27,7 @@ from app.features.curricula.services.module_service import module_service
 router = APIRouter()
 
 
-@router.post("/", response_model=ModuleResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ModuleResponse, status_code=status.HTTP_201_CREATED)
 async def create_module(
     module_data: ModuleCreate,
     db: Annotated[Session, Depends(get_db)],
@@ -59,7 +59,7 @@ async def create_module(
         )
 
 
-@router.get("/", response_model=ModuleListResponse)
+@router.get("", response_model=ModuleListResponse)
 async def list_modules(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[dict, Depends(get_current_active_user)],

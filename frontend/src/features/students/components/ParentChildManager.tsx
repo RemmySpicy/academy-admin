@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +31,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+// Optimized imports - only import what's used
 import {
   User,
   UserPlus,
@@ -39,7 +40,6 @@ import {
   Phone,
   Mail,
   Calendar,
-  MapPin,
   Edit,
   Trash2,
   Shield,
@@ -48,8 +48,7 @@ import {
   Users,
   Link as LinkIcon,
   Unlink,
-  Eye,
-  ExternalLink
+  Eye
 } from 'lucide-react';
 import Link from 'next/link';
 import { RELATIONSHIP_OPTIONS } from '@/features/students/types';
@@ -127,23 +126,25 @@ export function ParentChildManager({
   const isStudentView = userRole === 'student';
   const isAdminView = userRole === 'admin';
 
-  const getRelationshipDisplayData = (relationship: UserRelationship) => {
-    if (isParentView) {
-      // Parent viewing their children
-      return {
+  // Memoize expensive calculations to prevent re-computation on every render
+  const processedRelationships = useMemo(() => {
+    return relationships.map(relationship => {
+      const displayData = isParentView ? {
         user: relationship.child_user,
         relationshipType: relationship.relationship_type,
-        direction: 'child'
-      };
-    } else {
-      // Student viewing their parents or admin view
-      return {
+        direction: 'child' as const
+      } : {
         user: relationship.parent_user,
         relationshipType: relationship.relationship_type,
-        direction: 'parent'
+        direction: 'parent' as const
       };
-    }
-  };
+      
+      return {
+        ...relationship,
+        displayData
+      };
+    });
+  }, [relationships, isParentView]);
 
   const getRelationshipIcon = (relationshipType: string, direction: 'parent' | 'child') => {
     if (direction === 'child') {
@@ -396,8 +397,8 @@ export function ParentChildManager({
             </div>
           ) : (
             <div className="space-y-4">
-              {relationships.map((relationship) => {
-                const { user, relationshipType, direction } = getRelationshipDisplayData(relationship);
+              {processedRelationships.map((relationship) => {
+                const { user, relationshipType, direction } = relationship.displayData;
                 
                 return (
                   <Card key={relationship.id} className="border-l-4 border-l-blue-500">

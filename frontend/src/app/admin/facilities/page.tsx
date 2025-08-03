@@ -1,20 +1,29 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, MapPin, Edit, Trash2, Search, Filter } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Plus, Search, Filter, Grid, List } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useFacilities, useDeleteFacility } from '@/features/facilities/hooks';
-import { Facility } from '@/features/facilities/types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  useFacilities, 
+  useDeleteFacility, 
+  useDuplicateFacility, 
+  useArchiveFacility, 
+  useAssignFacilityManager 
+} from '@/features/facilities/hooks';
+import { FacilityCard } from '@/features/facilities/components';
+import type { Facility } from '@/features/facilities/types';
 
 export default function FacilitiesPage() {
+  const router = useRouter();
   usePageTitle('Facilities', 'Manage academy facilities and equipment');
   
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -30,73 +39,107 @@ export default function FacilitiesPage() {
 
   // Use facilities hook with program context
   const { data: facilitiesResponse, isLoading, error } = useFacilities(searchParams);
-  const deleteSuccessMutation = useDeleteFacility();
+  const deleteFacilityMutation = useDeleteFacility();
+  const duplicateFacilityMutation = useDuplicateFacility();
+  const archiveFacilityMutation = useArchiveFacility();
+  const assignManagerMutation = useAssignFacilityManager();
   
   const facilities = facilitiesResponse?.items || [];
-
-  const getStatusBadge = (status: string) => {
-    const variant = status === 'ACTIVE' ? 'default' : status === 'INACTIVE' ? 'secondary' : 'outline';
-    return <Badge variant={variant}>{status}</Badge>;
-  };
-
-  const getTypeBadge = (type: string) => {
-    const colors = {
-      POOL: 'bg-blue-100 text-blue-800',
-      COURTS: 'bg-green-100 text-green-800',
-      GYM: 'bg-purple-100 text-purple-800',
-      FIELD: 'bg-yellow-100 text-yellow-800',
-      CLASSROOM: 'bg-orange-100 text-orange-800',
-      EXTERNAL: 'bg-gray-100 text-gray-800'
-    };
-    return (
-      <Badge variant="outline" className={colors[type as keyof typeof colors]}>
-        {type}
-      </Badge>
-    );
-  };
 
   // All filtering is now handled by the API through search parameters
   const filteredFacilities = facilities;
 
-  const handleDelete = async (facilityId: string, facilityName: string) => {
-    // Find the facility to backup
-    const facility = facilities.find(f => f.id === facilityId);
-    if (!facility) {
-      alert("Error: Facility not found.");
+  // Action handlers
+  const handleView = (facility: Facility) => {
+    router.push(`/admin/facilities/${facility.id}`);
+  };
+
+  const handleEdit = (facility: Facility) => {
+    router.push(`/admin/facilities/${facility.id}/edit`);
+  };
+
+  const handleDuplicate = async (facility: Facility) => {
+    try {
+      await duplicateFacilityMutation.mutateAsync({
+        facilityId: facility.id,
+        duplicateData: {
+          name: `${facility.name} (Copy)`,
+          facility_code: `${facility.facility_code || 'COPY'}-${Date.now().toString().slice(-4)}`,
+          copy_specifications: true,
+          copy_equipment: true,
+          copy_operating_hours: true,
+          copy_pricing: false,
+        }
+      });
+    } catch (error: any) {
+      console.error('Error duplicating facility:', error);
+      alert(`Failed to duplicate facility: ${error.message}`);
+    }
+  };
+
+  const handleArchive = async (facility: Facility) => {
+    if (!confirm(`Archive "${facility.name}"? This will make it inactive but preserve all data.`)) {
       return;
     }
 
+    try {
+      await archiveFacilityMutation.mutateAsync({
+        facilityId: facility.id,
+        archiveData: {
+          reason: 'Manual archive from facilities page',
+          archive_date: new Date().toISOString(),
+          notify_users: true,
+        }
+      });
+    } catch (error: any) {
+      console.error('Error archiving facility:', error);
+      alert(`Failed to archive facility: ${error.message}`);
+    }
+  };
+
+  const handleExportData = (facility: Facility) => {
+    const exportData = {
+      facility: facility,
+      export_date: new Date().toISOString(),
+      export_note: "Facility data export from facilities listing"
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    const exportFileDefaultName = `facility-export-${facility.facility_code || facility.id}-${new Date().toISOString().split('T')[0]}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  const handleAssignManager = (facility: Facility) => {
+    // TODO: Open manager assignment dialog
+    console.log('Assign manager to facility:', facility.name);
+  };
+
+  const handleManageSchedule = (facility: Facility) => {
+    router.push(`/admin/facilities/${facility.id}?tab=schedule`);
+  };
+
+  const handleDelete = async (facility: Facility) => {
     // Offer to backup facility data first
     const shouldBackup = confirm(`📄 BACKUP FACILITY DATA
     
-Before deleting "${facilityName}", would you like to download a backup of the facility data?
+Before deleting "${facility.name}", would you like to download a backup of the facility data?
 
 Click OK to download backup first, or Cancel to skip backup.`);
 
     if (shouldBackup) {
-      // Create and download backup
-      const backupData = {
-        facility: facility,
-        backup_date: new Date().toISOString(),
-        backup_note: "Facility data backup created before deletion"
-      };
-      
-      const dataStr = JSON.stringify(backupData, null, 2);
-      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-      const exportFileDefaultName = `facility-backup-${facility.facility_code || facility.id}-${new Date().toISOString().split('T')[0]}.json`;
-      
-      const linkElement = document.createElement('a');
-      linkElement.setAttribute('href', dataUri);
-      linkElement.setAttribute('download', exportFileDefaultName);
-      linkElement.click();
-      
+      handleExportData(facility);
       alert("✅ Facility backup downloaded successfully.");
     }
 
     // Enhanced protection against accidental deletion
     const confirmMessage = `⚠️ WARNING: DELETE FACILITY
     
-You are about to permanently delete "${facilityName}".
+You are about to permanently delete "${facility.name}".
 
 This action will:
 • Remove all facility data
@@ -112,31 +155,52 @@ Type "DELETE" to confirm:`;
     }
 
     // Double confirmation
-    if (!confirm(`Final confirmation: Delete "${facilityName}"? Click Cancel to keep the facility.`)) {
+    if (!confirm(`Final confirmation: Delete "${facility.name}"? Click Cancel to keep the facility.`)) {
       alert("Deletion cancelled. Facility was not deleted.");
       return;
     }
 
     try {
-      setDeletingId(facilityId);
-      await deleteSuccessMutation.mutateAsync(facilityId);
-      alert(`✅ Facility "${facilityName}" has been successfully deleted.`);
+      await deleteFacilityMutation.mutateAsync(facility.id);
+      alert(`✅ Facility "${facility.name}" has been successfully deleted.`);
     } catch (error: any) {
       console.error('Error deleting facility:', error);
       alert(`❌ Error: Failed to delete facility. ${error.message || 'Please try again.'}`);
-    } finally {
-      setDeletingId(null);
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Main Action Button */}
-      <div className="flex justify-end">
-        <Button onClick={() => window.location.href = '/admin/facilities/new'}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Facility
-        </Button>
+      {/* Header with Actions */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Facilities</h1>
+          <p className="text-muted-foreground">
+            Showing {filteredFacilities.length} of {facilities.length} facilities
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center border rounded-lg">
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+            >
+              <Grid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button onClick={() => router.push('/admin/facilities/new')}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Facility
+          </Button>
+        </div>
       </div>
 
       {/* Search and Filters */}
@@ -238,103 +302,27 @@ Type "DELETE" to confirm:`;
         </Card>
       )}
 
-      {/* Facilities Grid */}
+      {/* Facilities Display */}
       {!isLoading && !error && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className={viewMode === 'grid' 
+          ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" 
+          : "space-y-4"
+        }>
           {filteredFacilities.map((facility) => (
-            <Card key={facility.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-2">
-                    <MapPin className="h-5 w-5 text-gray-400" />
-                    <CardTitle className="text-lg">{facility.name}</CardTitle>
-                  </div>
-                  <div className="flex space-x-1">
-                    {getStatusBadge(facility.status)}
-                    {getTypeBadge(facility.facility_type)}
-                  </div>
-                </div>
-                <CardDescription className="text-sm">
-                  {facility.address}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Capacity */}
-                {facility.capacity && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Capacity:</span>
-                    <span className="font-medium">{facility.capacity} people</span>
-                  </div>
-                )}
-
-                {/* Facility Head */}
-                {facility.facility_head_name && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Manager:</span>
-                    <span className="font-medium">{facility.facility_head_name}</span>
-                  </div>
-                )}
-
-                {/* Facility Code */}
-                {facility.facility_code && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Code:</span>
-                    <span className="font-medium">{facility.facility_code}</span>
-                  </div>
-                )}
-
-                {/* Amenities */}
-                {facility.equipment?.amenities && facility.equipment.amenities.length > 0 && (
-                  <div className="pt-2 border-t border-gray-100">
-                    <div className="text-xs text-gray-600 space-y-1">
-                      <div className="font-medium">Amenities:</div>
-                      <div className="flex flex-wrap gap-1">
-                        {facility.equipment.amenities.slice(0, 3).map((amenity: string, index: number) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {amenity}
-                          </Badge>
-                        ))}
-                        {facility.equipment.amenities.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{facility.equipment.amenities.length - 3} more
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Contact */}
-                <div className="pt-2 border-t border-gray-100">
-                  <div className="text-xs text-gray-600 space-y-1">
-                    {facility.contact_phone && <div>{facility.contact_phone}</div>}
-                    {facility.contact_email && <div>{facility.contact_email}</div>}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex space-x-2 pt-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1"
-                    onClick={() => window.location.href = `/admin/facilities/${facility.id}/edit`}
-                  >
-                    <Edit className="h-3 w-3 mr-1" />
-                    Edit
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="text-red-600 hover:text-red-700"
-                    onClick={() => handleDelete(facility.id, facility.name)}
-                    disabled={deletingId === facility.id}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <FacilityCard
+              key={facility.id}
+              facility={facility}
+              viewMode={viewMode}
+              onView={handleView}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onDuplicate={handleDuplicate}
+              onArchive={handleArchive}
+              onExportData={handleExportData}
+              onAssignManager={handleAssignManager}
+              onManageSchedule={handleManageSchedule}
+              showActions={true}
+            />
           ))}
         </div>
       )}

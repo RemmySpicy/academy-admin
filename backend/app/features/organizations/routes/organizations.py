@@ -48,7 +48,7 @@ def require_admin_access(current_user: User = Depends(get_current_user)):
     return current_user
 
 
-@router.get("/", response_model=OrganizationListApiResponse)
+@router.get("", response_model=OrganizationListApiResponse)
 async def get_organizations(
     status: Optional[OrganizationStatus] = Query(None),
     search: Optional[str] = Query(None),
@@ -91,7 +91,7 @@ async def get_organizations(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/", response_model=OrganizationApiResponse)
+@router.post("", response_model=OrganizationApiResponse)
 async def create_organization(
     organization_data: OrganizationCreate,
     current_user: User = Depends(require_admin_access),

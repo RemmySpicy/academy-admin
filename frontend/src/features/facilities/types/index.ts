@@ -121,3 +121,80 @@ export interface FacilityStatsResponse {
   facilities_by_type: Record<FacilityType, number>;
   facilities_by_status: Record<FacilityStatus, number>;
 }
+
+// Enhanced types for new facility operations
+export interface FacilityDuplicateRequest {
+  name: string;
+  facility_code?: string;
+  copy_specifications?: boolean;
+  copy_equipment?: boolean;
+  copy_operating_hours?: boolean;
+  copy_pricing?: boolean;
+}
+
+export interface FacilityArchiveRequest {
+  reason?: string;
+  archive_date?: string;
+  notify_users?: boolean;
+}
+
+export interface FacilityExportData {
+  facility: Facility;
+  specifications?: Record<string, any>;
+  equipment?: Record<string, any>;
+  operating_hours?: Record<string, any>;
+  pricing_data?: any[];
+  staff_assignments?: any[];
+  schedule_data?: any[];
+  export_date: string;
+  export_note?: string;
+}
+
+export interface FacilityManagerAssignment {
+  user_id: string;
+  role: 'manager' | 'assistant_manager' | 'coordinator';
+  start_date?: string;
+  notes?: string;
+}
+
+export interface FacilityStaffAssignment {
+  user_id: string;
+  facility_id: string;
+  role: string;
+  permissions: string[];
+  active: boolean;
+  assigned_date: string;
+}
+
+export interface FacilityScheduleSlot {
+  id: string;
+  facility_id: string;
+  day_of_week: number; // 0-6 (Sunday-Saturday)
+  start_time: string;
+  end_time: string;
+  activity_type?: string;
+  instructor_id?: string;
+  capacity_override?: number;
+  notes?: string;
+  recurring: boolean;
+  active: boolean;
+}
+
+export interface FacilityAvailability {
+  id: string;
+  facility_id: string;
+  date: string;
+  available_from: string;
+  available_to: string;
+  maintenance_window?: {
+    start: string;
+    end: string;
+    reason: string;
+  };
+  booking_slots: Array<{
+    start_time: string;
+    end_time: string;
+    available_capacity: number;
+    booked_capacity: number;
+  }>;
+}

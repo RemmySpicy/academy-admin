@@ -72,7 +72,17 @@
       "Bash(./venv/bin/mypy --version)",
       "Bash(node:*)",
       "Bash(cat:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(git subtree:*)",
+      "Bash(git branch:*)",
+      "Bash(gh repo create:*)",
+      "WebFetch(domain:docs.expo.dev)",
+      "WebFetch(domain:reactnavigation.org)",
+      "WebFetch(domain:docs.swmansion.com)",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(timeout 30s npx expo start --web)",
+      "Bash(yarn install:*)",
+      "Bash(timeout 300s npm install --legacy-peer-deps --verbose)"
     ],
     "deny": []
   }

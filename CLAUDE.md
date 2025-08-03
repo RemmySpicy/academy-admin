@@ -21,12 +21,20 @@ Academy Management System with program-centric architecture, role-based access c
 - **🆕 Database Schema**: ProgramAssignment model and enhanced CourseEnrollment ✅ **MIGRATED**
 - **🆕 System Health**: All 208 API endpoints verified and accessible ✅ **HEALTHY**
 
-### 🔗 **Latest Update (2025-08-02)**
+### 🔗 **Latest Update (2025-08-03)**
+- **🔧 System-Wide Trailing Slash Fix**: Resolved all FastAPI route trailing slash issues across 10 features preventing `ERR_NAME_NOT_RESOLVED` errors ✅ **COMPLETED**
+- **🌐 Frontend Proxy Optimization**: Fixed Next.js proxy routing for all API endpoints, eliminating direct backend hostname calls ✅ **DEPLOYED**
+- **📡 API Endpoint Standardization**: Updated 18 route definitions across curricula, facilities, content, organizations, media, and scheduling ✅ **STANDARDIZED**
+- **🎯 Comprehensive Testing**: Verified all major endpoints work correctly with authentication and program context headers ✅ **VERIFIED**
+- **📁 Directory Restructuring Support**: Ensured all features work properly after curricula became independent entity ✅ **COMPATIBLE**
+
+### 🔗 **Previous Update (2025-08-02)**
 - **📊 Production-Quality Program Statistics**: Comprehensive real-time statistics system with error handling and retry mechanisms ✅ **COMPLETED**
 - **🔧 Statistics Data Filtering Fix**: Resolved zero-value display issue by correcting course status mapping (`published` = active) ✅ **FIXED**
 - **🎯 Advanced Error Handling**: Production-quality error states, loading skeletons, and user-friendly retry functionality ✅ **IMPLEMENTED**
 - **📈 Multi-dimensional Analytics**: Course breakdown, student tracking, team assignments, and facility resource monitoring ✅ **WORKING**
 - **🛡️ Type-Safe Data Validation**: Comprehensive frontend validation with safe value extraction and structure validation ✅ **DEPLOYED**
+- **🔄 Frontend Integration Complete**: Fixed double-wrapped API response structure, statistics now display correctly (4 courses, 7 students, 14 team members, 3 facilities) ✅ **FIXED**
 
 ### 🔗 **Previous Update (2025-08-02)**
 - **🎯 Production-Ready Course Management**: Comprehensive course system with 5 functional tabs (Overview, Structure, Enrollments, Analytics, Pricing) ✅ **COMPLETED**
@@ -297,15 +305,11 @@ export default function FeaturePage() {
 
 ### 🎯 **Quick Start Commands**
 ```bash
-# Multi-app development (all apps)
-npm run dev:all
+# Academy admin development
+npm run dev
 
-# Mobile apps only
-npm run mobile:dev
-
-# Git subtree management
-npm run subtree:sync     # Sync shared resources
-npm run subtree:push     # Deploy to mobile repositories
+# Mobile development (separate workspace)
+cd ../academy-apps && npm run dev:all
 ```
 
 **📖 For complete multi-app guide, see: [`PROJECT_STRUCTURE.md`](PROJECT_STRUCTURE.md)**
@@ -345,7 +349,39 @@ npm run subtree:push     # Deploy to mobile repositories
 
 **Remember: Documentation is your friend. When in doubt, check the docs first!**
 
-## 🔧 **Recent Critical Fixes (2025-07-29)**
+## 🔧 **Recent Critical Fixes (2025-08-03)**
+
+### ✅ **System-Wide Trailing Slash Resolution**
+All FastAPI routing issues causing `ERR_NAME_NOT_RESOLVED` and frontend proxy failures have been resolved:
+
+#### **1. Comprehensive Route Definition Updates**
+- **Issue**: FastAPI routes using `@router.get("/")` causing 307 redirects to `http://backend:8000`
+- **Root Cause**: Trailing slash mismatch between frontend calls and backend route definitions
+- **Solution**: Updated 18 route definitions across 10 features from `"/"` to `""` patterns
+- **Impact**: ✅ All major features now work without network resolution errors
+
+#### **2. Features Fixed**
+- **Curricula & Sub-routes**: `/api/v1/curricula`, `/api/v1/curricula/levels`, `/api/v1/curricula/modules`, `/api/v1/curricula/sections`
+- **Facilities**: `/api/v1/facilities`, `/api/v1/facilities/pricing`
+- **Content Management**: `/api/v1/content/lessons`
+- **Media Library**: `/api/v1/media`
+- **Organizations**: `/api/v1/organizations`
+- **Parent Management**: `/api/v1/parents/relationships`
+- **Partner Auth**: `/api/v1/organizations/partner-auth`
+- **Scheduling**: `/api/v1/scheduling/sessions`
+
+#### **3. Frontend Proxy Optimization**
+- **Issue**: Frontend making direct calls to Docker service name `backend:8000`
+- **Solution**: Ensured `NEXT_PUBLIC_API_URL=` (empty) for relative path routing through Next.js proxy
+- **Impact**: ✅ All API calls now properly route through frontend proxy
+
+#### **4. Test Results**
+- ✅ **No more network resolution errors**: All endpoints return proper API responses
+- ✅ **Authentication working**: JWT tokens and program context headers pass through correctly  
+- ✅ **Proxy routing functional**: Next.js correctly forwards requests to backend service
+- ✅ **Directory restructuring compatible**: Curricula independence doesn't break routing
+
+## 🔧 **Previous Critical Fixes (2025-07-29)**
 
 ### ✅ **Table Visibility & Course Assignment Fixes**
 All major issues affecting students/parents table display and course assignments have been resolved:
@@ -539,7 +575,7 @@ The student frontend table now displays **100% real data** instead of placeholde
 
 ### ✅ **Current Clean Structure**
 - **Main Repository**: `RemmySpicy/academy-admin` (development)
-- **Mobile Repositories**: `RemmySpicy/academy-instructors-app`, `RemmySpicy/academy-students-app` (deployment)
+- **Mobile Apps**: Located in `../academy-apps/` (separate workspace)
 - **Shared Resources**: Unified across all applications
 - **Documentation**: Consolidated, organized, and up-to-date with proper feature separation + recent fixes
 - **System Health**: All 208 API endpoints verified and accessible with critical fixes applied

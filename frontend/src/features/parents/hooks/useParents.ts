@@ -29,8 +29,11 @@ export function useParents(
   return useQuery({
     queryKey: parentKeys.list({ ...searchParams, page, per_page }),
     queryFn: () => parentApi.getAll(searchParams, page, per_page),
-    keepPreviousData: true,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    placeholderData: (previousData) => previousData, // Better than keepPreviousData
+    staleTime: 8 * 60 * 1000, // 8 minutes - parents change less frequently
+    gcTime: 15 * 60 * 1000, // Keep in cache for 15 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 

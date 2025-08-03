@@ -28,7 +28,7 @@ from app.features.facilities.schemas.facility_course_pricing import (
 router = APIRouter(prefix="/facility-course-pricing", tags=["Facility Course Pricing"])
 
 
-@router.post("/", response_model=FacilityCoursePricingResponse)
+@router.post("", response_model=FacilityCoursePricingResponse)
 async def create_pricing_entry(
     pricing_data: FacilityCoursePricingCreate,
     db: Session = Depends(get_db),
@@ -48,7 +48,7 @@ async def create_pricing_entry(
         raise HTTPException(status_code=500, detail="Failed to create pricing entry")
 
 
-@router.get("/", response_model=FacilityCoursePricingListResponse)
+@router.get("", response_model=FacilityCoursePricingListResponse)
 async def list_pricing_entries(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),

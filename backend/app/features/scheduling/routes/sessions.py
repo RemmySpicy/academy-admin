@@ -35,7 +35,7 @@ get_program_filter = create_program_filter_dependency(get_current_active_user)
 scheduling_service = SchedulingService()
 
 
-@router.post("/", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
 async def create_session(
     session_data: SessionCreate,
     db: Annotated[Session, Depends(get_db)],

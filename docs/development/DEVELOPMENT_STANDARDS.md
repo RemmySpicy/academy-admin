@@ -164,7 +164,7 @@ from app.features.authentication.routes.auth import get_current_active_user
 # MANDATORY: Create program filter dependency
 get_program_filter = create_program_filter_dependency(get_current_active_user)
 
-@router.get("/", response_model=YourListResponse)
+@router.get("", response_model=YourListResponse)
 async def list_entities(
     db: Annotated[Session, Depends(get_db)],
     program_context: Annotated[Optional[str], Depends(get_program_filter)],  # MANDATORY
@@ -191,7 +191,7 @@ async def list_entities(
         # ... pagination fields
     )
 
-@router.post("/", response_model=YourResponse)
+@router.post("", response_model=YourResponse)
 async def create_entity(
     entity_data: YourCreateSchema,
     db: Annotated[Session, Depends(get_db)],
@@ -255,7 +255,7 @@ def list_entities(self, db: Session, program_context: str):
     return [e for e in entities if e.program_id == program_context]  # INSECURE!
 
 # ❌ WRONG: No program context parameter
-@router.get("/")
+@router.get("")
 async def list_entities(db: Session = Depends(get_db)):
     return your_service.list_entities(db)
 
@@ -276,7 +276,7 @@ def get_entity(self, db: Session, entity_id: str, program_context: Optional[str]
     return query.first()
 
 # ✅ CORRECT: Program context dependency injection
-@router.get("/")
+@router.get("")
 async def list_entities(
     db: Annotated[Session, Depends(get_db)],
     program_context: Annotated[Optional[str], Depends(get_program_filter)]
@@ -436,6 +436,45 @@ Before merging any new feature, reviewers MUST verify:
 - [ ] **Security Testing**: Cross-program access prevention is tested
 - [ ] **Documentation**: Implementation follows this standard
 
+## 🔗 **API Route Definition Standards**
+
+### **Router Path Patterns**
+**⚠️ CRITICAL: Use empty strings for list/create routes to avoid 307 redirects**
+
+```python
+# ✅ CORRECT - No trailing slash
+@router.get("", response_model=ListResponse)
+@router.post("", response_model=CreateResponse)
+
+# ❌ AVOID - Causes 307 redirects and frontend errors
+@router.get("/", response_model=ListResponse)  
+@router.post("/", response_model=CreateResponse)
+```
+
+### **Why This Matters**
+- **Frontend Compatibility**: Frontend calls endpoints without trailing slashes
+- **Proxy Routing**: Next.js proxy forwards requests correctly without redirects
+- **Performance**: Eliminates unnecessary 307 redirect round trips
+- **Error Prevention**: Prevents `ERR_NAME_NOT_RESOLVED` in browser console
+
+### **Route Pattern Reference**
+```python
+# List/Create operations (no trailing slash)
+@router.get("", response_model=EntityListResponse)
+@router.post("", response_model=EntityResponse)
+
+# Individual operations (with ID parameter)
+@router.get("/{entity_id}", response_model=EntityResponse)
+@router.put("/{entity_id}", response_model=EntityResponse)
+@router.delete("/{entity_id}")
+
+# Sub-resources (no trailing slash)
+@router.get("/{entity_id}/children", response_model=ChildListResponse)
+@router.post("/{entity_id}/children", response_model=ChildResponse)
+```
+
+---
+
 ### **Automated Checks**
 
 The following automated checks will be implemented:
@@ -444,6 +483,7 @@ The following automated checks will be implemented:
 2. **Schema Validation**: Ensure program_id fields in create/response schemas
 3. **Test Coverage**: Require program context filtering tests
 4. **Security Scanning**: Check for potential program context bypasses
+5. **Route Pattern Validation**: Check for trailing slash patterns in route definitions
 
 ---
 

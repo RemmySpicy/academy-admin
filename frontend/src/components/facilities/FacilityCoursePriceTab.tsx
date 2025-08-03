@@ -34,7 +34,7 @@ import {
 import { Plus, Edit, Trash2, Copy, DollarSign, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProgramContext } from '@/store/programContext';
-import { coursesApi } from '@/features/courses/api/courseApiService';
+import { courseApiService } from '@/features/courses/api/courseApiService';
 import { facilityCoursePricingApi } from '@/features/facilities/api/facilityCoursePricingApi';
 
 interface FacilityCoursePriceTabProps {
@@ -125,7 +125,7 @@ export function FacilityCoursePriceTab({ data, updateData }: FacilityCoursePrice
     if (!currentProgram?.id) return;
     
     try {
-      const courses = await coursesApi.getCourses({ program_id: currentProgram.id });
+      const courses = await courseApiService.getCourses({ program_id: currentProgram.id });
       setAvailableCourses(courses.items || []);
     } catch (error) {
       console.error('Error loading courses:', error);

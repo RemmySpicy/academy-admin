@@ -192,12 +192,15 @@ class UserService(BaseService[User, dict, dict]):
         
         parent_relationships = parent_query.all()
         
+        # Get all relationships for this user (both as parent and child)
+        all_relationships = list(children_relationships) + list(parent_relationships)
+        
         return {
             "user": user,
             "children": [
                 {
                     "user": rel.child_user,
-                    "relationship_type": rel.relationship_type.value,
+                    "relationship_type": rel.relationship_type if hasattr(rel.relationship_type, 'value') else str(rel.relationship_type),
                     "is_primary": rel.is_primary,
                     "relationship_id": rel.id
                 }
@@ -206,11 +209,24 @@ class UserService(BaseService[User, dict, dict]):
             "parents": [
                 {
                     "user": rel.parent_user,
-                    "relationship_type": rel.relationship_type.value,
+                    "relationship_type": rel.relationship_type if hasattr(rel.relationship_type, 'value') else str(rel.relationship_type),
                     "is_primary": rel.is_primary,
                     "relationship_id": rel.id
                 }
                 for rel in parent_relationships
+            ],
+            "relationships": [
+                {
+                    "id": rel.id,
+                    "parent_user_id": rel.parent_user_id,
+                    "child_user_id": rel.child_user_id,
+                    "relationship_type": rel.relationship_type if hasattr(rel.relationship_type, 'value') else str(rel.relationship_type),
+                    "is_primary": rel.is_primary,
+                    "is_active": rel.is_active,
+                    "emergency_contact": rel.emergency_contact,
+                    "can_pick_up": rel.can_pick_up
+                }
+                for rel in all_relationships
             ]
         }
     

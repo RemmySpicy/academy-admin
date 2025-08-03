@@ -4,10 +4,7 @@
   "description": "Academy Management System with multi-app development support",
   "private": true,
   "workspaces": [
-    "frontend",
-    "apps/admin-dashboard",
-    "apps/academy-instructors-app",
-    "apps/academy-students-app"
+    "frontend"
   ],
   "scripts": {
     "dev": "docker-compose up",
@@ -35,12 +32,9 @@
     "db:local:up": "docker-compose -f docker-compose.local.yml up -d",
     "db:local:down": "docker-compose -f docker-compose.local.yml down",
     "db:local:logs": "docker-compose -f docker-compose.local.yml logs -f",
-    "install:all": "npm install && npm run install:frontend && npm run install:backend && npm run install:mobile",
+    "install:all": "npm install && npm run install:frontend && npm run install:backend",
     "install:frontend": "cd frontend && npm install",
     "install:backend": "cd backend && pip install -r requirements.txt",
-    "install:mobile": "npm run install:instructor && npm run install:student",
-    "install:instructor": "cd apps/academy-instructors-app && npm install",
-    "install:student": "cd apps/academy-students-app && npm install",
     "lint:frontend": "cd frontend && npm run lint",
     "lint:frontend:fix": "cd frontend && npm run lint:fix",
     "format:frontend": "cd frontend && npm run format",
@@ -103,35 +97,10 @@
     "generate:feature": "python3 tools/generators/generate_feature.py",
     "generate:backend": "python3 tools/generators/service_template.py",
     "generate:frontend": "python3 tools/generators/frontend_template.py",
-    "dev:all": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\" \"npm run dev:instructor\" \"npm run dev:student\"",
-    "dev:instructor": "cd apps/academy-instructors-app && npm start",
-    "dev:student": "cd apps/academy-students-app && npm start",
     "dev:admin": "npm run frontend:dev",
-    "build:all": "npm run frontend:build && npm run build:mobile",
-    "build:mobile": "npm run build:instructor && npm run build:student",
-    "build:instructor": "cd apps/academy-instructors-app && expo build",
-    "build:student": "cd apps/academy-students-app && expo build",
-    "test:mobile": "npm run test:instructor && npm run test:student",
-    "test:instructor": "cd apps/academy-instructors-app && npm test",
-    "test:student": "cd apps/academy-students-app && npm test",
-    "subtree:setup": "./scripts/subtree-commands.sh setup-remotes",
-    "subtree:add": "./scripts/subtree-commands.sh add-subtrees",
-    "subtree:push": "./scripts/subtree-commands.sh push-all",
-    "subtree:pull": "./scripts/subtree-commands.sh pull-all",
-    "subtree:push:instructor": "./scripts/subtree-commands.sh push-instructor",
-    "subtree:pull:instructor": "./scripts/subtree-commands.sh pull-instructor",
-    "subtree:push:student": "./scripts/subtree-commands.sh push-student",
-    "subtree:pull:student": "./scripts/subtree-commands.sh pull-student",
-    "subtree:sync": "./scripts/subtree-commands.sh sync-shared",
-    "subtree:status": "./scripts/subtree-commands.sh status",
-    "subtree:force-push": "./scripts/subtree-commands.sh force-push-all",
-    "mobile:setup": "npm run install:mobile && npm run subtree:sync",
-    "mobile:dev": "concurrently \"npm run dev:instructor\" \"npm run dev:student\"",
-    "mobile:build": "npm run build:mobile",
-    "mobile:test": "npm run test:mobile",
-    "mobile:deploy": "npm run subtree:sync && npm run mobile:build && npm run subtree:push"
+    "build:all": "npm run frontend:build",
   },
-  "keywords": ["academy", "admin", "nextjs", "fastapi", "typescript", "python", "react-native", "mobile", "multi-app"],
+  "keywords": ["academy", "admin", "nextjs", "fastapi", "typescript", "python"],
   "author": "Academy Admin Team",
   "license": "MIT",
   "repository": {
@@ -146,7 +115,5 @@
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
   },
-  "devDependencies": {
-    "concurrently": "^9.1.0"
-  }
+  "devDependencies": {}
 }

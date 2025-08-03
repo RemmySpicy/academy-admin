@@ -27,7 +27,7 @@ from app.features.curricula.services.level_service import level_service
 router = APIRouter()
 
 
-@router.post("/", response_model=LevelResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=LevelResponse, status_code=status.HTTP_201_CREATED)
 async def create_level(
     level_data: LevelCreate,
     db: Annotated[Session, Depends(get_db)],
@@ -59,7 +59,7 @@ async def create_level(
         )
 
 
-@router.get("/", response_model=LevelListResponse)
+@router.get("", response_model=LevelListResponse)
 async def list_levels(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[dict, Depends(get_current_active_user)],

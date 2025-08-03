@@ -30,7 +30,9 @@ import {
   useUserRelationships, 
   useCreateRelationship, 
   useUpdateRelationship, 
-  useDeleteRelationship 
+  useDeleteRelationship,
+  type CreateRelationshipData,
+  type UpdateRelationshipData
 } from '@/features/students/hooks/useUserRelationships';
 import { StudentScheduleManager } from '@/features/scheduling/components/StudentScheduleManager';
 import { StudentFinancialManager } from '@/features/payments/components/StudentFinancialManager';
@@ -175,11 +177,11 @@ export default function StudentDetailPage() {
   const updateRelationshipMutation = useUpdateRelationship();
   const deleteRelationshipMutation = useDeleteRelationship();
 
-  const handleCreateRelationship = async (data: any) => {
+  const handleCreateRelationship = async (data: CreateRelationshipData) => {
     await createRelationshipMutation.mutateAsync(data);
   };
 
-  const handleUpdateRelationship = async (id: string, data: any) => {
+  const handleUpdateRelationship = async (id: string, data: UpdateRelationshipData) => {
     await updateRelationshipMutation.mutateAsync({ id, data });
   };
 

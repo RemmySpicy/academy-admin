@@ -9,12 +9,14 @@ const nextConfig = {
       return [
         {
           source: '/api/:path*',
-          destination: 'http://localhost:8000/api/:path*',
+          destination: 'http://backend:8000/api/:path*',
         },
       ];
     }
     return [];
   },
+  // Handle trailing slash redirects for API routes
+  trailingSlash: false,
   // Environment variables validation
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,

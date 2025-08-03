@@ -24,7 +24,7 @@ from app.features.parents.schemas.relationship import (
 router = APIRouter()
 
 
-@router.post("/", response_model=ParentChildRelationshipResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ParentChildRelationshipResponse, status_code=status.HTTP_201_CREATED)
 async def create_parent_child_relationship(
     relationship_data: ParentChildRelationshipCreate,
     current_user: Annotated[dict, Depends(get_current_active_user)],
@@ -50,7 +50,7 @@ async def create_parent_child_relationship(
     )
 
 
-@router.get("/", response_model=List[ParentChildRelationshipResponse])
+@router.get("", response_model=List[ParentChildRelationshipResponse])
 async def list_parent_child_relationships(
     current_user: Annotated[dict, Depends(get_current_active_user)],
     db: Session = Depends(get_db),

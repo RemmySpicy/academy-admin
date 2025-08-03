@@ -2,238 +2,201 @@
 
 ## 📁 **Repository Overview**
 
-The Academy Admin project uses a multi-repository architecture with Git subtrees for managing separate mobile applications while maintaining a unified development environment.
+The Academy Admin project uses a simplified single-repository structure with separate workspaces for web admin and mobile applications.
 
-### 🎯 **Repository Structure**
+### 🎯 **Directory Structure**
 
 ```
-RemmySpicy/academy-admin                    # Main development repository
-├── apps/                                   # Multi-app development environment
-│   ├── academy-instructors-app/           # Instructor mobile app (development)
-│   └── academy-students-app/              # Student mobile app (development)
-├── shared/                                 # Shared resources across all apps
-├── backend/                                # FastAPI backend
-├── frontend/                               # Next.js admin dashboard
-└── scripts/                                # Git subtree automation scripts
-
-RemmySpicy/academy-instructors-app          # Standalone instructor app repository
-└── [Complete React Native/Expo app]       # Deployed from apps/academy-instructors-app/
-
-RemmySpicy/academy-students-app             # Standalone student app repository
-└── [Complete React Native/Expo app]       # Deployed from apps/academy-students-app/
+Programming/
+├── academy-admin/                          # Main admin system repository
+│   ├── backend/                            # FastAPI backend
+│   ├── frontend/                           # Next.js admin dashboard
+│   ├── docs/                               # Documentation
+│   ├── tools/                              # Quality assurance tools
+│   └── scripts/                            # Development scripts
+│
+└── academy-apps/                           # Mobile apps workspace (separate)
+    ├── academy-instructors-app/            # Instructor mobile app
+    ├── academy-students-app/               # Student mobile app
+    ├── shared/                             # Shared mobile resources
+    ├── package.json                        # Mobile workspace config
+    └── docker-compose.mobile.yml           # Mobile development environment
 ```
 
 ## 🔄 **Development Workflow**
 
-### **Primary Development Location**
-- **Work in**: `RemmySpicy/academy-admin` repository
-- **Develop mobile apps in**: `apps/academy-instructors-app/` and `apps/academy-students-app/`
-- **Shared resources in**: `shared/` directory
-
-### **Deployment Flow**
-```
-apps/academy-instructors-app/ →  (Git Subtree)  →  RemmySpicy/academy-instructors-app
-apps/academy-students-app/  →  (Git Subtree)  →  RemmySpicy/academy-students-app
-```
-
-### **Git Subtree Commands**
+### **Web Admin Development**
 ```bash
-# Sync shared resources to mobile apps
-npm run subtree:sync
-
-# Deploy instructor app updates
-npm run subtree:push:instructor
-
-# Deploy student app updates  
-npm run subtree:push:student
-
-# Deploy both mobile apps
-npm run subtree:push
+cd academy-admin
+npm run dev                    # Backend + Frontend
 ```
 
-## 🏗️ **Apps Directory Structure**
+### **Mobile Apps Development**
+```bash
+cd academy-apps
+npm run install:all           # Install dependencies
+npm run dev:all              # Start both mobile apps
+```
 
-### `apps/academy-instructors-app/`
-**Purpose**: Development version of the instructor mobile app
+### **Backend Integration**
+Mobile apps connect to the same backend:
+```bash
+cd academy-admin
+docker-compose up db backend  # Provides API for mobile apps
+```
+
+## 🏗️ **Academy Admin Structure**
+
+### `backend/`
+**FastAPI Backend System**
+- RESTful API with 208+ endpoints
+- PostgreSQL database with SQLAlchemy
+- JWT authentication and role-based access
+- Program context architecture
+- Feature-based organization
+
+### `frontend/`
+**Next.js Admin Dashboard**
+- TypeScript + Tailwind CSS
+- React Query for data fetching
+- Shadcn/ui components
+- Program context management
+- Role-based UI rendering
+
+### `docs/`
+**Comprehensive Documentation**
+- API endpoints reference
+- Development workflows
+- Architecture documentation
+- Feature implementation guides
+
+### `tools/`
+**Quality Assurance Tools**
+- Code quality checks
+- Security scanning
+- Program context validation
+- Test coverage analysis
+
+## 📱 **Academy Apps Structure**
+
+### `academy-instructors-app/`
+**Instructor Mobile App**
 - React Native/Expo configuration
-- Shared API client integration
-- TypeScript type definitions
-- Example service implementations
-- Existing code migration folder
+- Student management features
+- Attendance and progress tracking
+- Communication tools
 
-### `apps/academy-students-app/`
-**Purpose**: Development version of the student mobile app
+### `academy-students-app/`
+**Student Mobile App**
 - React Native/Expo configuration
-- Shared API client integration
-- TypeScript type definitions
-- Example service implementations
-- Existing code migration folder
+- Course progress viewing
+- Assignment management
+- Parent communication features
 
-## 📱 **Mobile App Repositories**
-
-### `RemmySpicy/academy-instructors-app`
-**Purpose**: Standalone deployment repository for instructor app
-- Complete React Native/Expo project
-- Includes shared resources
-- Ready for app store deployment
-- Independent development possible
-
-### `RemmySpicy/academy-students-app`
-**Purpose**: Standalone deployment repository for student app
-- Complete React Native/Expo project
-- Includes shared resources
-- Ready for app store deployment
-- Independent development possible
-
-## 🔗 **Shared Resources**
-
-### `shared/types/`
-Common TypeScript type definitions used across all applications:
-- Authentication types
-- User and role definitions
-- API response interfaces
-- Common data structures
-
-### `shared/api-client/`
-Unified API client library for consistent backend communication:
-- HTTP client with authentication
-- Service layer abstractions
-- Error handling and retry logic
-- Caching and token management
-
-### `shared/utils/`
-Common utility functions and helpers used across applications.
+### `shared/`
+**Shared Mobile Resources**
+- Common TypeScript types
+- Unified API client
+- Utility functions
+- Cross-app components
 
 ## 🚀 **Development Commands**
 
-### **Multi-App Development**
+### **Academy Admin (Web)**
 ```bash
-# Start all applications (backend + frontend + both mobile apps)
-npm run dev:all
+cd academy-admin
 
-# Start only mobile apps
-npm run mobile:dev
+# Development
+npm run dev                    # Full stack development
+npm run frontend:dev          # Frontend only
+npm run backend:dev           # Backend only
 
-# Start individual apps
-npm run dev:instructor     # Instructor app only
-npm run dev:student        # Student app only
-npm run dev:admin          # Admin dashboard only
+# Quality assurance
+npm run quality:academy       # Comprehensive checks
+npm run test:all             # Run all tests
+npm run build:all            # Production build
 ```
 
-### **Deployment**
+### **Mobile Apps**
 ```bash
-# Full mobile deployment pipeline
-npm run mobile:deploy
+cd academy-apps
 
-# Individual app deployment
-npm run subtree:push:instructor
-npm run subtree:push:student
+# Development
+npm run dev:all              # Both mobile apps
+npm run dev:instructor       # Instructor app only
+npm run dev:student         # Student app only
 
-# Sync shared resources before deployment
-npm run subtree:sync
+# Building
+npm run build:all           # Build both apps
+npm run test:all            # Test all apps
+
+# Docker development
+npm run docker:up           # Mobile development environment
 ```
 
-## 🔄 **Git Subtree Commands Reference**
+## 🔗 **Backend Integration**
 
-### **Setup Commands** (One-time)
+Both web and mobile applications connect to the same FastAPI backend:
+
+- **API Base URL**: `http://localhost:8000/api/v1`
+- **Authentication**: JWT tokens with automatic refresh
+- **Program Context**: Automatic data filtering by user program assignments
+- **Real-time Features**: WebSocket support for live updates
+
+### **API Features**
+- 208+ RESTful endpoints
+- Role-based access control (Super Admin, Program Admin, Coordinator, Tutor)
+- Program context filtering for multi-tenant data isolation
+- Comprehensive error handling and validation
+
+## 📋 **Development Best Practices**
+
+### **Web Admin Development**
+1. Use program context hooks for data fetching
+2. Follow feature-based organization in `src/features/`
+3. Use TypeScript strictly with proper type definitions
+4. Run quality checks before committing
+5. Test across different user roles and programs
+
+### **Mobile Development**
+1. Develop in the `academy-apps` workspace
+2. Use shared resources for consistency
+3. Test with real backend integration
+4. Follow React Native/Expo best practices
+5. Ensure offline capability where appropriate
+
+### **Shared Development**
+1. Keep backend API documentation updated
+2. Use consistent data models across web and mobile
+3. Maintain program context throughout all applications
+4. Test integration between web and mobile features
+
+## 🔧 **Configuration**
+
+### **Environment Setup**
+- **Node.js**: 18+
+- **Docker**: For development environment
+- **PostgreSQL**: Database (via Docker)
+- **Redis**: Caching (optional)
+
+### **Required Environment Variables**
 ```bash
-# Add remotes (done automatically by scripts)
-./scripts/subtree-commands.sh setup-remotes
+# Academy Admin
+DATABASE_URL=postgresql://...
+JWT_SECRET=...
+PROGRAM_CONTEXT_ENABLED=true
 
-# Check subtree status
-./scripts/subtree-commands.sh status
+# Mobile Apps
+API_BASE_URL=http://localhost:8000/api/v1
+WS_BASE_URL=ws://localhost:8000/ws
 ```
 
-### **Daily Development Commands**
-```bash
-# Sync shared resources to mobile apps
-npm run subtree:sync
+## 📚 **Documentation**
 
-# Push changes to mobile repositories
-npm run subtree:push:instructor # Instructor app only
-npm run subtree:push:student    # Student app only
-npm run subtree:push            # Both apps
+- **Setup Guide**: [`docs/setup/PROJECT_SETUP.md`](docs/setup/PROJECT_SETUP.md)
+- **API Reference**: [`docs/api/API_ENDPOINTS.md`](docs/api/API_ENDPOINTS.md)
+- **Architecture**: [`docs/architecture/`](docs/architecture/)
+- **Features**: [`docs/features/`](docs/features/)
+- **Mobile Apps**: [`../academy-apps/README.md`](../academy-apps/README.md)
 
-# Pull changes from mobile repositories (if edited externally)
-./scripts/subtree-commands.sh pull-instructor
-./scripts/subtree-commands.sh pull-student
-```
-
-### **Manual Git Subtree Commands**
-```bash
-# Push specific app
-git subtree push --prefix=apps/academy-instructors-app instructor-mobile-origin main
-git subtree push --prefix=apps/academy-students-app student-mobile-origin main
-
-# Pull specific app
-git subtree pull --prefix=apps/academy-instructors-app instructor-mobile-origin main --squash
-git subtree pull --prefix=apps/academy-students-app student-mobile-origin main --squash
-
-# Force push (use with caution)
-git subtree push --prefix=apps/academy-instructors-app instructor-mobile-origin main --force
-```
-
-## 📋 **Best Practices**
-
-### **Development**
-1. **Always develop in the main repository** (`RemmySpicy/academy-admin`)
-2. **Make changes in** `apps/academy-instructors-app/` and `apps/academy-students-app/`
-3. **Update shared resources** in `shared/` directory
-4. **Use Git subtrees for deployment** to standalone repositories
-
-### **Daily Workflow**
-1. **Start of day**: Pull any external mobile changes (if applicable)
-2. **During development**: Work in `apps/` directories
-3. **After shared changes**: Run `npm run subtree:sync` 
-4. **Before commits**: Test all apps with `npm run dev:all`
-5. **Deploy changes**: Use `npm run subtree:push`
-
-### **Deployment**
-1. **Test changes** in the main repository first
-2. **Run quality checks**: `npm run quality:academy`
-3. **Sync shared resources**: `npm run subtree:sync`
-4. **Deploy to mobile repos**: `npm run subtree:push`
-
-### **Shared Resource Management**
-1. **Update types** in `shared/types/` when backend changes
-2. **Extend API client** in `shared/api-client/` for new endpoints
-3. **Keep utilities generic** in `shared/utils/` for reusability
-
-### **Conflict Resolution**
-```bash
-# If subtree push fails
-./scripts/subtree-commands.sh status  # Check current state
-git status                            # Check for uncommitted changes
-
-# If subtree pull conflicts occur
-git subtree pull --prefix=apps/academy-instructors-app instructor-mobile-origin main --squash --strategy=ours
-
-# For manual resolution
-git mergetool
-git commit -m "resolve: merge conflicts in mobile subtree"
-```
-
-## ⚠️ **Important Notes**
-
-### **Don't Edit Mobile Repositories Directly**
-- Mobile app repositories (`academy-instructors-app`, `academy-students-app`) are deployment targets
-- Direct changes will be overwritten by Git subtree pushes
-- Always make changes in the main repository's `apps/` directory
-
-### **Existing Code Migration**
-- Place existing mobile app code in respective `existing-code/` folders
-- Follow migration guides in each app's README
-- Use shared API client instead of custom implementations
-
-### **Git Subtree Workflow**
-- Git subtrees maintain history and allow bidirectional sync
-- Use provided scripts for consistency
-- Manual git subtree commands should follow documented patterns
-
-## 🔧 **Repository URLs**
-
-- **Main Repository**: `git@github.com:RemmySpicy/academy-admin.git`
-- **Instructor App**: `git@github.com:RemmySpicy/academy-instructors-app.git`
-- **Students App**: `git@github.com:RemmySpicy/academy-students-app.git`
-
-This structure provides the flexibility of separate app repositories for deployment while maintaining a unified development environment for shared resources and coordinated development.
+This simplified structure provides clean separation between web admin and mobile applications while maintaining shared backend integration and development consistency.

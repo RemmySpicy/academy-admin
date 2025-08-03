@@ -4,7 +4,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { programsApi } from '../api';
-import { useProgramContext } from '@/hooks/useProgramContext';
+import { useProgramContext } from '@/store/programContext';
 
 // Query Keys
 export const PROGRAM_QUERY_KEYS = {

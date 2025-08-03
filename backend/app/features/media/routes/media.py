@@ -124,7 +124,7 @@ async def upload_media_file(
         )
 
 
-@router.get("/", response_model=MediaLibraryListResponse)
+@router.get("", response_model=MediaLibraryListResponse)
 async def list_media(
     db: Annotated[Session, Depends(get_db)],
     program_context: Annotated[Optional[str], Depends(get_program_filter)],

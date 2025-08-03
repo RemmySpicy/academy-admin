@@ -6,6 +6,8 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { httpClient } from '@/lib/api/httpClient';
 
 interface UserRelationship {
   id: string;
@@ -46,6 +48,7 @@ interface CreateRelationshipData {
   emergency_contact?: boolean;
   can_pick_up?: boolean;
   notes?: string;
+  program_id?: string;
 }
 
 interface UpdateRelationshipData {
@@ -56,73 +59,76 @@ interface UpdateRelationshipData {
   notes?: string;
 }
 
+interface FamilyStructureResponse {
+  user: UserRelationship['parent_user'] | UserRelationship['child_user'];
+  children: Array<{
+    user: NonNullable<UserRelationship['child_user']>;
+    relationship_type: string;
+    is_primary: boolean;
+    relationship_id: string;
+  }>;
+  parents: Array<{
+    user: NonNullable<UserRelationship['parent_user']>;
+    relationship_type: string;
+    is_primary: boolean;
+    relationship_id: string;
+  }>;
+  relationships: UserRelationship[];
+}
+
 const QUERY_KEYS = {
   USER_RELATIONSHIPS: 'userRelationships',
   USER_CHILDREN: 'userChildren',
   USER_PARENTS: 'userParents',
 } as const;
 
-// API functions (these would typically be in a separate API service file)
+// API functions using centralized HTTP client with program context support
 const userRelationshipsApi = {
   getUserRelationships: async (userId: string): Promise<UserRelationship[]> => {
-    const response = await fetch(`/api/v1/users/${userId}/family`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      },
-    });
+    const response = await httpClient.get<FamilyStructureResponse>(
+      API_ENDPOINTS.users.family(userId)
+    );
     
-    if (!response.ok) {
-      throw new Error('Failed to fetch user relationships');
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to fetch user relationships');
     }
     
-    const data = await response.json();
-    return data.relationships || [];
+    return response.data.relationships || [];
   },
 
   createRelationship: async (data: CreateRelationshipData): Promise<UserRelationship> => {
-    const response = await fetch('/api/v1/users/relationships', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      },
-      body: JSON.stringify(data),
-    });
+    const response = await httpClient.post<UserRelationship>(
+      API_ENDPOINTS.users.createRelationship, 
+      data
+    );
     
-    if (!response.ok) {
-      throw new Error('Failed to create relationship');
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to create relationship');
     }
     
-    return response.json();
+    return response.data;
   },
 
   updateRelationship: async (id: string, data: UpdateRelationshipData): Promise<UserRelationship> => {
-    const response = await fetch(`/api/v1/users/relationships/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      },
-      body: JSON.stringify(data),
-    });
+    const response = await httpClient.put<UserRelationship>(
+      API_ENDPOINTS.users.updateRelationship(id), 
+      data
+    );
     
-    if (!response.ok) {
-      throw new Error('Failed to update relationship');
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to update relationship');
     }
     
-    return response.json();
+    return response.data;
   },
 
   deleteRelationship: async (id: string): Promise<void> => {
-    const response = await fetch(`/api/v1/users/relationships/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      },
-    });
+    const response = await httpClient.delete<void>(
+      API_ENDPOINTS.users.deleteRelationship(id)
+    );
     
-    if (!response.ok) {
-      throw new Error('Failed to delete relationship');
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to delete relationship');
     }
   },
 
@@ -135,64 +141,68 @@ const userRelationshipsApi = {
   }>> => {
     const params = new URLSearchParams({
       search: query,
-      exclude_ids: excludeIds.join(','),
+      ...(excludeIds.length > 0 && { exclude_ids: excludeIds.join(',') }),
     });
     
-    const response = await fetch(`/api/v1/users/search?${params}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      },
-    });
+    const response = await httpClient.get<{
+      items: Array<{
+        id: string;
+        username: string;
+        email: string;
+        full_name: string;
+        role: string;
+      }>;
+    }>(`${API_ENDPOINTS.users.search}?${params}`);
     
-    if (!response.ok) {
-      throw new Error('Failed to search users');
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to search users');
     }
     
-    const data = await response.json();
-    return data.items || [];
+    return response.data.items || [];
   },
 };
 
 /**
  * Get all relationships for a user (both as parent and child)
+ * Optimized cache configuration for family data
  */
 export const useUserRelationships = (userId: string) => {
   return useQuery({
     queryKey: [QUERY_KEYS.USER_RELATIONSHIPS, userId],
     queryFn: () => userRelationshipsApi.getUserRelationships(userId),
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes - family relationships rarely change
+    gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache longer
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnMount: false, // Don't refetch on mount if data exists
+    refetchOnReconnect: 'always', // Refetch when network reconnects
   });
 };
 
 /**
  * Get children relationships for a parent user
+ * Optimized to use cached family data instead of separate API call
  */
 export const useUserChildren = (parentUserId: string) => {
-  return useQuery({
-    queryKey: [QUERY_KEYS.USER_CHILDREN, parentUserId],
-    queryFn: async () => {
-      const relationships = await userRelationshipsApi.getUserRelationships(parentUserId);
-      return relationships.filter(rel => rel.parent_user_id === parentUserId);
-    },
-    enabled: !!parentUserId,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: allRelationships, ...queryInfo } = useUserRelationships(parentUserId);
+  
+  return {
+    ...queryInfo,
+    data: allRelationships?.filter(rel => rel.parent_user_id === parentUserId) || [],
+  };
 };
 
 /**
  * Get parent relationships for a child user
+ * Optimized to use cached family data instead of separate API call
  */
 export const useUserParents = (childUserId: string) => {
-  return useQuery({
-    queryKey: [QUERY_KEYS.USER_PARENTS, childUserId],
-    queryFn: async () => {
-      const relationships = await userRelationshipsApi.getUserRelationships(childUserId);
-      return relationships.filter(rel => rel.child_user_id === childUserId);
-    },
-    enabled: !!childUserId,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: allRelationships, ...queryInfo } = useUserRelationships(childUserId);
+  
+  return {
+    ...queryInfo,
+    data: allRelationships?.filter(rel => rel.child_user_id === childUserId) || [],
+  };
 };
 
 /**
@@ -204,18 +214,29 @@ export const useCreateRelationship = () => {
   return useMutation({
     mutationFn: userRelationshipsApi.createRelationship,
     onSuccess: (newRelationship) => {
-      // Invalidate queries for both parent and child
+      // Optimized cache updates - update data directly instead of invalidating
+      queryClient.setQueryData(
+        [QUERY_KEYS.USER_CHILDREN, newRelationship.parent_user_id],
+        (oldData: UserRelationship[] | undefined) => {
+          return oldData ? [...oldData, newRelationship] : [newRelationship];
+        }
+      );
+      
+      queryClient.setQueryData(
+        [QUERY_KEYS.USER_PARENTS, newRelationship.child_user_id],
+        (oldData: UserRelationship[] | undefined) => {
+          return oldData ? [...oldData, newRelationship] : [newRelationship];
+        }
+      );
+      
+      // Only invalidate the broader relationships if direct update fails
       queryClient.invalidateQueries({ 
-        queryKey: [QUERY_KEYS.USER_RELATIONSHIPS, newRelationship.parent_user_id] 
+        queryKey: [QUERY_KEYS.USER_RELATIONSHIPS, newRelationship.parent_user_id],
+        refetchType: 'none' // Don't refetch immediately
       });
       queryClient.invalidateQueries({ 
-        queryKey: [QUERY_KEYS.USER_RELATIONSHIPS, newRelationship.child_user_id] 
-      });
-      queryClient.invalidateQueries({ 
-        queryKey: [QUERY_KEYS.USER_CHILDREN, newRelationship.parent_user_id] 
-      });
-      queryClient.invalidateQueries({ 
-        queryKey: [QUERY_KEYS.USER_PARENTS, newRelationship.child_user_id] 
+        queryKey: [QUERY_KEYS.USER_RELATIONSHIPS, newRelationship.child_user_id],
+        refetchType: 'none'
       });
       
       toast.success('Family relationship created successfully');
@@ -292,4 +313,9 @@ export const useSearchUsers = (query: string, excludeIds: string[] = []) => {
   });
 };
 
-export type { UserRelationship, CreateRelationshipData, UpdateRelationshipData };
+export type { 
+  UserRelationship, 
+  CreateRelationshipData, 
+  UpdateRelationshipData, 
+  FamilyStructureResponse 
+};

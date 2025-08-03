@@ -36,7 +36,7 @@ active_courses = db.query(Course).filter(
 ).count()
 ```
 
-#### **Expected Results After Fix**
+#### **Expected Results After All Fixes**
 For Swimming program specifically:
 - **Total Courses**: 7
 - **Active Courses**: 4 (published courses)
@@ -46,10 +46,51 @@ For Swimming program specifically:
 - **Team Members**: 14
 - **Facilities**: 3
 
+✅ **Verified Working**: All statistics now display correctly with the combined backend status mapping fix and frontend data extraction fix.
+
 #### **Files Modified**
 - `backend/app/features/programs/services/program_service.py` - Line 236 (status filtering fix)
 
-### Issue 2: Frontend TypeError on Statistics Access (Fixed - 2025-08-02)
+### Issue 2: Frontend Double-Wrapped Response Structure (Fixed - 2025-08-02)
+
+#### **Problem Description**
+- Program statistics displaying all zeros despite backend API returning correct data
+- Frontend receiving valid API responses but unable to access nested data structure
+- httpClient wrapping backend response causing data extraction issues
+
+#### **Root Cause**
+The backend API returns statistics wrapped in `{"success": true, "data": {...}}`, but the frontend httpClient also wraps responses in the same structure, creating a double-nested data structure:
+
+```typescript
+// Backend returns:
+{"success": true, "data": {"courses": {"active": 4}, ...}}
+
+// httpClient wraps this again:
+{
+  success: true,
+  data: {
+    success: true,
+    data: {"courses": {"active": 4}, ...}  // Actual statistics buried here
+  }
+}
+```
+
+#### **Solution Applied** ✅
+Updated the `useAcademyProgramStatistics` hook to properly extract nested data:
+
+```typescript
+// OLD - Only accessed first level
+const data = response.data;
+
+// NEW - Handle double-wrapped structure
+const data = response.data?.data || response.data;
+```
+
+#### **Files Modified**
+- `frontend/src/features/academy/hooks/useAcademyPrograms.ts` - Line 185 (data extraction fix)
+- `frontend/src/features/academy/components/programs/ProgramViewPage.tsx` - Enhanced error handling
+
+### Issue 3: Frontend TypeError on Statistics Access (Fixed - 2025-08-02)
 
 #### **Problem Description**
 ```

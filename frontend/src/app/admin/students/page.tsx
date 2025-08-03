@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -84,17 +84,27 @@ export default function StudentsParentsPage() {
   
   // Students state
   const [studentSearchTerm, setStudentSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [studentStatusFilter, setStudentStatusFilter] = useState('all');
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [studentCurrentPage, setStudentCurrentPage] = useState(1);
   
+  // Debounce search to improve performance
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(studentSearchTerm);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [studentSearchTerm]);
+  
   const perPage = 20;
   
-  // Build search parameters for students
-  const studentSearchParams = {
-    search: studentSearchTerm || undefined,
+  // Memoize search parameters to prevent unnecessary re-renders
+  const studentSearchParams = useMemo(() => ({
+    search: debouncedSearchTerm || undefined,
     status: studentStatusFilter === 'all' ? undefined : studentStatusFilter,
-  };
+  }), [debouncedSearchTerm, studentStatusFilter]);
   
   // React Query hooks for students
   const {
@@ -156,22 +166,22 @@ export default function StudentsParentsPage() {
 
   // No more manual loading - hooks handle everything automatically!
 
-  // Student handlers
-  const handleSelectStudent = (studentId: string) => {
+  // Memoized handlers to prevent unnecessary re-renders
+  const handleSelectStudent = useCallback((studentId: string) => {
     setSelectedStudents(prev => 
       prev.includes(studentId) 
         ? prev.filter(id => id !== studentId)
         : [...prev, studentId]
     );
-  };
+  }, []);
 
-  const handleSelectAllStudents = () => {
+  const handleSelectAllStudents = useCallback(() => {
     setSelectedStudents(
       selectedStudents.length === students.length 
         ? [] 
         : students.map(student => student.id)
     );
-  };
+  }, [selectedStudents.length, students]);
   
   // Parent handlers
   const handleSelectParent = (parentId: string) => {

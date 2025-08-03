@@ -62,8 +62,8 @@
 ## Program Management ✅ **ENHANCED (2025-08-02)**
 
 ### Core Program Operations
-- `GET /api/v1/programs/` - List programs (role-filtered)
-- `POST /api/v1/programs/` - Create program (Super Admin only)
+- `GET /api/v1/programs` - List programs (role-filtered)
+- `POST /api/v1/programs` - Create program (Super Admin only)
 - `GET /api/v1/programs/{id}` - **ENHANCED**: Get specific program with configuration data
 - `PUT /api/v1/programs/{id}` - Update program (includes configuration fields)
 - `DELETE /api/v1/programs/{id}` - Delete program (Super Admin only)
@@ -148,8 +148,8 @@ Program responses now include configuration fields for cross-feature integration
 - Cross-program comparison analytics
 
 ## Course Management ✅ (Program Context Filtered)
-- `GET /api/v1/courses/` - List courses (program-filtered)
-- `POST /api/v1/courses/` - Create course (program context enforced)
+- `GET /api/v1/courses` - List courses (program-filtered)
+- `POST /api/v1/courses` - Create course (program context enforced)
 - `GET /api/v1/courses/{id}` - Get course (program access validated)
 - `PUT /api/v1/courses/{id}` - Update course (program scoped)
 - `DELETE /api/v1/courses/{id}` - Delete course (program scoped)
@@ -161,19 +161,19 @@ Program responses now include configuration fields for cross-feature integration
 
 ## Facility Management ✅ (Program Context Filtered)
 ### Core Facility Operations
-- `GET /api/v1/facilities/` - List facilities (program-filtered)
-- `POST /api/v1/facilities/` - Create facility (program context enforced)
+- `GET /api/v1/facilities` - List facilities (program-filtered)
+- `POST /api/v1/facilities` - Create facility (program context enforced)
 - `GET /api/v1/facilities/{id}` - Get facility (program access validated)
 - `PUT /api/v1/facilities/{id}` - Update facility (program scoped)
 - `DELETE /api/v1/facilities/{id}` - Delete facility (program scoped)
-- `GET /api/v1/facilities/stats/` - Facility statistics (program filtered)
+- `GET /api/v1/facilities/stats` - Facility statistics (program filtered)
 
 ### 🆕 Facility Course Pricing System ✅ (NEW - 2025-07-30)
 **Complete facility-specific course pricing that determines actual customer charges - 14 endpoints**
 
 #### Pricing Management (6 endpoints)
-- `GET /api/v1/facility-course-pricing/` - List pricing entries with filtering & pagination
-- `POST /api/v1/facility-course-pricing/` - Create new pricing entry
+- `GET /api/v1/facility-course-pricing` - List pricing entries with filtering & pagination
+- `POST /api/v1/facility-course-pricing` - Create new pricing entry
 - `GET /api/v1/facility-course-pricing/{id}` - Get specific pricing entry
 - `PUT /api/v1/facility-course-pricing/{id}` - Update pricing entry
 - `DELETE /api/v1/facility-course-pricing/{id}` - Delete pricing entry
@@ -229,7 +229,7 @@ Program responses now include configuration fields for cross-feature integration
 - **Method Name Fix**: Corrected service method calls in parent routes (eliminates 500 errors)
 - **Enum Alignment**: Database enums now match Python enum values for consistency
 ### Standard Operations
-- `GET /api/v1/students/` - List students with pagination and filtering  
+- `GET /api/v1/students` - List students with pagination and filtering  
 - `GET /api/v1/students/stats` - **UPDATED**: Student statistics (assignment-based architecture) 
   - Total student profiles and active enrollments
   - Course enrollment counts (active/paused)  
@@ -261,7 +261,7 @@ Program responses now include configuration fields for cross-feature integration
 ## Parents Management ✅ (Program Context Filtered - 5 endpoints)
 **🔧 Fixed (2025-01-29)**: Service method name corrections and permission updates
 ### Standard Operations
-- `GET /api/v1/parents/` - List parents with family info
+- `GET /api/v1/parents` - List parents with family info
 - `GET /api/v1/parents/stats` - **UPDATED**: Parent statistics (relationship-focused architecture)
   - Total parent profiles and relationship counts
   - Parent-child relationship statistics  

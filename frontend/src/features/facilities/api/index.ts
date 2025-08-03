@@ -10,7 +10,13 @@ import {
   FacilityUpdate,
   FacilitySearchParams,
   FacilityListResponse,
-  FacilityStatsResponse
+  FacilityStatsResponse,
+  FacilityDuplicateRequest,
+  FacilityArchiveRequest,
+  FacilityManagerAssignment,
+  FacilityScheduleSlot,
+  FacilityAvailability,
+  FacilityStaffAssignment
 } from '../types';
 
 export const facilitiesApi = {
@@ -75,6 +81,73 @@ export const facilitiesApi = {
     const response = await httpClient.get<FacilityStatsResponse>(API_ENDPOINTS.facilities.stats);
     if (!response.success) {
       throw new Error(response.error || 'Failed to fetch facility statistics');
+    }
+    return response.data;
+  },
+
+  /**
+   * Duplicate a facility
+   */
+  async duplicateFacility(facilityId: string, duplicateData: FacilityDuplicateRequest): Promise<Facility> {
+    const response = await httpClient.post<Facility>(`${API_ENDPOINTS.facilities.get(facilityId)}/duplicate`, duplicateData);
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to duplicate facility');
+    }
+    return response.data;
+  },
+
+  /**
+   * Archive a facility
+   */
+  async archiveFacility(facilityId: string, archiveData: FacilityArchiveRequest): Promise<Facility> {
+    const response = await httpClient.post<Facility>(`${API_ENDPOINTS.facilities.get(facilityId)}/archive`, archiveData);
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to archive facility');
+    }
+    return response.data;
+  },
+
+  /**
+   * Assign manager to facility
+   */
+  async assignManager(facilityId: string, assignment: FacilityManagerAssignment): Promise<Facility> {
+    const response = await httpClient.post<Facility>(`${API_ENDPOINTS.facilities.get(facilityId)}/assign-manager`, assignment);
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to assign manager to facility');
+    }
+    return response.data;
+  },
+
+  /**
+   * Get facility schedule
+   */
+  async getFacilitySchedule(facilityId: string): Promise<FacilityScheduleSlot[]> {
+    const response = await httpClient.get<FacilityScheduleSlot[]>(`${API_ENDPOINTS.facilities.get(facilityId)}/schedule`);
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to fetch facility schedule');
+    }
+    return response.data;
+  },
+
+  /**
+   * Get facility availability
+   */
+  async getFacilityAvailability(facilityId: string, date?: string): Promise<FacilityAvailability> {
+    const params = date ? { date } : undefined;
+    const response = await httpClient.get<FacilityAvailability>(`${API_ENDPOINTS.facilities.get(facilityId)}/availability`, params);
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to fetch facility availability');
+    }
+    return response.data;
+  },
+
+  /**
+   * Get facility staff assignments
+   */
+  async getFacilityStaff(facilityId: string): Promise<FacilityStaffAssignment[]> {
+    const response = await httpClient.get<FacilityStaffAssignment[]>(`${API_ENDPOINTS.facilities.get(facilityId)}/staff`);
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to fetch facility staff');
     }
     return response.data;
   }

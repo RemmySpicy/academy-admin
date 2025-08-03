@@ -28,7 +28,7 @@ from app.features.content.services.lesson_service import lesson_service
 router = APIRouter()
 
 
-@router.post("/", response_model=LessonResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=LessonResponse, status_code=status.HTTP_201_CREATED)
 async def create_lesson(
     lesson_data: LessonCreate,
     db: Annotated[Session, Depends(get_db)],
@@ -60,7 +60,7 @@ async def create_lesson(
         )
 
 
-@router.get("/", response_model=LessonListResponse)
+@router.get("", response_model=LessonListResponse)
 async def list_lessons(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[dict, Depends(get_current_active_user)],

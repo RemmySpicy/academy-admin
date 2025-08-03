@@ -129,33 +129,11 @@ class ParentApiService {
 
   /**
    * Get parents for a specific child/student
+   * Optimized to use direct endpoint instead of chaining calls
    */
   async getParentsForChild(childId: string): Promise<ApiResponse<EnhancedParent[]>> {
-    const familyResponse = await httpClient.get<FamilyStructure>(API_ENDPOINTS.students.family(childId));
-    
-    if (familyResponse.success && familyResponse.data) {
-      // Extract parent information from family structure
-      const parents = familyResponse.data.parents.map(parentRel => ({
-        ...parentRel.user,
-        children_count: 1, // We know they have at least this child
-        has_children: true,
-        relationship_type: parentRel.relationship_type,
-        is_primary: parentRel.is_primary,
-        relationship_id: parentRel.relationship_id
-      }));
-      
-      return {
-        success: true,
-        data: parents,
-        message: 'Parents retrieved successfully'
-      };
-    }
-    
-    return {
-      success: false,
-      error: familyResponse.error || 'Failed to retrieve parents',
-      data: []
-    };
+    // Use direct endpoint for better performance
+    return httpClient.get<EnhancedParent[]>(`${API_ENDPOINTS.students.get(childId)}/parents`);
   }
 
   /**

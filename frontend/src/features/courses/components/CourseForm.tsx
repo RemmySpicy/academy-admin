@@ -7,7 +7,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useProgramContext } from '@/store/programContext';
-import { useProgramConfiguration, useProgramAgeGroups, useProgramDifficultyLevels, useProgramSessionTypes } from '@/features/academy/hooks/useAcademyPrograms';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -786,7 +785,7 @@ export function CourseForm({
                 <Award className="h-5 w-5" />
                 Course Pricing Setup
               </CardTitle>
-              <p className="text-sm text-muted-foreground">Set price ranges for each age group to give customers an idea of cost without exact pricing</p>
+              <p className="text-sm text-muted-foreground">Set price ranges for selected age groups to give customers an idea of cost. Leave empty if no age groups selected or course has fixed pricing.</p>
             </CardHeader>
             <CardContent>
               {pricingRanges.length > 0 ? (

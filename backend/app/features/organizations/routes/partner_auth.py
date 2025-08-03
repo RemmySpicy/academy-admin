@@ -107,7 +107,7 @@ async def partner_admin_login(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/", response_model=ApiResponse)
+@router.post("", response_model=ApiResponse)
 async def create_partner_admin(
     admin_data: PartnerAdminCreate,
     current_user: User = Depends(require_super_admin),

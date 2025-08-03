@@ -33,7 +33,7 @@ router.include_router(pricing_router, prefix="/pricing", tags=["facility-course-
 get_program_filter = create_program_filter_dependency(get_current_active_user)
 
 
-@router.post("/", response_model=FacilityResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=FacilityResponse, status_code=status.HTTP_201_CREATED)
 async def create_facility(
     facility_data: FacilityCreate,
     db: Annotated[Session, Depends(get_db)],
@@ -71,7 +71,7 @@ async def create_facility(
         )
 
 
-@router.get("/", response_model=FacilityListResponse)
+@router.get("", response_model=FacilityListResponse)
 async def list_facilities(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[dict, Depends(get_current_active_user)],

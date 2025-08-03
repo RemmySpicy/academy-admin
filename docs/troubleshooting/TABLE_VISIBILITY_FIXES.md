@@ -1,4 +1,4 @@
-# Table Visibility & Service Architecture Fixes (2025-07-29 & 2025-07-31)
+# Table Visibility & Service Architecture Fixes (2025-07-29 to 2025-08-02)
 
 ## Overview
 This document details the critical fixes applied to resolve students and parents not showing up in program context tables. These fixes ensure the two-step workflow system functions correctly.
@@ -209,6 +209,40 @@ async def get_user_family_structure(
 **Files Modified**:
 - `backend/app/features/authentication/routes/users.py`
 
+**Impact**: Family relationship endpoints now functional and accessible
+
+### 9. Family Endpoint Enum Handling Fix (2025-08-02)
+**Issue**: `/api/v1/users/{id}/family` endpoint returning 500 errors when viewing student profiles
+
+**Root Cause**: 
+- Enum access errors when `relationship_type.value` was called on string values
+- Missing `relationships` field in response schema causing validation failures
+- Inconsistent enum handling between database storage and API response
+
+**Solution Applied**:
+```python
+# Enhanced enum handling with defensive programming
+"relationship_type": rel.relationship_type if hasattr(rel.relationship_type, 'value') else str(rel.relationship_type),
+
+# Added missing relationships field to match FamilyStructureResponse schema
+"relationships": [
+    {
+        "id": rel.id,
+        "parent_user_id": rel.parent_user_id,
+        "child_user_id": rel.child_user_id,
+        "relationship_type": rel.relationship_type if hasattr(rel.relationship_type, 'value') else str(rel.relationship_type),
+        "is_primary": rel.is_primary,
+        "is_active": rel.is_active,
+        "emergency_contact": rel.emergency_contact,
+        "can_pick_up": rel.can_pick_up
+    }
+    for rel in all_relationships
+]
+```
+
+**Files Modified**:
+- `backend/app/features/authentication/services/user_service.py` (enum handling and schema alignment)
+
 ## Verification Results
 
 After applying all fixes:
@@ -224,6 +258,7 @@ After applying all fixes:
 | Parent Service Methods | AttributeError | Working | ✅ Fixed |
 | Family Relationships API | 500 Error | 401 Auth | ✅ Fixed |
 | API Router Registration | 404 Error | 401 Auth | ✅ Fixed |
+| Student Profile Family View | 500 Error | 200 Success | ✅ Fixed (2025-08-02) |
 
 ## Testing Commands
 

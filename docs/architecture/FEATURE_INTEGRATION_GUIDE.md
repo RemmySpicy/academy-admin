@@ -23,7 +23,48 @@ All features implement consistent role-based access:
 
 ## Feature Integration Matrix
 
-### 1. Program Configuration ↔ Multiple Features Integration ✅ **IMPLEMENTED**
+### 1. Facility Management ↔ Multiple Features Integration ✅ **ENHANCED** (2025-01-03)
+
+#### **Data Dependencies**
+```
+Facility Model → Multiple Features
+├── facility_type (enum) → Course/Program targeting
+├── capacity (int) → Session/Schedule capacity limits
+├── access_fees → Course pricing calculations
+├── operating_hours → Scheduling availability windows
+├── equipment → Course suitability filtering
+├── specifications → Course requirements matching
+└── facility_code (string) → Cross-feature identification
+```
+
+#### **Integration Points**
+- **Course Assignment**: Facilities determine available venues for course delivery ✅ **ENHANCED**
+- **Scheduling Integration**: Operating hours and capacity define scheduling constraints ✅ **ENHANCED**
+- **Pricing Integration**: Access fees are factored into course pricing via FacilityCoursePricing ✅ **ENHANCED**
+- **Staff Assignment**: Facilities can have dedicated managers and assigned instructors ✅ **NEW**
+- **Equipment Matching**: Course requirements matched against facility equipment ✅ **ENHANCED**
+- **Availability Management**: Real-time booking slots and maintenance windows ✅ **NEW**
+
+#### **Business Rules**
+- Facilities must have unique codes within each program ✅ **ENHANCED**
+- Capacity constraints are enforced during session booking ✅ **ENHANCED**
+- Operating hours define valid scheduling windows ✅ **ENHANCED**
+- Access fees are automatically included in course pricing calculations ✅ **ENHANCED**
+- Equipment specifications determine course eligibility ✅ **ENHANCED**
+- Manager assignments require valid user relationships ✅ **NEW**
+
+#### **API Integration Patterns**
+```typescript
+// Enhanced facility operations
+useFacility(id) // Basic facility data
+useFacilitySchedule(id) // Schedule integration
+useFacilityAvailability(id, date) // Booking availability
+useFacilityStaff(id) // Staff assignments
+useDuplicateFacility() // Template operations
+useArchiveFacility() // Lifecycle management
+```
+
+### 2. Program Configuration ↔ Multiple Features Integration ✅ **IMPLEMENTED**
 
 #### **Data Dependencies**
 ```

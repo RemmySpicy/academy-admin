@@ -27,7 +27,7 @@ from app.features.curricula.services.section_service import section_service
 router = APIRouter()
 
 
-@router.post("/", response_model=SectionResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=SectionResponse, status_code=status.HTTP_201_CREATED)
 async def create_section(
     section_data: SectionCreate,
     db: Annotated[Session, Depends(get_db)],
@@ -59,7 +59,7 @@ async def create_section(
         )
 
 
-@router.get("/", response_model=SectionListResponse)
+@router.get("", response_model=SectionListResponse)
 async def list_sections(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[dict, Depends(get_current_active_user)],
