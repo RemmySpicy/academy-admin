@@ -111,7 +111,7 @@ class ContentVersionResponse(ContentVersionBase, TimestampMixin):
     
     class Config:
         from_attributes = True
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "version-id-1",
                 "lesson_id": "lesson-id-1",
@@ -190,7 +190,7 @@ class ContentVersionDetailResponse(ContentVersionResponse):
     content_diff: Optional[Dict[str, Any]] = Field(None, description="Differences from previous version")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "version-id-1",
                 "lesson_id": "lesson-id-1",
@@ -249,7 +249,7 @@ class ContentVersionCompareResponse(BaseModel):
     change_summary: List[str] = Field(..., description="Summary of changes")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "version_1": {
                     "id": "version-id-1",

@@ -223,7 +223,7 @@ class BulkLessonGradingRequest(BaseModel):
     instructor_id: str = Field(..., description="Instructor performing the grading")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "grades": [
                     {

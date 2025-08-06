@@ -92,7 +92,7 @@ class ModuleResponse(ModuleBase, TimestampMixin):
     
     class Config:
         from_attributes = True
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "module-id-1",
                 "name": "Introduction to Robotics",
@@ -176,7 +176,7 @@ class ModuleTreeResponse(BaseModel):
     equipment: List[Dict[str, Any]] = Field(default=[], description="Equipment requirements")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "module-id-1",
                 "name": "Introduction to Robotics",

@@ -223,7 +223,7 @@ class StudentResponse(StudentBase, TimestampMixin):
     
     class Config:
         from_attributes = True
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "550e8400-e29b-41d4-a716-446655440000",
                 "student_id": "STU-2025-0001",

@@ -121,7 +121,7 @@ class CourseResponse(CourseBase, TimestampMixin):
     
     class Config:
         from_attributes = True
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "course-id-1",
                 "program_id": "program-id-1",
@@ -205,7 +205,7 @@ class CourseTreeResponse(BaseModel):
     curricula: List[Dict[str, Any]] = Field(default=[], description="List of curricula with their levels")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "course-id-1",
                 "name": "Introduction to Robotics",

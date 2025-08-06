@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { ArrowLeft, UserPlus, Building2, AlertCircle, CheckCircle, Users } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useProgramContext } from '@/hooks/useProgramContext';
 
 // Import reusable components
-import { SimpleFormField as FormField } from '@/components/ui/forms';
-import { PersonSearchAndSelect } from '@/components/ui/forms/PersonSearchAndSelect';
+import { SimpleFormField as FormField, PersonSearchAndSelect } from '@/components/ui/forms';
 
 // Types
 interface SponsorshipFormData {
@@ -322,34 +323,24 @@ export default function NewSponsoredStudentPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Selection Mode Toggle */}
-          <div className="flex items-center space-x-6">
+          <RadioGroup 
+            value={formData.student_selection.mode} 
+            onValueChange={(value) => handleStudentModeChange(value as 'existing' | 'new')}
+            className="flex items-center space-x-6"
+          >
             <div className="flex items-center space-x-2">
-              <input
-                type="radio"
-                id="existing"
-                name="student_mode"
-                checked={formData.student_selection.mode === 'existing'}
-                onChange={() => handleStudentModeChange('existing')}
-                className="text-blue-600"
-              />
-              <label htmlFor="existing" className="text-sm font-medium">
+              <RadioGroupItem value="existing" id="existing" />
+              <Label htmlFor="existing" className="text-sm font-medium">
                 Select Existing Student
-              </label>
+              </Label>
             </div>
             <div className="flex items-center space-x-2">
-              <input
-                type="radio"
-                id="new"
-                name="student_mode"
-                checked={formData.student_selection.mode === 'new'}
-                onChange={() => handleStudentModeChange('new')}
-                className="text-blue-600"
-              />
-              <label htmlFor="new" className="text-sm font-medium">
+              <RadioGroupItem value="new" id="new" />
+              <Label htmlFor="new" className="text-sm font-medium">
                 Create New Student
-              </label>
+              </Label>
             </div>
-          </div>
+          </RadioGroup>
 
           {/* Existing Student Selection */}
           {formData.student_selection.mode === 'existing' && (

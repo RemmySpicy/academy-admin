@@ -15,7 +15,7 @@ class LoginRequest(BaseModel):
     password: str = Field(..., min_length=3, max_length=255, description="User password")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "username": "admin",
                 "password": "admin123"
@@ -32,7 +32,7 @@ class LoginResponse(BaseModel):
     user: "UserResponse" = Field(..., description="User information")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
                 "token_type": "bearer",
@@ -77,7 +77,7 @@ class UserResponse(BaseModel):
     
     class Config:
         from_attributes = True
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "550e8400-e29b-41d4-a716-446655440000",
                 "username": "admin",
@@ -121,7 +121,7 @@ class UserCreate(BaseModel):
         return v
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "username": "jdoe",
                 "email": "john.doe@academy.com",
@@ -176,7 +176,7 @@ class PasswordChangeRequest(BaseModel):
     new_password: str = Field(..., min_length=8, max_length=255, description="New password")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "current_password": "oldpassword123",
                 "new_password": "newpassword456"
@@ -190,7 +190,7 @@ class RefreshTokenRequest(BaseModel):
     refresh_token: str = Field(..., description="Refresh token")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
             }

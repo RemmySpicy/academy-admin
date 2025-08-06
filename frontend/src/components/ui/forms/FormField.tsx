@@ -1,152 +1,60 @@
 /**
- * Reusable form field component for consistent form styling and validation
+ * Generic form field component with validation
  */
-
 import React from 'react';
+import { UseFormRegister, FieldError } from 'react-hook-form';
+import { cn } from '@/lib/utils';
 
-export interface FormFieldProps {
+interface FormFieldProps {
+  id: string;
   label: string;
-  field: string;
-  type?: string;
-  value: string | number | boolean;
-  onChange: (field: string, value: any) => void;
-  error?: string;
-  required?: boolean;
+  type?: 'text' | 'email' | 'password' | 'number' | 'tel';
   placeholder?: string;
+  register: UseFormRegister<any>;
+  error?: FieldError;
+  required?: boolean;
   disabled?: boolean;
   className?: string;
-  options?: { value: string; label: string }[];
-  rows?: number;
-  min?: string | number;
-  max?: string | number;
-  step?: string | number;
+  description?: string;
 }
 
-export function FormField({
+const FormField: React.FC<FormFieldProps> = ({
+  id,
   label,
-  field,
   type = 'text',
-  value,
-  onChange,
+  placeholder,
+  register,
   error,
   required = false,
-  placeholder,
   disabled = false,
-  className = '',
-  options,
-  rows = 3,
-  min,
-  max,
-  step
-}: FormFieldProps) {
-  const fieldId = `field-${field}`;
-  
-  const baseClasses = `w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 ${
-    error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500'
-  } ${className}`;
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { value: newValue, type: inputType } = e.target;
-    
-    if (inputType === 'checkbox') {
-      onChange(field, (e.target as HTMLInputElement).checked);
-    } else if (inputType === 'number') {
-      onChange(field, newValue === '' ? '' : Number(newValue));
-    } else {
-      onChange(field, newValue);
-    }
-  };
-
-  const renderInput = () => {
-    switch (type) {
-      case 'select':
-        return (
-          <select
-            id={fieldId}
-            value={String(value)}
-            onChange={handleChange}
-            disabled={disabled}
-            className={baseClasses}
-            required={required}
-          >
-            <option value="">Select {label}</option>
-            {options?.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        );
-
-      case 'textarea':
-        return (
-          <textarea
-            id={fieldId}
-            value={String(value)}
-            onChange={handleChange}
-            disabled={disabled}
-            placeholder={placeholder}
-            rows={rows}
-            className={baseClasses}
-            required={required}
-          />
-        );
-
-      case 'checkbox':
-        return (
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id={fieldId}
-              checked={Boolean(value)}
-              onChange={handleChange}
-              disabled={disabled}
-              className="rounded border-gray-300 focus:ring-2 focus:ring-blue-500"
-              required={required}
-            />
-            <label htmlFor={fieldId} className="text-sm font-medium text-gray-700">
-              {label} {required && <span className="text-red-500">*</span>}
-            </label>
-          </div>
-        );
-
-      default:
-        return (
-          <input
-            type={type}
-            id={fieldId}
-            value={String(value)}
-            onChange={handleChange}
-            disabled={disabled}
-            placeholder={placeholder}
-            min={min}
-            max={max}
-            step={step}
-            className={baseClasses}
-            required={required}
-          />
-        );
-    }
-  };
-
-  if (type === 'checkbox') {
-    return (
-      <div className="space-y-1">
-        {renderInput()}
-        {error && <p className="text-sm text-red-500">{error}</p>}
-      </div>
-    );
-  }
-
+  className,
+  description,
+}) => {
   return (
-    <div className="space-y-1">
-      <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700">
-        {label} {required && <span className="text-red-500">*</span>}
+    <div className={cn('space-y-2', className)}>
+      <label htmlFor={id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+        {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
       </label>
-      {renderInput()}
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      <input
+        id={id}
+        type={type}
+        placeholder={placeholder}
+        disabled={disabled}
+        {...register(id)}
+        className={cn(
+          'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+          error && 'border-red-500 focus-visible:ring-red-500'
+        )}
+      />
+      {description && (
+        <p className="text-xs text-muted-foreground">{description}</p>
+      )}
+      {error && (
+        <p className="text-xs font-medium text-red-500">{error.message}</p>
+      )}
     </div>
   );
-}
+};
 
 export default FormField;

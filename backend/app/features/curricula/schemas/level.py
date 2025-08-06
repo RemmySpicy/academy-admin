@@ -93,7 +93,7 @@ class LevelResponse(LevelBase, TimestampMixin):
     
     class Config:
         from_attributes = True
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "level-id-1",
                 "name": "Getting Started",
@@ -167,7 +167,7 @@ class LevelTreeResponse(BaseModel):
     modules: List[Dict[str, Any]] = Field(default=[], description="List of modules with their lessons")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "level-id-1",
                 "name": "Getting Started",

@@ -150,7 +150,7 @@ class CoursePricingMatrixResponse(BaseModel):
     courses: List[Dict[str, Any]] = Field(..., description="Courses with their pricing matrices")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "facility_id": "facility-123",
                 "facility_name": "Olympic Swimming Pool",

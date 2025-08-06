@@ -23,7 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Plus, X, Users, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { PersonSearchAndSelect } from '@/components/ui/forms/PersonSearchAndSelect';
+import { PersonSearchAndSelect } from '@/components/ui/forms';
 
 interface TeamAssignment {
   user_id: string;

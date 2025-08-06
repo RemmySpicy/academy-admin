@@ -171,14 +171,14 @@ export function Sidebar({ className }: SidebarProps) {
           onClick={item.onClick}
           className={cn(
             "group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors w-full text-left",
-            "text-gray-700 hover:bg-white hover:text-gray-900 hover:shadow-sm"
+            "text-card-foreground hover:bg-accent hover:text-accent-foreground hover:shadow-sm"
           )}
           title={isCollapsed ? item.title : undefined}
         >
           <Icon
             className={cn(
               "h-5 w-5 flex-shrink-0",
-              "text-gray-400 group-hover:text-gray-600"
+              "text-muted-foreground group-hover:text-accent-foreground"
             )}
           />
           {!isCollapsed && (
@@ -197,15 +197,15 @@ export function Sidebar({ className }: SidebarProps) {
         className={cn(
           "group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
           isActive
-            ? "bg-blue-100 text-blue-900 shadow-sm"
-            : "text-gray-700 hover:bg-white hover:text-gray-900 hover:shadow-sm"
+            ? "bg-primary/10 text-primary border border-primary/20 shadow-sm dark:bg-primary dark:text-primary-foreground dark:border-primary"
+            : "text-card-foreground hover:bg-accent hover:text-accent-foreground hover:shadow-sm"
         )}
         title={isCollapsed ? item.title : undefined}
       >
         <Icon
           className={cn(
             "h-5 w-5 flex-shrink-0",
-            isActive ? "text-blue-900" : "text-gray-400 group-hover:text-gray-600"
+            isActive ? "text-primary dark:text-primary-foreground" : "text-muted-foreground group-hover:text-accent-foreground"
           )}
         />
         {!isCollapsed && (
@@ -218,19 +218,19 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <div
       className={cn(
-        "relative flex h-full flex-col bg-gray-50 border-r border-gray-200 transition-all duration-300",
+        "relative flex h-full flex-col bg-card border-r border-border transition-all duration-300",
         isCollapsed ? "w-16" : "w-64",
         className
       )}
     >
       {/* Header */}
-      <div className="flex h-16 items-center justify-between px-4 border-b border-gray-200 bg-white">
+      <div className="flex h-16 items-center justify-between px-4 border-b border-border bg-card">
         {!isCollapsed && (
-          <h1 className="text-xl font-bold text-gray-900">Academy Admin</h1>
+          <h1 className="text-xl font-bold text-card-foreground">Academy Admin</h1>
         )}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
         >
           {isCollapsed ? (
             <ChevronRight className="h-4 w-4" />
@@ -242,10 +242,10 @@ export function Sidebar({ className }: SidebarProps) {
 
       {/* Program Context Display */}
       {currentProgram && !isCollapsed && (
-        <div className="px-4 py-3 bg-blue-50 border-b border-blue-100">
+        <div className="px-4 py-3 bg-primary/10 border-b border-primary/20">
           <div className="flex items-center space-x-2">
-            <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
-            <span className="text-sm font-medium text-blue-900">
+            <div className="h-2 w-2 bg-primary rounded-full"></div>
+            <span className="text-sm font-medium text-primary">
               {currentProgram.name}
             </span>
           </div>
@@ -261,19 +261,19 @@ export function Sidebar({ className }: SidebarProps) {
             </div>
             {/* Add separator between sections when collapsed */}
             {isCollapsed && sectionIndex < filteredSections.length - 1 && (
-              <div className="border-t border-gray-200 my-4"></div>
+              <div className="border-t border-border my-4"></div>
             )}
           </div>
         ))}
         
         {/* Logout button */}
-        <div className="pt-4 border-t border-gray-200">
+        <div className="pt-4 border-t border-border">
           <button
             onClick={handleLogout}
-            className="group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors w-full text-left text-gray-700 hover:bg-white hover:text-gray-900 hover:shadow-sm"
+            className="group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors w-full text-left text-card-foreground hover:bg-accent hover:text-accent-foreground hover:shadow-sm"
             title={isCollapsed ? 'Logout' : undefined}
           >
-            <LogOut className="h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-gray-600" />
+            <LogOut className="h-5 w-5 flex-shrink-0 text-muted-foreground group-hover:text-accent-foreground" />
             {!isCollapsed && (
               <span className="ml-3 truncate">Logout</span>
             )}
@@ -283,19 +283,19 @@ export function Sidebar({ className }: SidebarProps) {
 
       {/* User info at bottom */}
       {user && (
-        <div className="border-t border-gray-200 p-4">
+        <div className="border-t border-border p-4">
           <div className="flex items-center">
-            <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center">
-              <span className="text-sm font-medium text-blue-600">
+            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="text-sm font-medium text-primary">
                 {user.first_name[0]}{user.last_name[0] || ''}
               </span>
             </div>
             {!isCollapsed && (
               <div className="ml-3 flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
+                <p className="text-sm font-medium text-card-foreground truncate">
                   {user.first_name} {user.last_name}
                 </p>
-                <p className="text-xs text-gray-500 truncate">
+                <p className="text-xs text-muted-foreground truncate">
                   {user.role === 'super_admin' ? 'Super Admin' : 
                    user.role === 'program_admin' ? 'Program Admin' :
                    user.role === 'program_coordinator' ? 'Program Coordinator' :

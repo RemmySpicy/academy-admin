@@ -4,6 +4,7 @@
 
 import { HttpClient } from '../core/HttpClient';
 import { ApiResponse } from '../core/types';
+import { API_ENDPOINTS } from '../constants';
 import { 
   User, 
   CreateUserRequest, 
@@ -75,7 +76,7 @@ export class UserService {
    * Get user statistics
    */
   async getUserStats(): Promise<ApiResponse<UserStats>> {
-    return this.http.get<UserStats>('/users/stats', {
+    return this.http.get<UserStats>(API_ENDPOINTS.USERS.STATS, {
       skipProgramContext: true,
       useCache: true,
       cacheTTL: 10 * 60 * 1000,

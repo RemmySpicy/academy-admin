@@ -4,6 +4,8 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -281,12 +283,11 @@ export function ParentChildManager({
                         {isParentView ? 'Child' : 'User'}
                       </label>
                       <div className="col-span-3">
-                        <input
+                        <Input
                           id="user-search"
                           placeholder={isParentView ? 'Search for student...' : 'Search for user...'}
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
                     </div>
@@ -355,12 +356,11 @@ export function ParentChildManager({
                         Notes
                       </label>
                       <div className="col-span-3">
-                        <textarea
+                        <Textarea
                           id="notes"
                           placeholder="Additional notes..."
                           value={newRelationship.notes}
                           onChange={(e) => setNewRelationship(prev => ({ ...prev, notes: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           rows={3}
                         />
                       </div>
@@ -628,12 +628,11 @@ export function ParentChildManager({
                 Notes
               </label>
               <div className="col-span-3">
-                <textarea
+                <Textarea
                   id="edit-notes"
                   placeholder="Additional notes..."
                   value={newRelationship.notes}
                   onChange={(e) => setNewRelationship(prev => ({ ...prev, notes: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   rows={3}
                 />
               </div>

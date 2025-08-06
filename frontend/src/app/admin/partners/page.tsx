@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Building2, 
   Plus, 
@@ -134,10 +135,10 @@ export default function PartnersPage() {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       active: 'bg-green-100 text-green-800',
-      inactive: 'bg-gray-100 text-gray-800',
+      inactive: 'bg-muted text-muted-foreground',
       pending: 'bg-yellow-100 text-yellow-800'
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'bg-muted text-muted-foreground';
   };
 
   return (
@@ -145,8 +146,8 @@ export default function PartnersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Partners Management</h1>
-          <p className="text-gray-600">Manage partner organizations and sponsorship programs</p>
+          <h1 className="text-2xl font-bold text-foreground">Partners Management</h1>
+          <p className="text-muted-foreground">Manage partner organizations and sponsorship programs</p>
         </div>
         
         <div className="flex items-center space-x-3">
@@ -172,7 +173,7 @@ export default function PartnersPage() {
             <div className="flex items-center">
               <Building2 className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Partners</p>
+                <p className="text-sm font-medium text-muted-foreground">Total Partners</p>
                 <p className="text-2xl font-bold text-gray-900">{mockStats.total_partners}</p>
               </div>
             </div>
@@ -254,19 +255,20 @@ export default function PartnersPage() {
                     className="pl-10"
                   />
                 </div>
-                <select
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="all">All Types</option>
-                  <option value="school">School</option>
-                  <option value="company">Company</option>
-                  <option value="non_profit">Non-Profit</option>
-                  <option value="sports_club">Sports Club</option>
-                  <option value="government">Government</option>
-                  <option value="other">Other</option>
-                </select>
+                <Select value={selectedType} onValueChange={setSelectedType}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="school">School</SelectItem>
+                    <SelectItem value="company">Company</SelectItem>
+                    <SelectItem value="non_profit">Non-Profit</SelectItem>
+                    <SelectItem value="sports_club">Sports Club</SelectItem>
+                    <SelectItem value="government">Government</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Organizations List */}

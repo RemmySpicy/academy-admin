@@ -29,7 +29,7 @@ get_program_filter = create_program_filter_dependency(get_current_active_user)
 
 @router.get("/members", response_model=TeamMemberListResponse)
 async def list_team_members(
-    current_user: Annotated[dict, Depends(get_current_active_user)],
+    current_user: Annotated[object, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)],
     program_context: Annotated[Optional[str], Depends(get_program_filter)],
     page: int = Query(1, ge=1, description="Page number"),
@@ -93,7 +93,7 @@ async def list_team_members(
 @router.post("/members", response_model=TeamMemberResponse, status_code=status.HTTP_201_CREATED)
 async def add_team_member(
     request: AddTeamMemberRequest,
-    current_user: Annotated[dict, Depends(get_current_active_user)],
+    current_user: Annotated[object, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)],
     program_context: Annotated[Optional[str], Depends(get_program_filter)]
 ):
@@ -115,7 +115,7 @@ async def add_team_member(
             program_id=program_context,
             role=request.role,
             is_default_program=request.is_default_program,
-            assigned_by=current_user["id"]
+            assigned_by=current_user.id
         )
         
         return team_member
@@ -136,7 +136,7 @@ async def add_team_member(
 async def update_team_member(
     user_id: str,
     request: UpdateTeamMemberRequest,
-    current_user: Annotated[dict, Depends(get_current_active_user)],
+    current_user: Annotated[object, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)],
     program_context: Annotated[Optional[str], Depends(get_program_filter)]
 ):
@@ -158,7 +158,7 @@ async def update_team_member(
             program_id=program_context,
             role=request.role,
             is_default_program=request.is_default_program,
-            updated_by=current_user["id"]
+            updated_by=current_user.id
         )
         
         if not team_member:
@@ -186,7 +186,7 @@ async def update_team_member(
 @router.delete("/members/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_team_member(
     user_id: str,
-    current_user: Annotated[dict, Depends(get_current_active_user)],
+    current_user: Annotated[object, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)],
     program_context: Annotated[Optional[str], Depends(get_program_filter)]
 ):
@@ -225,7 +225,7 @@ async def remove_team_member(
 
 @router.get("/available-users", response_model=AvailableUserListResponse)
 async def list_available_users(
-    current_user: Annotated[dict, Depends(get_current_active_user)],
+    current_user: Annotated[object, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)],
     program_context: Annotated[Optional[str], Depends(get_program_filter)],
     page: int = Query(1, ge=1, description="Page number"),
@@ -274,7 +274,7 @@ async def list_available_users(
 
 @router.get("/stats", response_model=TeamStatsResponse)
 async def get_team_stats(
-    current_user: Annotated[dict, Depends(get_current_active_user)],
+    current_user: Annotated[object, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)],
     program_context: Annotated[Optional[str], Depends(get_program_filter)]
 ):

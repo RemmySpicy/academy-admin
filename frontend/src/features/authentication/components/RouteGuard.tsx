@@ -166,7 +166,7 @@ export function RouteGuard({ children, fallback }: RouteGuardProps) {
  */
 function AccessDeniedPage({ reason, redirectTo }: { reason: string; redirectTo?: string }) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user } = useRouteGuardState();
 
   const handleRedirect = () => {
     if (redirectTo) {
@@ -182,9 +182,9 @@ function AccessDeniedPage({ reason, redirectTo }: { reason: string; redirectTo?:
       return <Users className="h-12 w-12 text-orange-500" />;
     }
     if (reason.includes('permission')) {
-      return <Shield className="h-12 w-12 text-red-500" />;
+      return <Shield className="h-12 w-12 text-destructive" />;
     }
-    return <Lock className="h-12 w-12 text-gray-500" />;
+    return <Lock className="h-12 w-12 text-muted-foreground" />;
   };
 
   const getReasonTitle = () => {

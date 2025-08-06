@@ -111,7 +111,7 @@ class SectionResponse(SectionBase, TimestampMixin):
     
     class Config:
         from_attributes = True
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "section-id-1",
                 "name": "Robot Components Overview",
@@ -200,7 +200,7 @@ class SectionTreeResponse(BaseModel):
     equipment: List[Dict[str, Any]] = Field(default=[], description="Equipment requirements")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "section-id-1",
                 "name": "Robot Components Overview",

@@ -3,6 +3,7 @@ import { QueryProvider } from '@/components/providers/QueryProvider';
 import { ToastProvider } from '@/components/providers/ToastProvider';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/features/authentication/hooks';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
 
 export const metadata: Metadata = {
   title: 'Login - Academy Admin',
@@ -15,12 +16,14 @@ export default function AuthLayout({
   children: React.ReactNode
 }) {
   return (
-    <QueryProvider>
-      <AuthProvider>
-        {children}
-        <ToastProvider />
-        <Toaster />
-      </AuthProvider>
-    </QueryProvider>
+    <ThemeProvider>
+      <QueryProvider>
+        <AuthProvider>
+          {children}
+          <ToastProvider />
+          <Toaster />
+        </AuthProvider>
+      </QueryProvider>
+    </ThemeProvider>
   )
 }

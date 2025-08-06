@@ -124,7 +124,7 @@ class EquipmentRequirementResponse(EquipmentRequirementBase, TimestampMixin):
     
     class Config:
         from_attributes = True
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "equipment-id-1",
                 "name": "Basic Robot Building Kit",

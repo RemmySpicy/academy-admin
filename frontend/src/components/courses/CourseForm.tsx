@@ -192,7 +192,7 @@ export function CurriculumForm({
                 </SelectContent>
               </Select>
               {form.formState.errors[`${type === 'course' ? 'program' : 'course'}_id`] && (
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-destructive">
                   {form.formState.errors[`${type === 'course' ? 'program' : 'course'}_id`]?.message}
                 </p>
               )}
@@ -209,7 +209,7 @@ export function CurriculumForm({
                 placeholder="Enter name"
               />
               {form.formState.errors.name && (
-                <p className="text-sm text-red-600">{form.formState.errors.name.message}</p>
+                <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
               )}
             </div>
             
@@ -221,7 +221,7 @@ export function CurriculumForm({
                 placeholder="Enter code"
               />
               {form.formState.errors.code && (
-                <p className="text-sm text-red-600">{form.formState.errors.code.message}</p>
+                <p className="text-sm text-destructive">{form.formState.errors.code.message}</p>
               )}
             </div>
           </div>

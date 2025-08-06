@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Plus,
   Search,
@@ -197,7 +200,7 @@ export function AcademyUsers() {
       case 'parent':
         return <UserPlus className="h-4 w-4 text-indigo-600" />;
       default:
-        return <Users className="h-4 w-4 text-gray-600" />;
+        return <Users className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -224,7 +227,7 @@ export function AcademyUsers() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="text-red-600 mb-2">Error loading users</div>
-          <div className="text-gray-600 mb-4">{error.message}</div>
+          <div className="text-muted-foreground mb-4">{error.message}</div>
           <Button onClick={() => window.location.reload()}>Try Again</Button>
         </div>
       </div>
@@ -234,7 +237,7 @@ export function AcademyUsers() {
   return (
     <div className="space-y-6">
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -272,14 +275,27 @@ export function AcademyUsers() {
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Students & Parents</CardTitle>
-            <UserPlus className="h-4 w-4 text-purple-600" />
+            <CardTitle className="text-sm font-medium">Instructors</CardTitle>
+            <UserCheck className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
-              {(stats?.users_by_role?.student || 0) + (stats?.users_by_role?.parent || 0)}
+            <div className="text-2xl font-bold text-orange-600">
+              {stats?.users_by_role?.instructor || 0}
             </div>
-            <p className="text-xs text-muted-foreground">End users</p>
+            <p className="text-xs text-muted-foreground">Teaching staff</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Coordinators</CardTitle>
+            <Users className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {stats?.users_by_role?.program_coordinator || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">Program coordinators</p>
           </CardContent>
         </Card>
       </div>
@@ -304,39 +320,41 @@ export function AcademyUsers() {
           {/* Search and Filters */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <input
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
                 type="text"
                 placeholder="Search users by name, email, or username..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="pl-10"
                 value={searchParams.search || ''}
                 onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
             
-            <select
-              className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={searchParams.role || ''}
-              onChange={(e) => handleRoleFilter(e.target.value as UserRole | '')}
-            >
-              <option value="">All Roles</option>
-              <option value="super_admin">Super Admin</option>
-              <option value="program_admin">Program Admin</option>
-              <option value="program_coordinator">Program Coordinator</option>
-              <option value="instructor">Instructor</option>
-              <option value="student">Student</option>
-              <option value="parent">Parent</option>
-            </select>
+            <Select value={searchParams.role || ''} onValueChange={(value) => handleRoleFilter(value as UserRole | '')}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Roles</SelectItem>
+                <SelectItem value="super_admin">Super Admin</SelectItem>
+                <SelectItem value="program_admin">Program Admin</SelectItem>
+                <SelectItem value="program_coordinator">Program Coordinator</SelectItem>
+                <SelectItem value="instructor">Instructor</SelectItem>
+                <SelectItem value="student">Student</SelectItem>
+                <SelectItem value="parent">Parent</SelectItem>
+              </SelectContent>
+            </Select>
             
-            <select
-              className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={searchParams.is_active === undefined ? '' : searchParams.is_active.toString()}
-              onChange={(e) => handleStatusFilter(e.target.value === '' ? '' : e.target.value === 'true')}
-            >
-              <option value="">All Status</option>
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
-            </select>
+            <Select value={searchParams.is_active === undefined ? '' : searchParams.is_active.toString()} onValueChange={(value) => handleStatusFilter(value === '' ? '' : value === 'true')}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="true">Active</SelectItem>
+                <SelectItem value="false">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
             
             <Button variant="outline">
               <Filter className="h-4 w-4 mr-2" />
@@ -390,11 +408,9 @@ export function AcademyUsers() {
               <thead>
                 <tr className="border-b">
                   <th className="text-left p-3">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={selectedUsers.length === (usersData?.items?.length || 0) && (usersData?.items?.length || 0) > 0}
-                      onChange={handleSelectAll}
-                      className="rounded"
+                      onCheckedChange={handleSelectAll}
                     />
                   </th>
                   <th className="text-left p-3 font-medium">User</th>
@@ -418,19 +434,17 @@ export function AcademyUsers() {
                   </tr>
                 ) : usersData?.items?.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="p-8 text-center text-gray-500">
+                    <td colSpan={8} className="p-8 text-center text-muted-foreground">
                       No users found
                     </td>
                   </tr>
                 ) : (
                   usersData?.items?.map((user: User) => (
-                    <tr key={user.id} className="border-b hover:bg-gray-50">
+                    <tr key={user.id} className="border-b hover:bg-muted/50">
                       <td className="p-3">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={selectedUsers.includes(user.id)}
-                          onChange={() => handleSelectUser(user.id)}
-                          className="rounded"
+                          onCheckedChange={() => handleSelectUser(user.id)}
                         />
                       </td>
                       <td className="p-3">
@@ -442,7 +456,7 @@ export function AcademyUsers() {
                           </div>
                           <div>
                             <div className="font-medium">{user.first_name} {user.last_name}</div>
-                            <div className="text-sm text-gray-500">@{user.username}</div>
+                            <div className="text-sm text-muted-foreground">@{user.username}</div>
                           </div>
                         </div>
                       </td>
@@ -460,25 +474,29 @@ export function AcademyUsers() {
                       </td>
                       <td className="p-3">
                         <div className="text-sm">
-                          {user.program_assignments?.length > 0 ? (
+                          {user.program_assignments && user.program_assignments.length > 0 ? (
                             <div>
                               {user.program_assignments.slice(0, 2).map((assignment, index) => (
-                                <div key={index} className="text-xs bg-gray-100 px-2 py-1 rounded mb-1">
-                                  {assignment.program_name}
+                                <div key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 mr-1 mb-1">
+                                  {assignment.program_name || assignment.program_id}
                                 </div>
                               ))}
                               {user.program_assignments.length > 2 && (
-                                <div className="text-xs text-gray-500">
-                                  +{user.program_assignments.length - 2} more
+                                <div className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-muted text-muted-foreground">
+                                  +{user.program_assignments.length - 2}
                                 </div>
                               )}
                             </div>
+                          ) : user.role === 'super_admin' ? (
+                            <div className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
+                              System-wide
+                            </div>
                           ) : (
-                            <span className="text-gray-500">No assignments</span>
+                            <span className="text-muted-foreground text-xs">No assignments</span>
                           )}
                         </div>
                       </td>
-                      <td className="p-3 text-sm text-gray-600">
+                      <td className="p-3 text-sm text-muted-foreground">
                         {user.last_login 
                           ? new Date(user.last_login).toLocaleDateString()
                           : 'Never'
@@ -491,6 +509,7 @@ export function AcademyUsers() {
                             variant="ghost" 
                             onClick={() => handleViewUser(user)}
                             title="View Details"
+                            className="h-8 w-8 p-0"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -499,6 +518,7 @@ export function AcademyUsers() {
                             variant="ghost"
                             onClick={() => handleEditUser(user)}
                             title="Edit User"
+                            className="h-8 w-8 p-0"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -507,25 +527,22 @@ export function AcademyUsers() {
                             variant="ghost" 
                             onClick={() => handleManageUserPrograms(user)}
                             title="Manage Program Assignments"
+                            className="h-8 w-8 p-0"
                           >
                             <UsersIcon className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            onClick={() => handleEditUser(user)}
-                            title="User Settings"
-                          >
-                            <Settings className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            onClick={() => handleDeleteUser(user.id)}
-                            title="Delete User"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {/* Only show delete for non-super-admin users */}
+                          {!user.roles?.includes('super_admin') && (
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => handleDeleteUser(user.id)}
+                              title="Delete User"
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -538,7 +555,7 @@ export function AcademyUsers() {
           {/* Pagination */}
           {usersData && usersData.total > usersData.per_page && (
             <div className="flex items-center justify-between mt-6">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 Showing {((searchParams.page || 1) - 1) * usersData.per_page + 1} to {Math.min((searchParams.page || 1) * usersData.per_page, usersData.total)} of {usersData.total} users
               </div>
               <div className="flex items-center space-x-2">
@@ -550,7 +567,7 @@ export function AcademyUsers() {
                 >
                   Previous
                 </Button>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-muted-foreground">
                   Page {searchParams.page || 1} of {usersData.pages}
                 </span>
                 <Button 

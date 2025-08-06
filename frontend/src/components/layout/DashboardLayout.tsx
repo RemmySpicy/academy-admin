@@ -22,7 +22,7 @@ export function DashboardLayout({ children, title, description, headerActions }:
   
   return (
     <ProtectedRoute>
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex h-screen bg-background">
         {/* Sidebar */}
         <Sidebar />
         

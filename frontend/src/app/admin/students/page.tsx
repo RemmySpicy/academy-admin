@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Plus,
   Search,
@@ -233,7 +236,7 @@ export default function StudentsParentsPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="text-red-600 mb-2">Error loading students</div>
-          <div className="text-gray-600 mb-4">{studentError}</div>
+          <div className="text-muted-foreground mb-4">{studentError}</div>
           <Button onClick={() => refetchStudents()}>Try Again</Button>
         </div>
       </div>
@@ -245,7 +248,7 @@ export default function StudentsParentsPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="text-red-600 mb-2">Error loading parents</div>
-          <div className="text-gray-600 mb-4">{parentError}</div>
+          <div className="text-muted-foreground mb-4">{parentError}</div>
           <Button onClick={() => refetchParents()}>Try Again</Button>
         </div>
       </div>
@@ -306,10 +309,10 @@ export default function StudentsParentsPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Inactive</CardTitle>
-                <UserX className="h-4 w-4 text-gray-600" />
+                <UserX className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-gray-600">{studentStats?.inactive_students || 0}</div>
+                <div className="text-2xl font-bold text-muted-foreground">{studentStats?.inactive_students || 0}</div>
                 <p className="text-xs text-muted-foreground">Not enrolled</p>
               </CardContent>
             </Card>
@@ -355,27 +358,28 @@ export default function StudentsParentsPage() {
             <CardContent>
               <div className="flex flex-col sm:flex-row gap-4 mb-6">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <input
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
                     type="text"
                     placeholder="Search students..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="pl-10"
                     value={studentSearchTerm}
                     onChange={(e) => setStudentSearchTerm(e.target.value)}
                   />
                 </div>
                 
-                <select
-                  className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={studentStatusFilter}
-                  onChange={(e) => setStudentStatusFilter(e.target.value)}
-                >
-                  <option value="all">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                  <option value="pending">Pending</option>
-                  <option value="suspended">Suspended</option>
-                </select>
+                <Select value={studentStatusFilter} onValueChange={setStudentStatusFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                  </SelectContent>
+                </Select>
                 
                 <Button variant="outline">
                   <Filter className="h-4 w-4 mr-2" />
@@ -428,11 +432,9 @@ export default function StudentsParentsPage() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left p-3">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={selectedStudents.length === students.length && students.length > 0}
-                          onChange={handleSelectAllStudents}
-                          className="rounded"
+                          onCheckedChange={handleSelectAllStudents}
                         />
                       </th>
                       <th className="text-left p-3 font-medium">Name</th>
@@ -457,19 +459,17 @@ export default function StudentsParentsPage() {
                       </tr>
                     ) : students.length === 0 ? (
                       <tr>
-                        <td colSpan={9} className="p-8 text-center text-gray-500">
+                        <td colSpan={9} className="p-8 text-center text-muted-foreground">
                           No students found
                         </td>
                       </tr>
                     ) : (
                       students.map((student) => (
-                      <tr key={student.id} className="border-b hover:bg-gray-50">
+                      <tr key={student.id} className="border-b hover:bg-muted/50">
                         <td className="p-3">
-                          <input
-                            type="checkbox"
+                          <Checkbox
                             checked={selectedStudents.includes(student.id)}
-                            onChange={() => handleSelectStudent(student.id)}
-                            className="rounded"
+                            onCheckedChange={() => handleSelectStudent(student.id)}
                           />
                         </td>
                         <td className="p-3">
@@ -487,15 +487,15 @@ export default function StudentsParentsPage() {
                                 {student.first_name} {student.last_name}
                               </Link>
                               {student.email && (
-                                <div className="text-sm text-gray-500">{student.email}</div>
+                                <div className="text-sm text-muted-foreground">{student.email}</div>
                               )}
                             </div>
                           </div>
                         </td>
-                        <td className="p-3 text-sm text-gray-600">
+                        <td className="p-3 text-sm text-muted-foreground">
                           {student.facility_name || 'Not assigned'}
                         </td>
-                        <td className="p-3 text-sm text-gray-600">
+                        <td className="p-3 text-sm text-muted-foreground">
                           {student.course_name || 'Not enrolled'}
                         </td>
                         <td className="p-3">
@@ -505,7 +505,7 @@ export default function StudentsParentsPage() {
                                 Lvl {student.current_level} Mod {student.current_module}
                               </span>
                             ) : (
-                              <span className="text-gray-500">Not started</span>
+                              <span className="text-muted-foreground">Not started</span>
                             )}
                           </div>
                         </td>
@@ -514,7 +514,7 @@ export default function StudentsParentsPage() {
                             {student.completed_sessions !== undefined && student.total_sessions !== undefined ? (
                               <>
                                 <span className="font-medium">{student.completed_sessions}/{student.total_sessions}</span>
-                                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                                <div className="w-full bg-muted rounded-full h-1.5 mt-1">
                                   <div 
                                     className="bg-green-600 h-1.5 rounded-full" 
                                     style={{ width: `${Math.min(100, (student.completed_sessions / student.total_sessions) * 100)}%` }}
@@ -522,7 +522,7 @@ export default function StudentsParentsPage() {
                                 </div>
                               </>
                             ) : (
-                              <span className="text-gray-500">N/A</span>
+                              <span className="text-muted-foreground">N/A</span>
                             )}
                           </div>
                         </td>
@@ -581,7 +581,7 @@ export default function StudentsParentsPage() {
 
               {/* Pagination */}
               <div className="flex items-center justify-between mt-6">
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted-foreground">
                   Showing {students.length} of {totalStudents} students
                 </div>
                 <div className="flex items-center space-x-2">
@@ -593,7 +593,7 @@ export default function StudentsParentsPage() {
                   >
                     Previous
                   </Button>
-                  <span className="text-sm text-gray-600">Page {studentCurrentPage} of {studentTotalPages}</span>
+                  <span className="text-sm text-muted-foreground">Page {studentCurrentPage} of {studentTotalPages}</span>
                   <Button 
                     variant="outline" 
                     size="sm" 
@@ -647,10 +647,10 @@ export default function StudentsParentsPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Inactive</CardTitle>
-                <UserX className="h-4 w-4 text-gray-600" />
+                <UserX className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-gray-600">{parentStats?.inactive_parents || 0}</div>
+                <div className="text-2xl font-bold text-muted-foreground">{parentStats?.inactive_parents || 0}</div>
                 <p className="text-xs text-muted-foreground">Not engaged</p>
               </CardContent>
             </Card>
@@ -696,35 +696,37 @@ export default function StudentsParentsPage() {
             <CardContent>
               <div className="flex flex-col sm:flex-row gap-4 mb-6">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <input
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
                     type="text"
                     placeholder="Search parents..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="pl-10"
                     value={parentSearchTerm}
                     onChange={(e) => setParentSearchTerm(e.target.value)}
                   />
                 </div>
                 
-                <select
-                  className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={parentStatusFilter}
-                  onChange={(e) => setParentStatusFilter(e.target.value)}
-                >
-                  <option value="all">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+                <Select value={parentStatusFilter} onValueChange={setParentStatusFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
                 
-                <select
-                  className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={parentHasChildrenFilter}
-                  onChange={(e) => setParentHasChildrenFilter(e.target.value)}
-                >
-                  <option value="all">All Parents</option>
-                  <option value="with_children">With Children</option>
-                  <option value="without_children">Without Children</option>
-                </select>
+                <Select value={parentHasChildrenFilter} onValueChange={setParentHasChildrenFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Parents</SelectItem>
+                    <SelectItem value="with_children">With Children</SelectItem>
+                    <SelectItem value="without_children">Without Children</SelectItem>
+                  </SelectContent>
+                </Select>
                 
                 <Button variant="outline">
                   <Filter className="h-4 w-4 mr-2" />
@@ -777,11 +779,9 @@ export default function StudentsParentsPage() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left p-3">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={selectedParents.length === parents.length && parents.length > 0}
-                          onChange={handleSelectAllParents}
-                          className="rounded"
+                          onCheckedChange={handleSelectAllParents}
                         />
                       </th>
                       <th className="text-left p-3 font-medium">Name</th>
@@ -805,19 +805,17 @@ export default function StudentsParentsPage() {
                       </tr>
                     ) : parents.length === 0 ? (
                       <tr>
-                        <td colSpan={8} className="p-8 text-center text-gray-500">
+                        <td colSpan={8} className="p-8 text-center text-muted-foreground">
                           No parents found
                         </td>
                       </tr>
                     ) : (
                       parents.map((parent) => (
-                      <tr key={parent.id} className="border-b hover:bg-gray-50">
+                      <tr key={parent.id} className="border-b hover:bg-muted/50">
                         <td className="p-3">
-                          <input
-                            type="checkbox"
+                          <Checkbox
                             checked={selectedParents.includes(parent.id)}
-                            onChange={() => handleSelectParent(parent.id)}
-                            className="rounded"
+                            onCheckedChange={() => handleSelectParent(parent.id)}
                           />
                         </td>
                         <td className="p-3">
@@ -834,7 +832,7 @@ export default function StudentsParentsPage() {
                               >
                                 {parent.first_name ? `${parent.first_name} ${parent.last_name}` : parent.username}
                               </Link>
-                              <div className="text-sm text-gray-500 flex items-center">
+                              <div className="text-sm text-muted-foreground flex items-center">
                                 <Mail className="h-3 w-3 mr-1" />
                                 {parent.email}
                               </div>
@@ -843,7 +841,7 @@ export default function StudentsParentsPage() {
                         </td>
                         <td className="p-3">
                           <div className="flex items-center space-x-2">
-                            <Phone className="h-4 w-4 text-gray-400" />
+                            <Phone className="h-4 w-4 text-muted-foreground" />
                             <span>{parent.phone || 'Not provided'}</span>
                           </div>
                         </td>
@@ -851,7 +849,7 @@ export default function StudentsParentsPage() {
                           <div className="flex items-center space-x-2">
                             <Baby className="h-4 w-4 text-blue-500" />
                             <span className="font-medium">{parent.children_count || 0}</span>
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm text-muted-foreground">
                               {parent.children_count === 1 ? 'child' : 'children'}
                             </span>
                           </div>
@@ -878,7 +876,7 @@ export default function StudentsParentsPage() {
                             )}
                           </div>
                         </td>
-                        <td className="p-3 text-sm text-gray-600">
+                        <td className="p-3 text-sm text-muted-foreground">
                           {parent.last_contact_at ? new Date(parent.last_contact_at).toLocaleDateString() : 
                            parent.last_login_at ? new Date(parent.last_login_at).toLocaleDateString() : 
                            'Never'}
@@ -921,7 +919,7 @@ export default function StudentsParentsPage() {
 
               {/* Parent Pagination */}
               <div className="flex items-center justify-between mt-6">
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted-foreground">
                   Showing {parents.length} of {totalParents} parents
                 </div>
                 <div className="flex items-center space-x-2">
@@ -933,7 +931,7 @@ export default function StudentsParentsPage() {
                   >
                     Previous
                   </Button>
-                  <span className="text-sm text-gray-600">Page {parentCurrentPage} of {parentTotalPages}</span>
+                  <span className="text-sm text-muted-foreground">Page {parentCurrentPage} of {parentTotalPages}</span>
                   <Button 
                     variant="outline" 
                     size="sm" 

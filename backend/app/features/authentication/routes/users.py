@@ -322,6 +322,37 @@ async def list_users(
         )
 
 
+@router.get("/stats", response_model=UserStatsResponse)
+async def get_user_stats(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Annotated[Session, Depends(get_db)],
+    program_context: Annotated[Optional[str], Depends(get_program_context)],
+    bypass_program_filter: Optional[bool] = Query(None, description="Bypass program filtering (super admin only)")
+):
+    """
+    Get user statistics.
+    
+    Returns counts, role distribution, and other statistical information.
+    Respects program context for non-super-admin users.
+    """
+    try:
+        # Apply program context filtering for non-super-admin users  
+        context_filter = None
+        # Super admin can bypass program filtering when bypass_program_filter=true
+        if bypass_program_filter and current_user.has_role("super_admin"):
+            context_filter = None  # No filtering for super admin bypass
+        elif not current_user.is_super_admin() and program_context:
+            context_filter = program_context
+            
+        stats = user_service.get_user_stats(db, context_filter)
+        return stats
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving user statistics: {str(e)}"
+        )
+
+
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
     user_id: str,
@@ -568,35 +599,4 @@ async def get_users_by_role(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error retrieving users by role: {str(e)}"
-        )
-
-
-@router.get("/stats", response_model=UserStatsResponse)
-async def get_user_stats(
-    current_user: Annotated[User, Depends(get_current_active_user)],
-    db: Annotated[Session, Depends(get_db)],
-    program_context: Annotated[Optional[str], Depends(get_program_context)],
-    bypass_program_filter: Optional[bool] = Query(None, description="Bypass program filtering (super admin only)")
-):
-    """
-    Get user statistics.
-    
-    Returns counts, role distribution, and other statistical information.
-    Respects program context for non-super-admin users.
-    """
-    try:
-        # Apply program context filtering for non-super-admin users  
-        context_filter = None
-        # Super admin can bypass program filtering when bypass_program_filter=true
-        if bypass_program_filter and current_user.has_role("super_admin"):
-            context_filter = None  # No filtering for super admin bypass
-        elif not current_user.is_super_admin() and program_context:
-            context_filter = program_context
-            
-        stats = user_service.get_user_stats(db, context_filter)
-        return stats
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error retrieving user statistics: {str(e)}"
         )

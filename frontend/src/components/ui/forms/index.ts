@@ -1,36 +1,15 @@
 /**
- * Shared form components exports
+ * Reusable form components for Academy Admin Frontend
  */
-
-import { FormField } from './FormField';
-import { SimpleFormField } from './SimpleFormField';
-import { AddressForm } from './AddressForm';
-import { EmergencyContactForm } from './EmergencyContactForm';
-import { TabContainer, TabPanel } from './TabContainer';
-import { PersonSearchAndSelect } from './PersonSearchAndSelect';
-import { OrganizationSelector } from './OrganizationSelector';
-import { RelationshipManager } from './RelationshipManager';
-import { PaymentOverrideCard } from './PaymentOverrideCard';
-
-export { FormField, type FormFieldProps } from './FormField';
-export { SimpleFormField, type SimpleFormFieldProps } from './SimpleFormField';
-export { AddressForm, type AddressData } from './AddressForm';
-export { EmergencyContactForm, type EmergencyContactData } from './EmergencyContactForm';
-export { TabContainer, TabPanel, type TabConfig } from './TabContainer';
-export { PersonSearchAndSelect } from './PersonSearchAndSelect';
-export { OrganizationSelector } from './OrganizationSelector';
-export { RelationshipManager } from './RelationshipManager';
-export { PaymentOverrideCard } from './PaymentOverrideCard';
-
-export default {
-  FormField,
-  SimpleFormField,
-  AddressForm,
-  EmergencyContactForm,
-  TabContainer,
-  TabPanel,
-  PersonSearchAndSelect,
-  OrganizationSelector,
-  RelationshipManager,
-  PaymentOverrideCard,
-};
+export { default as FormField } from './FormField';
+export { default as FormSelect } from './FormSelect';
+export { default as FormTextarea } from './FormTextarea';
+export { default as FormCheckbox } from './FormCheckbox';
+export { default as FormDatePicker } from './FormDatePicker';
+export { default as FormFileUpload } from './FormFileUpload';
+export { default as FormPhoneInput } from './FormPhoneInput';
+export { default as FormPasswordInput } from './FormPasswordInput';
+export { default as OrganizationSelector } from './OrganizationSelector';
+export { default as SimpleFormField } from './SimpleFormField';
+export { default as PersonSearchAndSelect } from './PersonSearchAndSelect';
+export { default as RelationshipManager } from './RelationshipManager';

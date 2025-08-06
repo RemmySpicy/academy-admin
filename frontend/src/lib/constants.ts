@@ -39,6 +39,7 @@ export const API_ENDPOINTS = {
     get: (id: string) => `/api/v1/users/${id}`,
     update: (id: string) => `/api/v1/users/${id}`,
     delete: (id: string) => `/api/v1/users/${id}`,
+    stats: '/api/v1/users/stats',
   },
   programs: {
     list: '/api/v1/programs',

@@ -97,8 +97,7 @@
     "generate:feature": "python3 tools/generators/generate_feature.py",
     "generate:backend": "python3 tools/generators/service_template.py",
     "generate:frontend": "python3 tools/generators/frontend_template.py",
-    "dev:admin": "npm run frontend:dev",
-    "build:all": "npm run frontend:build",
+    "dev:admin": "npm run frontend:dev"
   },
   "keywords": ["academy", "admin", "nextjs", "fastapi", "typescript", "python"],
   "author": "Academy Admin Team",

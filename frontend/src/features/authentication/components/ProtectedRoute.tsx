@@ -63,13 +63,44 @@ export function ProtectedRoute({
   return <>{children}</>;
 }
 
-// Convenience wrapper for admin only routes
+// Convenience wrapper for super admin only routes  
 export function SuperAdminRoute({ children }: { children: ReactNode }) {
-  return (
-    <ProtectedRoute requiredRole="admin">
-      {children}
-    </ProtectedRoute>
-  );
+  const { isAuthenticated, user, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        router.push('/login');
+        return;
+      }
+
+      // Check if user is super admin
+      if (user?.role !== 'super_admin') {
+        router.push('/admin'); // Redirect to main admin dashboard
+        return;
+      }
+    }
+  }, [isAuthenticated, user, isLoading, router]);
+
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated or wrong role
+  if (!isAuthenticated || user?.role !== 'super_admin') {
+    return null;
+  }
+
+  return <>{children}</>;
 }
 
 // Higher-order component for page-level protection

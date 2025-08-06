@@ -121,7 +121,7 @@ class MediaLibraryResponse(MediaLibraryBase, TimestampMixin):
     
     class Config:
         from_attributes = True
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "media-id-1",
                 "title": "Introduction to Robotics Video",
@@ -230,7 +230,7 @@ class MediaUploadResponse(BaseModel):
     expires_at: datetime = Field(..., description="Upload URL expiration time")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "upload_id": "upload-session-123",
                 "upload_url": "/api/v1/media/upload/upload-session-123",
@@ -272,7 +272,7 @@ class MediaUsageResponse(BaseModel):
     access_frequency: float = Field(..., description="Access frequency (uses per day)")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "media_id": "media-id-1",
                 "media_title": "Introduction to Robotics Video",
@@ -308,7 +308,7 @@ class MediaProcessingStatusResponse(BaseModel):
     processing_steps: List[Dict[str, Any]] = Field(..., description="Processing steps and their status")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "media_id": "media-id-1",
                 "processing_status": "processing",

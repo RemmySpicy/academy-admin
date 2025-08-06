@@ -4,6 +4,11 @@
  */
 
 import React, { useId } from 'react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 
 export interface SimpleFormFieldProps {
   label: string;
@@ -42,16 +47,12 @@ export function SimpleFormField({
 }: SimpleFormFieldProps) {
   const fieldId = useId(); // React's built-in hook for unique IDs
   
-  const baseClasses = `w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 ${
-    error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500'
-  } ${className}`;
+  // No need for baseClasses anymore as themed components handle styling
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { value: newValue, type: inputType } = e.target;
     
-    if (inputType === 'checkbox') {
-      onChange((e.target as HTMLInputElement).checked);
-    } else if (inputType === 'number') {
+    if (inputType === 'number') {
       onChange(newValue === '' ? '' : Number(newValue));
     } else {
       onChange(newValue);
@@ -62,33 +63,30 @@ export function SimpleFormField({
     switch (type) {
       case 'select':
         return (
-          <select
-            id={fieldId}
-            value={String(value)}
-            onChange={handleChange}
-            disabled={disabled}
-            className={baseClasses}
-            required={required}
-          >
-            <option value="">{placeholder || `Select ${label}`}</option>
-            {options?.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <Select value={String(value)} onValueChange={onChange} disabled={disabled}>
+            <SelectTrigger className={cn(error && "border-destructive", className)}>
+              <SelectValue placeholder={placeholder || `Select ${label}`} />
+            </SelectTrigger>
+            <SelectContent>
+              {options?.map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         );
 
       case 'textarea':
         return (
-          <textarea
+          <Textarea
             id={fieldId}
             value={String(value)}
             onChange={handleChange}
             disabled={disabled}
             placeholder={placeholder}
             rows={rows}
-            className={baseClasses}
+            className={cn(error && "border-destructive", className)}
             required={required}
           />
         );
@@ -96,24 +94,22 @@ export function SimpleFormField({
       case 'checkbox':
         return (
           <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
+            <Checkbox
               id={fieldId}
               checked={Boolean(value)}
-              onChange={handleChange}
+              onCheckedChange={onChange}
               disabled={disabled}
-              className="rounded border-gray-300 focus:ring-2 focus:ring-blue-500"
               required={required}
             />
-            <label htmlFor={fieldId} className="text-sm font-medium text-gray-700">
-              {label} {required && <span className="text-red-500">*</span>}
+            <label htmlFor={fieldId} className="text-sm font-medium text-foreground">
+              {label} {required && <span className="text-destructive">*</span>}
             </label>
           </div>
         );
 
       default:
         return (
-          <input
+          <Input
             type={type}
             id={fieldId}
             value={String(value)}
@@ -123,7 +119,7 @@ export function SimpleFormField({
             min={min}
             max={max}
             step={step}
-            className={baseClasses}
+            className={cn(error && "border-destructive", className)}
             required={required}
           />
         );
@@ -134,20 +130,20 @@ export function SimpleFormField({
     return (
       <div className="space-y-1">
         {renderInput()}
-        {note && <p className="text-xs text-gray-500">{note}</p>}
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {note && <p className="text-xs text-muted-foreground">{note}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
       </div>
     );
   }
 
   return (
     <div className="space-y-1">
-      <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700">
-        {label} {required && <span className="text-red-500">*</span>}
+      <label htmlFor={fieldId} className="block text-sm font-medium text-foreground">
+        {label} {required && <span className="text-destructive">*</span>}
       </label>
       {renderInput()}
-      {note && <p className="text-xs text-gray-500">{note}</p>}
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {note && <p className="text-xs text-muted-foreground">{note}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   );
 }

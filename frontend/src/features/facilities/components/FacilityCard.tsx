@@ -94,7 +94,7 @@ const typeIcons = {
   EXTERNAL: MapPin,
 };
 
-export function FacilityCard({
+function FacilityCard({
   facility,
   onView,
   onEdit,
@@ -523,3 +523,5 @@ export function FacilityCard({
     </>
   );
 }
+
+export default FacilityCard;

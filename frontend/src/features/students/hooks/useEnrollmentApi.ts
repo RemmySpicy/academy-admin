@@ -38,7 +38,7 @@ const ENROLLMENT_QUERY_KEYS = {
 /**
  * Hook to check student age eligibility for a course
  */
-export function useStudentAgeEligibility(userId: string, courseId: string, enabled = true) {
+function useStudentAgeEligibility(userId: string, courseId: string, enabled = true) {
   const { currentProgram } = useProgramContext();
 
   return useQuery({
@@ -53,7 +53,7 @@ export function useStudentAgeEligibility(userId: string, courseId: string, enabl
 /**
  * Hook to get student's default facility based on enrollment history
  */
-export function useStudentDefaultFacility(userId: string, enabled = true) {
+function useStudentDefaultFacility(userId: string, enabled = true) {
   const { currentProgram } = useProgramContext();
 
   return useQuery({
@@ -68,7 +68,7 @@ export function useStudentDefaultFacility(userId: string, enabled = true) {
 /**
  * Hook to get available facilities for a course
  */
-export function useAvailableFacilities(courseId: string, enabled = true) {
+function useAvailableFacilities(courseId: string, enabled = true) {
   const { currentProgram } = useProgramContext();
 
   return useQuery({
@@ -83,7 +83,7 @@ export function useAvailableFacilities(courseId: string, enabled = true) {
 /**
  * Hook to validate facility availability for a course
  */
-export function useFacilityAvailability(
+function useFacilityAvailability(
   courseId: string, 
   facilityId: string, 
   enabled = true
@@ -102,7 +102,7 @@ export function useFacilityAvailability(
 /**
  * Hook for real-time pricing calculation
  */
-export function usePricingCalculation() {
+function usePricingCalculation() {
   const queryClient = useQueryClient();
   const { currentProgram } = useProgramContext();
 
@@ -127,7 +127,7 @@ export function usePricingCalculation() {
 /**
  * Hook for coupon validation with caching
  */
-export function useCouponValidation() {
+function useCouponValidation() {
   const queryClient = useQueryClient();
   const { currentProgram } = useProgramContext();
 
@@ -168,7 +168,7 @@ export function useCouponValidation() {
 /**
  * Hook to create course assignment (enrollment)
  */
-export function useCreateCourseAssignment() {
+function useCreateCourseAssignment() {
   const queryClient = useQueryClient();
   const { currentProgram } = useProgramContext();
 
@@ -206,7 +206,7 @@ export function useCreateCourseAssignment() {
 /**
  * Invalidate enrollment-related queries
  */
-export function useInvalidateEnrollmentQueries() {
+function useInvalidateEnrollmentQueries() {
   const queryClient = useQueryClient();
 
   return {
@@ -245,7 +245,7 @@ export function useInvalidateEnrollmentQueries() {
 /**
  * Prefetch enrollment data for better UX
  */
-export function usePrefetchEnrollmentData() {
+function usePrefetchEnrollmentData() {
   const queryClient = useQueryClient();
   const { currentProgram } = useProgramContext();
 

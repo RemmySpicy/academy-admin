@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Plus, Building, Users, Settings } from 'lucide-react';
 import { AcademyPrograms, AcademyUsers } from '@/features/academy';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 /**
  * Academy Administration - Programs Management Page
@@ -12,15 +13,10 @@ import { AcademyPrograms, AcademyUsers } from '@/features/academy';
  * Super admin-only page for managing all programs across the academy
  */
 export default function AcademyProgramsPage() {
+  usePageTitle('Academy Administration', 'Manage academy-wide programs, users, and settings');
+  
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Academy Administration</h1>
-          <p className="text-gray-600">Manage academy-wide programs, users, and settings</p>
-        </div>
-      </div>
+    <div className="space-y-6">
 
       {/* Academy Administration Tabs */}
       <Tabs defaultValue="programs" className="space-y-6">

@@ -11,8 +11,8 @@
  * - Equipment and amenity tracking
  */
 
-// Components - empty for now
-// export * from './components';
+// Components
+export * from './components';
 
 // Hooks
 export * from './hooks';

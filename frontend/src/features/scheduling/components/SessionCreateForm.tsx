@@ -29,9 +29,7 @@ import {
   GraduationCap
 } from 'lucide-react';
 
-import FormSelect from '@/components/forms/FormSelect';
-import FormDatePicker from '@/components/forms/FormDatePicker';
-import FormTextarea from '@/components/forms/FormTextarea';
+import { FormSelect, FormDatePicker, FormTextarea } from '@/components/ui/forms';
 
 import { useFacilities } from '@/features/facilities/hooks';
 import { StudentSelector } from './StudentSelector';

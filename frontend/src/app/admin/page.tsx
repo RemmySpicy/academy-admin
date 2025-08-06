@@ -15,6 +15,7 @@ import {
   UserCheck
 } from 'lucide-react';
 import { useAuth } from '@/components/providers/AppStateProvider';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 interface StatCard {
   title: string;
@@ -93,14 +94,6 @@ const quickActions: QuickAction[] = [
     color: 'bg-orange-500'
   },
   {
-    title: 'User Management',
-    description: 'Manage admin users and permissions',
-    href: '/admin/users',
-    icon: Users,
-    color: 'bg-red-500',
-    roles: ['admin']
-  },
-  {
     title: 'Settings',
     description: 'Configure system settings and preferences',
     href: '/admin/settings',
@@ -110,6 +103,7 @@ const quickActions: QuickAction[] = [
 ];
 
 export default function AdminDashboard() {
+  usePageTitle('Dashboard', 'Academy management overview and quick actions');
   const { user } = useAuth();
 
   // Filter quick actions based on user role
@@ -122,10 +116,10 @@ export default function AdminDashboard() {
     <div className="space-y-8">
       {/* Welcome Section */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-foreground">
           Welcome back, {user?.firstName}!
         </h1>
-        <p className="text-gray-600 mt-1">
+        <p className="text-muted-foreground mt-1">
           Here's what's happening at your academy today.
         </p>
       </div>
@@ -137,14 +131,14 @@ export default function AdminDashboard() {
           return (
             <Card key={index}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
                   {stat.title}
                 </CardTitle>
-                <Icon className="h-4 w-4 text-gray-400" />
+                <Icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
-                <p className={`text-xs ${stat.trend === 'up' ? 'text-green-600' : 'text-gray-600'}`}>
+                <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+                <p className={`text-xs ${stat.trend === 'up' ? 'text-green-600' : 'text-muted-foreground'}`}>
                   {stat.description}
                 </p>
               </CardContent>
@@ -155,7 +149,7 @@ export default function AdminDashboard() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredActions.map((action, index) => {
             const Icon = action.icon;
@@ -197,24 +191,24 @@ export default function AdminDashboard() {
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 New student enrolled in Swimming Program - <span className="font-medium">Sarah Johnson</span>
               </p>
-              <span className="text-xs text-gray-400">2 hours ago</span>
+              <span className="text-xs text-muted-foreground">2 hours ago</span>
             </div>
             <div className="flex items-center space-x-3">
               <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Schedule updated for Basketball Program - <span className="font-medium">Monday sessions</span>
               </p>
-              <span className="text-xs text-gray-400">4 hours ago</span>
+              <span className="text-xs text-muted-foreground">4 hours ago</span>
             </div>
             <div className="flex items-center space-x-3">
               <div className="h-2 w-2 bg-purple-500 rounded-full"></div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 New curriculum level added - <span className="font-medium">Swimming Level 3</span>
               </p>
-              <span className="text-xs text-gray-400">1 day ago</span>
+              <span className="text-xs text-muted-foreground">1 day ago</span>
             </div>
           </div>
         </CardContent>

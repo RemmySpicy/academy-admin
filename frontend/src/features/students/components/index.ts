@@ -3,7 +3,7 @@
  */
 
 export { ParentChildManager } from './ParentChildManager';
-export { StudentCreateForm } from './StudentCreateForm';
+export { default as StudentCreateForm } from './StudentCreateForm';
 
 // Enrollment components
 export * from './enrollment';

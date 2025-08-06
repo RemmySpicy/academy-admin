@@ -132,7 +132,7 @@ class AssessmentRubricResponse(AssessmentRubricBase, TimestampMixin):
     
     class Config:
         from_attributes = True
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "rubric-id-1",
                 "name": "Robot Building Technical Skills",
@@ -237,7 +237,7 @@ class AssessmentCriteriaResponse(AssessmentCriteriaBase, TimestampMixin):
     
     class Config:
         from_attributes = True
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "criteria-id-1",
                 "rubric_id": "rubric-id-1",
@@ -315,7 +315,7 @@ class AssessmentRubricDetailResponse(AssessmentRubricResponse):
     criteria: List[AssessmentCriteriaResponse] = Field(default=[], description="Assessment criteria for this rubric")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "rubric-id-1",
                 "name": "Robot Building Technical Skills",
@@ -408,7 +408,7 @@ class StudentAssessmentResponse(BaseModel):
     notes: Optional[str] = Field(None, description="Assessment notes")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "student_id": "student-id-1",
                 "student_name": "John Doe",

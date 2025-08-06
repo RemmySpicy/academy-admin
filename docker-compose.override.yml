@@ -45,41 +45,6 @@ services:
         npm run dev
       "
 
-  instructor-mobile:
-    environment:
-      - NODE_ENV=development
-      - EXPO_DEBUG=true
-      - EXPO_CLI_TELEMETRY_DISABLED=1
-    command: >
-      sh -c "
-        echo 'Installing instructor app dependencies...' &&
-        npm install &&
-        echo 'Installing Expo CLI...' &&
-        npm install -g @expo/cli &&
-        echo 'Syncing shared resources...' &&
-        mkdir -p /app/src/shared &&
-        cp -r /app/shared/* /app/src/shared/ 2>/dev/null || true &&
-        echo 'Starting Expo development server for instructor app...' &&
-        npx expo start --dev-client --clear
-      "
-
-  student-mobile:
-    environment:
-      - NODE_ENV=development
-      - EXPO_DEBUG=true
-      - EXPO_CLI_TELEMETRY_DISABLED=1
-    command: >
-      sh -c "
-        echo 'Installing student app dependencies...' &&
-        npm install &&
-        echo 'Installing Expo CLI...' &&
-        npm install -g @expo/cli &&
-        echo 'Syncing shared resources...' &&
-        mkdir -p /app/src/shared &&
-        cp -r /app/shared/* /app/src/shared/ 2>/dev/null || true &&
-        echo 'Starting Expo development server for student app...' &&
-        npx expo start --dev-client --clear
-      "
 
 volumes:
   backend_cache:

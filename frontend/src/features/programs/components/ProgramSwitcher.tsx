@@ -60,27 +60,27 @@ export function ProgramSwitcher() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center space-x-2 px-3 py-1.5 bg-gray-50 rounded-md">
-        <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
-        <span className="text-sm text-gray-600">Loading programs...</span>
+      <div className="flex items-center space-x-2 px-3 py-1.5 bg-muted rounded-md">
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">Loading programs...</span>
       </div>
     );
   }
 
   if (!availablePrograms.length) {
     return (
-      <div className="flex items-center space-x-2 px-3 py-1.5 bg-red-50 rounded-md">
-        <AlertCircle className="h-4 w-4 text-red-500" />
-        <span className="text-sm text-red-600">No programs available</span>
+      <div className="flex items-center space-x-2 px-3 py-1.5 bg-destructive/10 rounded-md">
+        <AlertCircle className="h-4 w-4 text-destructive" />
+        <span className="text-sm text-destructive">No programs available</span>
       </div>
     );
   }
 
   if (!canSwitchPrograms) {
     return (
-      <div className="flex items-center space-x-2 px-3 py-1.5 bg-blue-50 rounded-md">
-        <div className="h-2 w-2 bg-blue-500 rounded-full" />
-        <span className="text-sm font-medium text-blue-900">
+      <div className="flex items-center space-x-2 px-3 py-1.5 bg-primary/10 rounded-md">
+        <div className="h-2 w-2 bg-primary rounded-full" />
+        <span className="text-sm font-medium text-primary">
           {currentProgramName}
         </span>
       </div>
@@ -90,14 +90,14 @@ export function ProgramSwitcher() {
   return (
     <div className="flex items-center space-x-2">
       {(error || lastSwitchError) && (
-        <div className="flex items-center space-x-1 px-2 py-1 bg-red-50 rounded-md">
-          <AlertCircle className="h-3 w-3 text-red-500" />
-          <span className="text-xs text-red-600">{error || lastSwitchError}</span>
+        <div className="flex items-center space-x-1 px-2 py-1 bg-destructive/10 rounded-md">
+          <AlertCircle className="h-3 w-3 text-destructive" />
+          <span className="text-xs text-destructive">{error || lastSwitchError}</span>
           <Button
             variant="ghost"
             size="sm"
             onClick={clearError}
-            className="h-4 w-4 p-0 hover:bg-red-100"
+            className="h-4 w-4 p-0 hover:bg-destructive/20"
           >
             ×
           </Button>
@@ -108,13 +108,13 @@ export function ProgramSwitcher() {
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="flex items-center space-x-2 hover:bg-gray-50 px-3 py-1.5"
+            className="flex items-center space-x-2 hover:bg-accent px-3 py-1.5"
             disabled={isSwitching || !canSwitch}
             title={!canSwitch ? "You have unsaved changes. Save or discard them before switching programs." : undefined}
           >
             <div className="flex items-center space-x-2">
-              <div className={`h-2 w-2 rounded-full ${canSwitch ? 'bg-blue-500' : 'bg-orange-500'}`} />
-              <span className="text-sm font-medium text-gray-900">
+              <div className={`h-2 w-2 rounded-full ${canSwitch ? 'bg-primary' : 'bg-orange-500'}`} />
+              <span className="text-sm font-medium text-foreground">
                 {currentProgram?.name || 'Select Program'}
               </span>
               {currentProgram?.program_code && (
@@ -129,9 +129,9 @@ export function ProgramSwitcher() {
               )}
             </div>
             {isSwitching ? (
-              <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             ) : (
-              <ChevronDown className="h-4 w-4 text-gray-400" />
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
             )}
           </Button>
         </DropdownMenuTrigger>
@@ -146,10 +146,10 @@ export function ProgramSwitcher() {
             >
               <div className="flex items-center space-x-3">
                 <div className="flex flex-col">
-                  <span className="font-medium text-gray-900">
+                  <span className="font-medium text-foreground">
                     {program.name}
                   </span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-muted-foreground">
                     {program.program_code}
                   </span>
                 </div>
@@ -161,14 +161,14 @@ export function ProgramSwitcher() {
                   </Badge>
                 )}
                 {currentProgram?.id === program.id && (
-                  <Check className="h-4 w-4 text-blue-600" />
+                  <Check className="h-4 w-4 text-primary" />
                 )}
               </div>
             </DropdownMenuItem>
           ))}
           {availablePrograms.length === 0 && (
             <DropdownMenuItem disabled>
-              <span className="text-gray-500">No programs available</span>
+              <span className="text-muted-foreground">No programs available</span>
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>

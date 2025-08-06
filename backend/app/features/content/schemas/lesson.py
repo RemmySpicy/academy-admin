@@ -163,7 +163,7 @@ class LessonResponse(LessonBase, TimestampMixin):
     
     class Config:
         from_attributes = True
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "lesson-uuid-1",
                 "lesson_id": "ROBOT-101-L1",
@@ -260,7 +260,7 @@ class LessonDetailResponse(LessonResponse):
     content_versions: List[Dict[str, Any]] = Field(default=[], description="Content version history")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "lesson-uuid-1",
                 "lesson_id": "ROBOT-101-L1",

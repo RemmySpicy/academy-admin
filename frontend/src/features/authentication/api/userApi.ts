@@ -51,6 +51,7 @@ export interface UserSearchParams {
   per_page?: number;
   sort_by?: string;
   sort_order?: 'asc' | 'desc';
+  bypass_program_filter?: boolean;
 }
 
 export interface UserListResponse {
@@ -83,10 +84,11 @@ export class UserApi {
     if (params?.per_page) queryParams.append('per_page', params.per_page.toString());
     if (params?.sort_by) queryParams.append('sort_by', params.sort_by);
     if (params?.sort_order) queryParams.append('sort_order', params.sort_order);
+    if (params?.bypass_program_filter) queryParams.append('bypass_program_filter', params.bypass_program_filter.toString());
     
     const url = queryParams.toString() 
-      ? `${API_ENDPOINTS.auth.users}?${queryParams.toString()}`
-      : API_ENDPOINTS.auth.users;
+      ? `${API_ENDPOINTS.users.list}?${queryParams.toString()}`
+      : API_ENDPOINTS.users.list;
       
     return httpClient.get<UserListResponse>(url);
   }
@@ -95,28 +97,28 @@ export class UserApi {
    * Get user by ID
    */
   static async getUser(userId: string): Promise<ApiResponse<RealUser>> {
-    return httpClient.get<RealUser>(API_ENDPOINTS.auth.getUser(userId));
+    return httpClient.get<RealUser>(API_ENDPOINTS.users.get(userId));
   }
 
   /**
    * Create new user (admin only)
    */
   static async createUser(userData: UserCreate): Promise<ApiResponse<RealUser>> {
-    return httpClient.post<RealUser>(API_ENDPOINTS.auth.createUser, userData);
+    return httpClient.post<RealUser>(API_ENDPOINTS.users.create, userData);
   }
 
   /**
    * Update user
    */
   static async updateUser(userId: string, userData: UserUpdate): Promise<ApiResponse<RealUser>> {
-    return httpClient.put<RealUser>(API_ENDPOINTS.auth.updateUser(userId), userData);
+    return httpClient.put<RealUser>(API_ENDPOINTS.users.update(userId), userData);
   }
 
   /**
    * Delete user (admin only)
    */
   static async deleteUser(userId: string): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(API_ENDPOINTS.auth.deleteUser(userId));
+    return httpClient.delete<void>(API_ENDPOINTS.users.delete(userId));
   }
 
   /**
